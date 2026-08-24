@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m1">
+<ipestyle name="m1"><layout paper="180 120" origin="0 0" frame="180 120"/></ipestyle>
+<page>
+<path stroke="black">15 15 m 165 15 l 165 105 l 15 105 l h</path>
+</page></ipe>

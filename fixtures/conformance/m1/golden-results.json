@@ -1,0 +1,2602 @@
+{
+  "baseline": "70218",
+  "fixtures": {
+    "bbox-viewbbox-group-transform.ipe": {
+      "checks": {
+        "custom": {
+          "equal": true,
+          "roundtrip": [
+            "ipe-mcp:66666666-6666-4666-8666-666666666666"
+          ],
+          "source": [
+            "ipe-mcp:66666666-6666-4666-8666-666666666666"
+          ]
+        },
+        "default_materialized": [],
+        "effects_0_27": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "group_url": {
+          "equal": true,
+          "roundtrip": [
+            {
+              "number": 3,
+              "page": 1,
+              "url": "https://example.invalid/m1/group"
+            }
+          ],
+          "source": [
+            {
+              "number": 3,
+              "page": 1,
+              "url": "https://example.invalid/m1/group"
+            }
+          ]
+        },
+        "layer_view_active_marked": {
+          "equal": false,
+          "roundtrip": [
+            {
+              "layers": [
+                "BBOX",
+                "VIEWBBOX",
+                "content"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": null,
+                  "layer": "BBOX",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": null,
+                  "layer": "VIEWBBOX",
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:66666666-6666-4666-8666-666666666666",
+                  "layer": "content",
+                  "matrix": null,
+                  "number": 3,
+                  "tag": "group",
+                  "url": "https://example.invalid/m1/group"
+                }
+              ],
+              "views": [
+                {
+                  "active": "content",
+                  "effect": null,
+                  "layers": [
+                    "VIEWBBOX",
+                    "content"
+                  ],
+                  "marked": null,
+                  "name": null,
+                  "number": 1,
+                  "transforms": [
+                    {
+                      "layer": "content",
+                      "matrix": "1 0 0 1 20 0"
+                    }
+                  ]
+                },
+                {
+                  "active": "content",
+                  "effect": null,
+                  "layers": [
+                    "BBOX",
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": null,
+                  "number": 2,
+                  "transforms": [
+                    {
+                      "layer": "content",
+                      "matrix": "0.866 0.5 -0.5 0.866 50 15"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "source": [
+            {
+              "layers": [
+                "BBOX",
+                "VIEWBBOX",
+                "content"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": null,
+                  "layer": "BBOX",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": null,
+                  "layer": "VIEWBBOX",
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:66666666-6666-4666-8666-666666666666",
+                  "layer": "content",
+                  "matrix": null,
+                  "number": 3,
+                  "tag": "group",
+                  "url": "https://example.invalid/m1/group"
+                }
+              ],
+              "views": [
+                {
+                  "active": "content",
+                  "effect": null,
+                  "layers": [
+                    "VIEWBBOX",
+                    "content"
+                  ],
+                  "marked": "no",
+                  "name": null,
+                  "number": 1,
+                  "transforms": [
+                    {
+                      "layer": "content",
+                      "matrix": "1 0 0 1 20 0"
+                    }
+                  ]
+                },
+                {
+                  "active": "content",
+                  "effect": null,
+                  "layers": [
+                    "BBOX",
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": null,
+                  "number": 2,
+                  "transforms": [
+                    {
+                      "layer": "content",
+                      "matrix": "0.866 0.5 -0.5 0.866 50 15"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "order_custom": {
+          "equal": true,
+          "roundtrip": [
+            "ipe-mcp:66666666-6666-4666-8666-666666666666"
+          ],
+          "source": [
+            "ipe-mcp:66666666-6666-4666-8666-666666666666"
+          ]
+        },
+        "root_version": {
+          "equal": true,
+          "roundtrip": "70218",
+          "source": "70218"
+        },
+        "supported_payload": {
+          "equal": false,
+          "roundtrip": {
+            "layouts": [
+              {
+                "frame": "260 190",
+                "origin": "0 0",
+                "paper": "260 190"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "stroke": "black"
+                },
+                "children": [],
+                "content": "0 0 m 260 0 l 260 190 l 0 190 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "stroke": "gray"
+                },
+                "children": [],
+                "content": "20 20 m 240 20 l 240 170 l 20 170 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "url": "https://example.invalid/m1/group"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "fill": "0.9 0.5 0.5",
+                      "stroke": "red"
+                    },
+                    "children": [],
+                    "content": "55 45 m 165 45 l 165 125 l 55 125 l h",
+                    "tag": "path"
+                  },
+                  {
+                    "attributes": {
+                      "pos": "70 100",
+                      "stroke": "black",
+                      "type": "label",
+                      "valign": "bottom"
+                    },
+                    "children": [],
+                    "content": "linked group",
+                    "tag": "text"
+                  }
+                ],
+                "content": null,
+                "tag": "group"
+              }
+            ]
+          },
+          "source": {
+            "layouts": [
+              {
+                "crop": "yes",
+                "frame": "260 190",
+                "origin": "0 0",
+                "paper": "260 190"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "stroke": "black"
+                },
+                "children": [],
+                "content": "0 0 m 260 0 l 260 190 l 0 190 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "stroke": "gray"
+                },
+                "children": [],
+                "content": "20 20 m 240 20 l 240 170 l 20 170 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "url": "https://example.invalid/m1/group"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "fill": "0.9 0.5 0.5",
+                      "stroke": "red"
+                    },
+                    "children": [],
+                    "content": "55 45 m 165 45 l 165 125 l 55 125 l h",
+                    "tag": "path"
+                  },
+                  {
+                    "attributes": {
+                      "pos": "70 100",
+                      "stroke": "black",
+                      "type": "label",
+                      "valign": "bottom"
+                    },
+                    "children": [],
+                    "content": "linked group",
+                    "tag": "text"
+                  }
+                ],
+                "content": null,
+                "tag": "group"
+              }
+            ]
+          }
+        },
+        "unknown_x": {
+          "equal": true,
+          "roundtrip": {
+            "attributes": [],
+            "elements": []
+          },
+          "source": {
+            "attributes": [],
+            "elements": []
+          }
+        },
+        "view_transform": {
+          "equal": true,
+          "roundtrip": [
+            [
+              [
+                {
+                  "layer": "content",
+                  "matrix": "1 0 0 1 20 0"
+                }
+              ],
+              [
+                {
+                  "layer": "content",
+                  "matrix": "0.866 0.5 -0.5 0.866 50 15"
+                }
+              ]
+            ]
+          ],
+          "source": [
+            [
+              [
+                {
+                  "layer": "content",
+                  "matrix": "1 0 0 1 20 0"
+                }
+              ],
+              [
+                {
+                  "layer": "content",
+                  "matrix": "0.866 0.5 -0.5 0.866 50 15"
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "file_format": "70218",
+      "format": 1,
+      "native_copy": {
+        "custom_order": [
+          "ipe-mcp:66666666-6666-4666-8666-666666666666",
+          "ipe-mcp:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        ],
+        "groups": [
+          {
+            "number": 3,
+            "page": 1,
+            "url": "https://example.invalid/m1/group"
+          },
+          {
+            "number": 4,
+            "page": 1,
+            "url": "https://example.invalid/m1/group"
+          }
+        ],
+        "object_order": [
+          {
+            "custom": null,
+            "layer": "BBOX",
+            "matrix": null,
+            "number": 1,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": null,
+            "layer": "VIEWBBOX",
+            "matrix": null,
+            "number": 2,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": "ipe-mcp:66666666-6666-4666-8666-666666666666",
+            "layer": "content",
+            "matrix": null,
+            "number": 3,
+            "page": 1,
+            "tag": "group",
+            "url": "https://example.invalid/m1/group"
+          },
+          {
+            "custom": "ipe-mcp:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "layer": null,
+            "matrix": null,
+            "number": 4,
+            "page": 1,
+            "tag": "group",
+            "url": "https://example.invalid/m1/group"
+          }
+        ],
+        "pages": [
+          {
+            "layers": [
+              "BBOX",
+              "VIEWBBOX",
+              "content"
+            ],
+            "number": 1,
+            "objects": [
+              {
+                "custom": null,
+                "layer": "BBOX",
+                "matrix": null,
+                "number": 1,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": null,
+                "layer": "VIEWBBOX",
+                "matrix": null,
+                "number": 2,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": "ipe-mcp:66666666-6666-4666-8666-666666666666",
+                "layer": "content",
+                "matrix": null,
+                "number": 3,
+                "tag": "group",
+                "url": "https://example.invalid/m1/group"
+              },
+              {
+                "custom": "ipe-mcp:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "layer": null,
+                "matrix": null,
+                "number": 4,
+                "tag": "group",
+                "url": "https://example.invalid/m1/group"
+              }
+            ],
+            "views": [
+              {
+                "active": "content",
+                "effect": null,
+                "layers": [
+                  "VIEWBBOX",
+                  "content"
+                ],
+                "marked": null,
+                "name": null,
+                "number": 1,
+                "transforms": [
+                  {
+                    "layer": "content",
+                    "matrix": "1 0 0 1 20 0"
+                  }
+                ]
+              },
+              {
+                "active": "content",
+                "effect": null,
+                "layers": [
+                  "BBOX",
+                  "content"
+                ],
+                "marked": "yes",
+                "name": null,
+                "number": 2,
+                "transforms": [
+                  {
+                    "layer": "content",
+                    "matrix": "0.866 0.5 -0.5 0.866 50 15"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "default-runtime-omissions.ipe": {
+      "checks": {
+        "custom": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "default_materialized": [
+          {
+            "field": "layers",
+            "page": 1,
+            "roundtrip": [
+              "alpha"
+            ],
+            "source": []
+          },
+          {
+            "field": "views",
+            "page": 1,
+            "roundtrip": [
+              {
+                "active": "alpha",
+                "effect": null,
+                "layers": [
+                  "alpha"
+                ],
+                "marked": null,
+                "name": null,
+                "number": 1,
+                "transforms": []
+              }
+            ],
+            "source": []
+          },
+          {
+            "field": "layer",
+            "object": 1,
+            "page": 1,
+            "roundtrip": "alpha",
+            "source": null
+          }
+        ],
+        "effects_0_27": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "group_url": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "layer_view_active_marked": {
+          "equal": false,
+          "roundtrip": [
+            {
+              "layers": [
+                "alpha"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": null,
+                  "layer": "alpha",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                }
+              ],
+              "views": [
+                {
+                  "active": "alpha",
+                  "effect": null,
+                  "layers": [
+                    "alpha"
+                  ],
+                  "marked": null,
+                  "name": null,
+                  "number": 1,
+                  "transforms": []
+                }
+              ]
+            }
+          ],
+          "source": [
+            {
+              "layers": [],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": null,
+                  "layer": null,
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                }
+              ],
+              "views": []
+            }
+          ]
+        },
+        "order_custom": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "root_version": {
+          "equal": true,
+          "roundtrip": "70218",
+          "source": "70218"
+        },
+        "supported_payload": {
+          "equal": true,
+          "roundtrip": {
+            "layouts": [
+              {
+                "frame": "180 120",
+                "origin": "0 0",
+                "paper": "180 120"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "stroke": "black"
+                },
+                "children": [],
+                "content": "15 15 m 165 15 l 165 105 l 15 105 l h",
+                "tag": "path"
+              }
+            ]
+          },
+          "source": {
+            "layouts": [
+              {
+                "frame": "180 120",
+                "origin": "0 0",
+                "paper": "180 120"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "stroke": "black"
+                },
+                "children": [],
+                "content": "15 15 m 165 15 l 165 105 l 15 105 l h",
+                "tag": "path"
+              }
+            ]
+          }
+        },
+        "unknown_x": {
+          "equal": true,
+          "roundtrip": {
+            "attributes": [],
+            "elements": []
+          },
+          "source": {
+            "attributes": [],
+            "elements": []
+          }
+        },
+        "view_transform": {
+          "equal": false,
+          "roundtrip": [
+            [
+              []
+            ]
+          ],
+          "source": [
+            []
+          ]
+        }
+      },
+      "file_format": "70218",
+      "format": 1,
+      "native_copy": null
+    },
+    "effects-0-27.ipe": {
+      "checks": {
+        "custom": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "default_materialized": [],
+        "effects_0_27": {
+          "equal": false,
+          "roundtrip": [
+            {
+              "duration": "1",
+              "effect": "0",
+              "name": "e0",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "1",
+              "name": "e1",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "2",
+              "name": "e2",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "3",
+              "name": "e3",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "4",
+              "name": "e4",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "5",
+              "name": "e5",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "6",
+              "name": "e6",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "7",
+              "name": "e7",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "8",
+              "name": "e8",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "9",
+              "name": "e9",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "10",
+              "name": "e10",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "11",
+              "name": "e11",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "12",
+              "name": "e12",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "13",
+              "name": "e13",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "14",
+              "name": "e14",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "15",
+              "name": "e15",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "16",
+              "name": "e16",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "17",
+              "name": "e17",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "18",
+              "name": "e18",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "19",
+              "name": "e19",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "20",
+              "name": "e20",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "21",
+              "name": "e21",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "22",
+              "name": "e22",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "23",
+              "name": "e23",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "24",
+              "name": "e24",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "25",
+              "name": "e25",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "26",
+              "name": "e26",
+              "transition": null
+            },
+            {
+              "duration": "1",
+              "effect": "27",
+              "name": "e27",
+              "transition": null
+            }
+          ],
+          "source": [
+            {
+              "duration": "1",
+              "effect": "0",
+              "name": "e0",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "1",
+              "name": "e1",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "2",
+              "name": "e2",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "3",
+              "name": "e3",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "4",
+              "name": "e4",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "5",
+              "name": "e5",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "6",
+              "name": "e6",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "7",
+              "name": "e7",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "8",
+              "name": "e8",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "9",
+              "name": "e9",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "10",
+              "name": "e10",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "11",
+              "name": "e11",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "12",
+              "name": "e12",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "13",
+              "name": "e13",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "14",
+              "name": "e14",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "15",
+              "name": "e15",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "16",
+              "name": "e16",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "17",
+              "name": "e17",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "18",
+              "name": "e18",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "19",
+              "name": "e19",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "20",
+              "name": "e20",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "21",
+              "name": "e21",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "22",
+              "name": "e22",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "23",
+              "name": "e23",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "24",
+              "name": "e24",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "25",
+              "name": "e25",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "26",
+              "name": "e26",
+              "transition": "1"
+            },
+            {
+              "duration": "1",
+              "effect": "27",
+              "name": "e27",
+              "transition": "1"
+            }
+          ]
+        },
+        "group_url": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "layer_view_active_marked": {
+          "equal": false,
+          "roundtrip": [
+            {
+              "layers": [
+                "content"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": null,
+                  "layer": "content",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": null,
+                  "layer": null,
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "text",
+                  "url": null
+                }
+              ],
+              "views": [
+                {
+                  "active": "content",
+                  "effect": "e0",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": null,
+                  "name": "effect-0-normal",
+                  "number": 1,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e1",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-1-split-hi",
+                  "number": 2,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e2",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-2-split-ho",
+                  "number": 3,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e3",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-3-split-vi",
+                  "number": 4,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e4",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-4-split-vo",
+                  "number": 5,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e5",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-5-blinds-h",
+                  "number": 6,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e6",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-6-blinds-v",
+                  "number": 7,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e7",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-7-box-in",
+                  "number": 8,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e8",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-8-box-out",
+                  "number": 9,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e9",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-9-wipe-lr",
+                  "number": 10,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e10",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-10-wipe-bt",
+                  "number": 11,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e11",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-11-wipe-rl",
+                  "number": 12,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e12",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-12-wipe-tb",
+                  "number": 13,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e13",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-13-dissolve",
+                  "number": 14,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e14",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-14-glitter-lr",
+                  "number": 15,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e15",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-15-glitter-tb",
+                  "number": 16,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e16",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-16-glitter-d",
+                  "number": 17,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e17",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-17-fly-in-lr",
+                  "number": 18,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e18",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-18-fly-out-lr",
+                  "number": 19,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e19",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-19-fly-in-tb",
+                  "number": 20,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e20",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-20-fly-out-tb",
+                  "number": 21,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e21",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-21-push-lr",
+                  "number": 22,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e22",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-22-push-tb",
+                  "number": 23,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e23",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-23-cover-lr",
+                  "number": 24,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e24",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-24-cover-lb",
+                  "number": 25,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e25",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-25-uncover-lr",
+                  "number": 26,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e26",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-26-uncover-tb",
+                  "number": 27,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e27",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-27-fade",
+                  "number": 28,
+                  "transforms": []
+                }
+              ]
+            }
+          ],
+          "source": [
+            {
+              "layers": [
+                "content"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": null,
+                  "layer": "content",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": null,
+                  "layer": "content",
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "text",
+                  "url": null
+                }
+              ],
+              "views": [
+                {
+                  "active": "content",
+                  "effect": "e0",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "no",
+                  "name": "effect-0-normal",
+                  "number": 1,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e1",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-1-split-hi",
+                  "number": 2,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e2",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-2-split-ho",
+                  "number": 3,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e3",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-3-split-vi",
+                  "number": 4,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e4",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-4-split-vo",
+                  "number": 5,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e5",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-5-blinds-h",
+                  "number": 6,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e6",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-6-blinds-v",
+                  "number": 7,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e7",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-7-box-in",
+                  "number": 8,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e8",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-8-box-out",
+                  "number": 9,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e9",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-9-wipe-lr",
+                  "number": 10,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e10",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-10-wipe-bt",
+                  "number": 11,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e11",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-11-wipe-rl",
+                  "number": 12,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e12",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-12-wipe-tb",
+                  "number": 13,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e13",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-13-dissolve",
+                  "number": 14,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e14",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-14-glitter-lr",
+                  "number": 15,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e15",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-15-glitter-tb",
+                  "number": 16,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e16",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-16-glitter-d",
+                  "number": 17,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e17",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-17-fly-in-lr",
+                  "number": 18,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e18",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-18-fly-out-lr",
+                  "number": 19,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e19",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-19-fly-in-tb",
+                  "number": 20,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e20",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-20-fly-out-tb",
+                  "number": 21,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e21",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-21-push-lr",
+                  "number": 22,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e22",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-22-push-tb",
+                  "number": 23,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e23",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-23-cover-lr",
+                  "number": 24,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e24",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-24-cover-lb",
+                  "number": 25,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e25",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-25-uncover-lr",
+                  "number": 26,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e26",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-26-uncover-tb",
+                  "number": 27,
+                  "transforms": []
+                },
+                {
+                  "active": "content",
+                  "effect": "e27",
+                  "layers": [
+                    "content"
+                  ],
+                  "marked": "yes",
+                  "name": "effect-27-fade",
+                  "number": 28,
+                  "transforms": []
+                }
+              ]
+            }
+          ]
+        },
+        "order_custom": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "root_version": {
+          "equal": true,
+          "roundtrip": "70218",
+          "source": "70218"
+        },
+        "supported_payload": {
+          "equal": true,
+          "roundtrip": {
+            "layouts": [
+              {
+                "frame": "240 160",
+                "origin": "0 0",
+                "paper": "240 160"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "fill": "0.2 0.5 0.9",
+                  "stroke": "blue"
+                },
+                "children": [],
+                "content": "25 25 m 215 25 l 215 135 l 25 135 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "pos": "45 85",
+                  "stroke": "black",
+                  "type": "label",
+                  "valign": "bottom"
+                },
+                "children": [],
+                "content": "Ipe 7.2.30 effect matrix",
+                "tag": "text"
+              }
+            ]
+          },
+          "source": {
+            "layouts": [
+              {
+                "frame": "240 160",
+                "origin": "0 0",
+                "paper": "240 160"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "fill": "0.2 0.5 0.9",
+                  "stroke": "blue"
+                },
+                "children": [],
+                "content": "25 25 m 215 25 l 215 135 l 25 135 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "pos": "45 85",
+                  "stroke": "black",
+                  "type": "label",
+                  "valign": "bottom"
+                },
+                "children": [],
+                "content": "Ipe 7.2.30 effect matrix",
+                "tag": "text"
+              }
+            ]
+          }
+        },
+        "unknown_x": {
+          "equal": true,
+          "roundtrip": {
+            "attributes": [],
+            "elements": []
+          },
+          "source": {
+            "attributes": [],
+            "elements": []
+          }
+        },
+        "view_transform": {
+          "equal": true,
+          "roundtrip": [
+            [
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              []
+            ]
+          ],
+          "source": [
+            [
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              [],
+              []
+            ]
+          ]
+        }
+      },
+      "file_format": "70218",
+      "format": 1,
+      "native_copy": null
+    },
+    "metadata-custom-x.ipe": {
+      "checks": {
+        "custom": {
+          "equal": true,
+          "roundtrip": [
+            "ipe-mcp:11111111-1111-4111-8111-111111111111",
+            "ipe-mcp:22222222-2222-4222-8222-222222222222"
+          ],
+          "source": [
+            "ipe-mcp:11111111-1111-4111-8111-111111111111",
+            "ipe-mcp:22222222-2222-4222-8222-222222222222"
+          ]
+        },
+        "default_materialized": [],
+        "effects_0_27": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "group_url": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "layer_view_active_marked": {
+          "equal": false,
+          "roundtrip": [
+            {
+              "layers": [
+                "meta"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": "ipe-mcp:11111111-1111-4111-8111-111111111111",
+                  "layer": "meta",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:22222222-2222-4222-8222-222222222222",
+                  "layer": null,
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "text",
+                  "url": null
+                }
+              ],
+              "views": [
+                {
+                  "active": "meta",
+                  "effect": null,
+                  "layers": [
+                    "meta"
+                  ],
+                  "marked": null,
+                  "name": null,
+                  "number": 1,
+                  "transforms": []
+                }
+              ]
+            }
+          ],
+          "source": [
+            {
+              "layers": [
+                "meta"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": "ipe-mcp:11111111-1111-4111-8111-111111111111",
+                  "layer": "meta",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:22222222-2222-4222-8222-222222222222",
+                  "layer": "meta",
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "text",
+                  "url": null
+                }
+              ],
+              "views": [
+                {
+                  "active": "meta",
+                  "effect": null,
+                  "layers": [
+                    "meta"
+                  ],
+                  "marked": "no",
+                  "name": null,
+                  "number": 1,
+                  "transforms": []
+                }
+              ]
+            }
+          ]
+        },
+        "order_custom": {
+          "equal": true,
+          "roundtrip": [
+            "ipe-mcp:11111111-1111-4111-8111-111111111111",
+            "ipe-mcp:22222222-2222-4222-8222-222222222222"
+          ],
+          "source": [
+            "ipe-mcp:11111111-1111-4111-8111-111111111111",
+            "ipe-mcp:22222222-2222-4222-8222-222222222222"
+          ]
+        },
+        "root_version": {
+          "equal": true,
+          "roundtrip": "70218",
+          "source": "70218"
+        },
+        "supported_payload": {
+          "equal": true,
+          "roundtrip": {
+            "layouts": [
+              {
+                "frame": "240 180",
+                "origin": "0 0",
+                "paper": "240 180"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "stroke": "black"
+                },
+                "children": [],
+                "content": "20 20 m 220 20 l 220 160 l 20 160 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "pos": "35 95",
+                  "stroke": "black",
+                  "type": "label",
+                  "valign": "bottom"
+                },
+                "children": [],
+                "content": "custom and x-* probe",
+                "tag": "text"
+              }
+            ]
+          },
+          "source": {
+            "layouts": [
+              {
+                "frame": "240 180",
+                "origin": "0 0",
+                "paper": "240 180"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "stroke": "black"
+                },
+                "children": [],
+                "content": "20 20 m 220 20 l 220 160 l 20 160 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "pos": "35 95",
+                  "stroke": "black",
+                  "type": "label",
+                  "valign": "bottom"
+                },
+                "children": [],
+                "content": "custom and x-* probe",
+                "tag": "text"
+              }
+            ]
+          }
+        },
+        "unknown_x": {
+          "equal": false,
+          "roundtrip": {
+            "attributes": [],
+            "elements": []
+          },
+          "source": {
+            "attributes": [
+              {
+                "name": "x-owner",
+                "path": "ipe/info[1]",
+                "value": "fixture"
+              },
+              {
+                "name": "x-origin",
+                "path": "ipe/page[4]/path[3]",
+                "value": "manual"
+              },
+              {
+                "name": "x-note",
+                "path": "ipe/page[4]/text[4]",
+                "value": "unknown"
+              }
+            ],
+            "elements": [
+              {
+                "attributes": {
+                  "probe": "element-retention"
+                },
+                "path": "ipe/x-ipe-mcp[3]",
+                "tag": "x-ipe-mcp",
+                "text": null
+              }
+            ]
+          }
+        },
+        "view_transform": {
+          "equal": true,
+          "roundtrip": [
+            [
+              []
+            ]
+          ],
+          "source": [
+            [
+              []
+            ]
+          ]
+        }
+      },
+      "file_format": "70218",
+      "format": 1,
+      "native_copy": {
+        "custom_order": [
+          "ipe-mcp:11111111-1111-4111-8111-111111111111",
+          "ipe-mcp:99999999-9999-4999-8999-999999999999",
+          "ipe-mcp:22222222-2222-4222-8222-222222222222"
+        ],
+        "groups": [],
+        "object_order": [
+          {
+            "custom": "ipe-mcp:11111111-1111-4111-8111-111111111111",
+            "layer": "meta",
+            "matrix": null,
+            "number": 1,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": "ipe-mcp:99999999-9999-4999-8999-999999999999",
+            "layer": null,
+            "matrix": null,
+            "number": 2,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": "ipe-mcp:22222222-2222-4222-8222-222222222222",
+            "layer": null,
+            "matrix": null,
+            "number": 3,
+            "page": 1,
+            "tag": "text",
+            "url": null
+          }
+        ],
+        "pages": [
+          {
+            "layers": [
+              "meta"
+            ],
+            "number": 1,
+            "objects": [
+              {
+                "custom": "ipe-mcp:11111111-1111-4111-8111-111111111111",
+                "layer": "meta",
+                "matrix": null,
+                "number": 1,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": "ipe-mcp:99999999-9999-4999-8999-999999999999",
+                "layer": null,
+                "matrix": null,
+                "number": 2,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": "ipe-mcp:22222222-2222-4222-8222-222222222222",
+                "layer": null,
+                "matrix": null,
+                "number": 3,
+                "tag": "text",
+                "url": null
+              }
+            ],
+            "views": [
+              {
+                "active": "meta",
+                "effect": null,
+                "layers": [
+                  "meta"
+                ],
+                "marked": null,
+                "name": null,
+                "number": 1,
+                "transforms": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "z-order-copy.ipe": {
+      "checks": {
+        "custom": {
+          "equal": true,
+          "roundtrip": [
+            "ipe-mcp:33333333-3333-4333-8333-333333333333",
+            "ipe-mcp:44444444-4444-4444-8444-444444444444",
+            "ipe-mcp:55555555-5555-4555-8555-555555555555",
+            "ipe-mcp:77777777-7777-4777-8777-777777777777"
+          ],
+          "source": [
+            "ipe-mcp:33333333-3333-4333-8333-333333333333",
+            "ipe-mcp:44444444-4444-4444-8444-444444444444",
+            "ipe-mcp:55555555-5555-4555-8555-555555555555",
+            "ipe-mcp:77777777-7777-4777-8777-777777777777"
+          ]
+        },
+        "default_materialized": [],
+        "effects_0_27": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "group_url": {
+          "equal": true,
+          "roundtrip": [],
+          "source": []
+        },
+        "layer_view_active_marked": {
+          "equal": false,
+          "roundtrip": [
+            {
+              "layers": [
+                "objects"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": "ipe-mcp:33333333-3333-4333-8333-333333333333",
+                  "layer": "objects",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:44444444-4444-4444-8444-444444444444",
+                  "layer": null,
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:55555555-5555-4555-8555-555555555555",
+                  "layer": null,
+                  "matrix": null,
+                  "number": 3,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:77777777-7777-4777-8777-777777777777",
+                  "layer": null,
+                  "matrix": "1 0 0 1 -10 -10",
+                  "number": 4,
+                  "tag": "path",
+                  "url": null
+                }
+              ],
+              "views": [
+                {
+                  "active": "objects",
+                  "effect": null,
+                  "layers": [
+                    "objects"
+                  ],
+                  "marked": null,
+                  "name": null,
+                  "number": 1,
+                  "transforms": []
+                }
+              ]
+            }
+          ],
+          "source": [
+            {
+              "layers": [
+                "objects"
+              ],
+              "number": 1,
+              "objects": [
+                {
+                  "custom": "ipe-mcp:33333333-3333-4333-8333-333333333333",
+                  "layer": "objects",
+                  "matrix": null,
+                  "number": 1,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:44444444-4444-4444-8444-444444444444",
+                  "layer": "objects",
+                  "matrix": null,
+                  "number": 2,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:55555555-5555-4555-8555-555555555555",
+                  "layer": "objects",
+                  "matrix": null,
+                  "number": 3,
+                  "tag": "path",
+                  "url": null
+                },
+                {
+                  "custom": "ipe-mcp:77777777-7777-4777-8777-777777777777",
+                  "layer": "objects",
+                  "matrix": "1 0 0 1 -10 -10",
+                  "number": 4,
+                  "tag": "path",
+                  "url": null
+                }
+              ],
+              "views": [
+                {
+                  "active": "objects",
+                  "effect": null,
+                  "layers": [
+                    "objects"
+                  ],
+                  "marked": "no",
+                  "name": null,
+                  "number": 1,
+                  "transforms": []
+                }
+              ]
+            }
+          ]
+        },
+        "order_custom": {
+          "equal": true,
+          "roundtrip": [
+            "ipe-mcp:33333333-3333-4333-8333-333333333333",
+            "ipe-mcp:44444444-4444-4444-8444-444444444444",
+            "ipe-mcp:55555555-5555-4555-8555-555555555555",
+            "ipe-mcp:77777777-7777-4777-8777-777777777777"
+          ],
+          "source": [
+            "ipe-mcp:33333333-3333-4333-8333-333333333333",
+            "ipe-mcp:44444444-4444-4444-8444-444444444444",
+            "ipe-mcp:55555555-5555-4555-8555-555555555555",
+            "ipe-mcp:77777777-7777-4777-8777-777777777777"
+          ]
+        },
+        "root_version": {
+          "equal": true,
+          "roundtrip": "70218",
+          "source": "70218"
+        },
+        "supported_payload": {
+          "equal": true,
+          "roundtrip": {
+            "layouts": [
+              {
+                "frame": "220 160",
+                "origin": "0 0",
+                "paper": "220 160"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "fill": "0.2 0.5 0.9",
+                  "stroke": "blue"
+                },
+                "children": [],
+                "content": "30 25 m 190 25 l 190 135 l 30 135 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "fill": "0.9 0.7 0.1",
+                  "stroke": "orange"
+                },
+                "children": [],
+                "content": "55 45 m 205 45 l 150 145 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "fill": "0.8 0.1 0.2",
+                  "stroke": "red"
+                },
+                "children": [],
+                "content": "85 60 m 175 60 l 130 125 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "fill": "0.9 0.7 0.1",
+                  "matrix": "1 0 0 1 -10 -10",
+                  "stroke": "orange"
+                },
+                "children": [],
+                "content": "55 45 m 205 45 l 150 145 l h",
+                "tag": "path"
+              }
+            ]
+          },
+          "source": {
+            "layouts": [
+              {
+                "frame": "220 160",
+                "origin": "0 0",
+                "paper": "220 160"
+              }
+            ],
+            "objects": [
+              {
+                "attributes": {
+                  "fill": "0.2 0.5 0.9",
+                  "stroke": "blue"
+                },
+                "children": [],
+                "content": "30 25 m 190 25 l 190 135 l 30 135 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "fill": "0.9 0.7 0.1",
+                  "stroke": "orange"
+                },
+                "children": [],
+                "content": "55 45 m 205 45 l 150 145 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "fill": "0.8 0.1 0.2",
+                  "stroke": "red"
+                },
+                "children": [],
+                "content": "85 60 m 175 60 l 130 125 l h",
+                "tag": "path"
+              },
+              {
+                "attributes": {
+                  "fill": "0.9 0.7 0.1",
+                  "matrix": "1 0 0 1 -10 -10",
+                  "stroke": "orange"
+                },
+                "children": [],
+                "content": "55 45 m 205 45 l 150 145 l h",
+                "tag": "path"
+              }
+            ]
+          }
+        },
+        "unknown_x": {
+          "equal": true,
+          "roundtrip": {
+            "attributes": [],
+            "elements": []
+          },
+          "source": {
+            "attributes": [],
+            "elements": []
+          }
+        },
+        "view_transform": {
+          "equal": true,
+          "roundtrip": [
+            [
+              []
+            ]
+          ],
+          "source": [
+            [
+              []
+            ]
+          ]
+        }
+      },
+      "file_format": "70218",
+      "format": 1,
+      "native_copy": {
+        "custom_order": [
+          "ipe-mcp:33333333-3333-4333-8333-333333333333",
+          "ipe-mcp:88888888-8888-4888-8888-888888888888",
+          "ipe-mcp:44444444-4444-4444-8444-444444444444",
+          "ipe-mcp:55555555-5555-4555-8555-555555555555",
+          "ipe-mcp:77777777-7777-4777-8777-777777777777"
+        ],
+        "groups": [],
+        "object_order": [
+          {
+            "custom": "ipe-mcp:33333333-3333-4333-8333-333333333333",
+            "layer": "objects",
+            "matrix": null,
+            "number": 1,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": "ipe-mcp:88888888-8888-4888-8888-888888888888",
+            "layer": null,
+            "matrix": null,
+            "number": 2,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": "ipe-mcp:44444444-4444-4444-8444-444444444444",
+            "layer": null,
+            "matrix": null,
+            "number": 3,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": "ipe-mcp:55555555-5555-4555-8555-555555555555",
+            "layer": null,
+            "matrix": null,
+            "number": 4,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          },
+          {
+            "custom": "ipe-mcp:77777777-7777-4777-8777-777777777777",
+            "layer": null,
+            "matrix": "1 0 0 1 -10 -10",
+            "number": 5,
+            "page": 1,
+            "tag": "path",
+            "url": null
+          }
+        ],
+        "pages": [
+          {
+            "layers": [
+              "objects"
+            ],
+            "number": 1,
+            "objects": [
+              {
+                "custom": "ipe-mcp:33333333-3333-4333-8333-333333333333",
+                "layer": "objects",
+                "matrix": null,
+                "number": 1,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": "ipe-mcp:88888888-8888-4888-8888-888888888888",
+                "layer": null,
+                "matrix": null,
+                "number": 2,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": "ipe-mcp:44444444-4444-4444-8444-444444444444",
+                "layer": null,
+                "matrix": null,
+                "number": 3,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": "ipe-mcp:55555555-5555-4555-8555-555555555555",
+                "layer": null,
+                "matrix": null,
+                "number": 4,
+                "tag": "path",
+                "url": null
+              },
+              {
+                "custom": "ipe-mcp:77777777-7777-4777-8777-777777777777",
+                "layer": null,
+                "matrix": "1 0 0 1 -10 -10",
+                "number": 5,
+                "tag": "path",
+                "url": null
+              }
+            ],
+            "views": [
+              {
+                "active": "objects",
+                "effect": null,
+                "layers": [
+                  "objects"
+                ],
+                "marked": null,
+                "name": null,
+                "number": 1,
+                "transforms": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "format": 1
+}

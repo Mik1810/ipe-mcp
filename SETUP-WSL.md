@@ -63,3 +63,21 @@ e poi riaprire Ubuntu.
 L'Ipe installato su Windows e quello installato in Ubuntu sono ambienti separati. Il server MCP verrà eseguito in `/home/mik/github/ipe-mcp` e deve poter chiamare i binari Linux nativi senza attraversare `/mnt/c` o dipendere dall'interoperabilità Windows. Questo rende path, subprocess, LaTeX e test molto più prevedibili.
 
 Non serve compilare Ipe dal sorgente: Ubuntu 26.04 fornisce già esattamente la versione stabile scelta come baseline.
+
+## Laboratorio di conformance M1
+
+Con il pacchetto stabile installato, il laboratorio completo si esegue dalla root del repository:
+
+```bash
+bash scripts/check-m1.sh
+```
+
+Il comando verifica capability Lua/Ipelib, round-trip e copy, golden semantiche, render SVG ed export PDF degli effetti. Non scrive artefatti nel repository.
+
+La build sorgente resta una lane CI opzionale. Se esiste già una build 7.2.30, indicare la directory che contiene `ipetoipe`, `iperender` e `ipescript`:
+
+```bash
+IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/check-m1.sh
+```
+
+Il gate non scarica, compila o installa automaticamente la build sorgente; senza la variabile la lane viene riportata esplicitamente come `SKIP` e il gate stabile usa il pacchetto Ubuntu verificato.

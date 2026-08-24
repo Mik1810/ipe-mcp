@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m1">
+<ipestyle name="m1"><layout paper="220 160" origin="0 0" frame="220 160"/></ipestyle>
+<page><layer name="objects"/><view layers="objects" active="objects" marked="no"/>
+<path layer="objects" custom="ipe-mcp:33333333-3333-4333-8333-333333333333" fill="0.2 0.5 0.9" stroke="blue">30 25 m 190 25 l 190 135 l 30 135 l h</path>
+<path layer="objects" custom="ipe-mcp:44444444-4444-4444-8444-444444444444" fill="0.9 0.7 0.1" stroke="orange">55 45 m 205 45 l 150 145 l h</path>
+<path layer="objects" custom="ipe-mcp:55555555-5555-4555-8555-555555555555" fill="0.8 0.1 0.2" stroke="red">85 60 m 175 60 l 130 125 l h</path>
+<path layer="objects" custom="ipe-mcp:77777777-7777-4777-8777-777777777777" matrix="1 0 0 1 -10 -10" fill="0.9 0.7 0.1" stroke="orange">55 45 m 205 45 l 150 145 l h</path>
+</page></ipe>

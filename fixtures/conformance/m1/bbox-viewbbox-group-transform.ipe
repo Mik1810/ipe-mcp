@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m1">
+<ipestyle name="m1"><layout paper="260 190" origin="0 0" frame="260 190" crop="yes"/></ipestyle>
+<page><layer name="BBOX"/><layer name="VIEWBBOX"/><layer name="content"/>
+<view layers="VIEWBBOX content" active="content" marked="no"><transform layer="content" matrix="1 0 0 1 20 0"/></view>
+<view layers="BBOX content" active="content" marked="yes"><transform layer="content" matrix="0.866 0.5 -0.5 0.866 50 15"/></view>
+<path layer="BBOX" stroke="black">0 0 m 260 0 l 260 190 l 0 190 l h</path>
+<path layer="VIEWBBOX" stroke="gray">20 20 m 240 20 l 240 170 l 20 170 l h</path>
+<group layer="content" url="https://example.invalid/m1/group" custom="ipe-mcp:66666666-6666-4666-8666-666666666666"><path stroke="red" fill="0.9 0.5 0.5">55 45 m 165 45 l 165 125 l 55 125 l h</path><text pos="70 100" stroke="black">linked group</text></group>
+</page></ipe>

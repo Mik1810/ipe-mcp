@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m1">
+<info title="M1 metadata custom and extensions" x-owner="fixture"/>
+<ipestyle name="m1"><layout paper="240 180" origin="0 0" frame="240 180"/></ipestyle>
+<x-ipe-mcp probe="element-retention"/>
+<page><layer name="meta"/><view layers="meta" active="meta" marked="no"/>
+<path layer="meta" custom="ipe-mcp:11111111-1111-4111-8111-111111111111" x-origin="manual" stroke="black">20 20 m 220 20 l 220 160 l 20 160 l h</path>
+<text layer="meta" custom="ipe-mcp:22222222-2222-4222-8222-222222222222" x-note="unknown" pos="35 95" stroke="black">custom and x-* probe</text>
+</page></ipe>

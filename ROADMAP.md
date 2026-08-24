@@ -500,6 +500,8 @@ Confine M0/M1: i seed di M0 fissano casi e invarianti minimi, ma non pretendono 
 
 ### M1 — Laboratorio di conformance Ipe
 
+**Stato: completata il 2026-08-25.** Gate stabile dimostrato da `bash scripts/check-m1.sh` su Ipe `7.2.30-1build2`, con golden, review avversariale Sol e test indipendenti Luna; la lane build-sorgente resta opzionale e riproducibile tramite binari 7.2.30 forniti esplicitamente.
+
 Deliverable:
 
 - ambiente riproducibile con pacchetto Ubuntu Ipe/`ipescript` 7.2.30 e probe delle capability; build da sorgente mantenuta come controllo CI opzionale;

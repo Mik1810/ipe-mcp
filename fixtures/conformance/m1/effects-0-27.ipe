@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m1">
+<ipestyle name="m1"><layout paper="240 160" origin="0 0" frame="240 160"/>
+<effect name="e0" duration="1" transition="1" effect="0"/>
+<effect name="e1" duration="1" transition="1" effect="1"/>
+<effect name="e2" duration="1" transition="1" effect="2"/>
+<effect name="e3" duration="1" transition="1" effect="3"/>
+<effect name="e4" duration="1" transition="1" effect="4"/>
+<effect name="e5" duration="1" transition="1" effect="5"/>
+<effect name="e6" duration="1" transition="1" effect="6"/>
+<effect name="e7" duration="1" transition="1" effect="7"/>
+<effect name="e8" duration="1" transition="1" effect="8"/>
+<effect name="e9" duration="1" transition="1" effect="9"/>
+<effect name="e10" duration="1" transition="1" effect="10"/>
+<effect name="e11" duration="1" transition="1" effect="11"/>
+<effect name="e12" duration="1" transition="1" effect="12"/>
+<effect name="e13" duration="1" transition="1" effect="13"/>
+<effect name="e14" duration="1" transition="1" effect="14"/>
+<effect name="e15" duration="1" transition="1" effect="15"/>
+<effect name="e16" duration="1" transition="1" effect="16"/>
+<effect name="e17" duration="1" transition="1" effect="17"/>
+<effect name="e18" duration="1" transition="1" effect="18"/>
+<effect name="e19" duration="1" transition="1" effect="19"/>
+<effect name="e20" duration="1" transition="1" effect="20"/>
+<effect name="e21" duration="1" transition="1" effect="21"/>
+<effect name="e22" duration="1" transition="1" effect="22"/>
+<effect name="e23" duration="1" transition="1" effect="23"/>
+<effect name="e24" duration="1" transition="1" effect="24"/>
+<effect name="e25" duration="1" transition="1" effect="25"/>
+<effect name="e26" duration="1" transition="1" effect="26"/>
+<effect name="e27" duration="1" transition="1" effect="27"/>
+</ipestyle>
+<page title="M1 effect enum 0..27"><layer name="content"/>
+<view layers="content" active="content" marked="no" name="effect-0-normal" effect="e0"/>
+<view layers="content" active="content" marked="yes" name="effect-1-split-hi" effect="e1"/>
+<view layers="content" active="content" marked="yes" name="effect-2-split-ho" effect="e2"/>
+<view layers="content" active="content" marked="yes" name="effect-3-split-vi" effect="e3"/>
+<view layers="content" active="content" marked="yes" name="effect-4-split-vo" effect="e4"/>
+<view layers="content" active="content" marked="yes" name="effect-5-blinds-h" effect="e5"/>
+<view layers="content" active="content" marked="yes" name="effect-6-blinds-v" effect="e6"/>
+<view layers="content" active="content" marked="yes" name="effect-7-box-in" effect="e7"/>
+<view layers="content" active="content" marked="yes" name="effect-8-box-out" effect="e8"/>
+<view layers="content" active="content" marked="yes" name="effect-9-wipe-lr" effect="e9"/>
+<view layers="content" active="content" marked="yes" name="effect-10-wipe-bt" effect="e10"/>
+<view layers="content" active="content" marked="yes" name="effect-11-wipe-rl" effect="e11"/>
+<view layers="content" active="content" marked="yes" name="effect-12-wipe-tb" effect="e12"/>
+<view layers="content" active="content" marked="yes" name="effect-13-dissolve" effect="e13"/>
+<view layers="content" active="content" marked="yes" name="effect-14-glitter-lr" effect="e14"/>
+<view layers="content" active="content" marked="yes" name="effect-15-glitter-tb" effect="e15"/>
+<view layers="content" active="content" marked="yes" name="effect-16-glitter-d" effect="e16"/>
+<view layers="content" active="content" marked="yes" name="effect-17-fly-in-lr" effect="e17"/>
+<view layers="content" active="content" marked="yes" name="effect-18-fly-out-lr" effect="e18"/>
+<view layers="content" active="content" marked="yes" name="effect-19-fly-in-tb" effect="e19"/>
+<view layers="content" active="content" marked="yes" name="effect-20-fly-out-tb" effect="e20"/>
+<view layers="content" active="content" marked="yes" name="effect-21-push-lr" effect="e21"/>
+<view layers="content" active="content" marked="yes" name="effect-22-push-tb" effect="e22"/>
+<view layers="content" active="content" marked="yes" name="effect-23-cover-lr" effect="e23"/>
+<view layers="content" active="content" marked="yes" name="effect-24-cover-lb" effect="e24"/>
+<view layers="content" active="content" marked="yes" name="effect-25-uncover-lr" effect="e25"/>
+<view layers="content" active="content" marked="yes" name="effect-26-uncover-tb" effect="e26"/>
+<view layers="content" active="content" marked="yes" name="effect-27-fade" effect="e27"/>
+<path layer="content" fill="0.2 0.5 0.9" stroke="blue">25 25 m 215 25 l 215 135 l 25 135 l h</path>
+<text layer="content" pos="45 85" stroke="black">Ipe 7.2.30 effect matrix</text>
+</page></ipe>
