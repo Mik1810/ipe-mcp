@@ -6,7 +6,7 @@ Verificato il 2026-08-24 nell'ambiente del progetto:
 - repository Ubuntu `universe` già disponibile;
 - candidato APT: `ipe 7.2.30-1build2`;
 - WSLg attivo (`DISPLAY=:0`, Wayland disponibile);
-- Ipe non ancora installato in WSL.
+- Ipe installato e verificato in WSL: `7.2.30-1build2`.
 
 ## Installazione consigliata
 
@@ -41,6 +41,8 @@ command -v ipe ipescript ipetoipe iperender ipepresenter pdflatex
 
 Il primo comando deve stampare una versione che inizi con `7.2.30`; gli altri devono restituire path sotto `/usr/bin`.
 
+Verifica completata il 2026-08-24: `ipe`, `ipescript`, `ipetoipe`, `iperender`, `ipepresenter` e `pdflatex` sono tutti disponibili sotto `/usr/bin`.
+
 Per verificare la GUI Linux tramite WSLg:
 
 ```bash
@@ -61,4 +63,3 @@ e poi riaprire Ubuntu.
 L'Ipe installato su Windows e quello installato in Ubuntu sono ambienti separati. Il server MCP verrà eseguito in `/home/mik/github/ipe-mcp` e deve poter chiamare i binari Linux nativi senza attraversare `/mnt/c` o dipendere dall'interoperabilità Windows. Questo rende path, subprocess, LaTeX e test molto più prevedibili.
 
 Non serve compilare Ipe dal sorgente: Ubuntu 26.04 fornisce già esattamente la versione stabile scelta come baseline.
-

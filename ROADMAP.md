@@ -477,16 +477,24 @@ Ogni milestone termina con un gate di revisione; non si procede su una decisione
 
 Deliverable:
 
-- ADR su versione, IR, backend ibrido, ID, sidecar e confine di licenza; distribuzione esplicitamente rinviata;
-- specifica iniziale di coordinate, z-order e semantica page/layer/view;
-- threat model e matrice delle modalità degradate;
-- corpus minimo di file Ipe manuali.
+- `docs/adr/0001-compatibility-baseline.md`: Ipe 7.2.30, formato 70218 e lane 7.3.x;
+- `docs/adr/0002-domain-model-and-layout.md`: IR, coordinate, matrici, z-order e page/layer/view;
+- `docs/adr/0003-backend-persistence-and-identifiers.md`: backend ibrido, transazioni, `custom` e sidecar;
+- `docs/adr/0004-security-and-trust-boundaries.md`: sezioni canoniche `TM-XML`, `TM-TEX`, `TM-FS`, `TM-ASSET`, `TM-PROC`, `TM-CONCURRENCY`, `TM-METADATA` e `TM-HTTP`;
+- `docs/compatibility-modes.md`: matrice structural-only/full/nightly con capability, failure mode e label di diagnostica;
+- `fixtures/conformance/manifest.json` e almeno sei seed `.ipe` manuali: minimal, positions/matrices, layers/views, geometry/z-order, custom metadata, text/minipage;
+- `scripts/check-m0.sh`: smoke riproducibile di ADR/manifest, versione installata e round-trip di ogni seed con `ipetoipe -xml`, usando output temporanei.
 
 Gate:
 
-- tutte le decisioni in §14 approvate;
-- formato XML 70218 e baseline 7.2.30 congelati;
-- nessuna dipendenza da 7.3.x.
+- tutti gli ADR hanno stato `Accepted`; la distribuzione è registrata come deferral approvato, non come decisione mancante;
+- threat model contiene tutti gli otto ID canonici: XML/parser, LaTeX, filesystem/path, asset/rete, subprocess/CLI native, concorrenza/atomicità, metadata/sidecar e futuro HTTP; ogni rischio è collegato a una mitigazione/gate futuro;
+- la matrice definisce esattamente cosa può essere dichiarato “verificato” nelle tre modalità;
+- il manifest inventaria scopo, feature e invarianti di ogni seed, senza asset generati o binari superflui;
+- `bash scripts/check-m0.sh` verifica gli otto ID, richiede che `dpkg-query -W -f='${Version}' ipe` inizi con `7.2.30`, mostra la versione rilevata e conferma root `version="70218"` prima e dopo il round-trip;
+- nessun ADR o seed dipende da API 7.3.x; eventuali note 7.3.x sono marcate future/nightly.
+
+Confine M0/M1: i seed di M0 fissano casi e invarianti minimi, ma non pretendono di risolvere le divergenze native. M1 implementa probe, golden e decisioni empiriche e può estendere il corpus senza cambiare retroattivamente i contratti approvati.
 
 ### M1 — Laboratorio di conformance Ipe
 
