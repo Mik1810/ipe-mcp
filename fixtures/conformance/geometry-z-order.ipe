@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m0">
+<ipestyle name="m0"><layout paper="200 150" origin="0 0" frame="200 150"/></ipestyle>
+<page><layer name="shapes"/><view layers="shapes" active="shapes" marked="no"/>
+<path layer="shapes" fill="0.8 0.8 1" stroke="blue">30 30 m 150 30 l 150 120 l 30 120 l h</path>
+<path layer="shapes" fill="1 0.3 0.3" stroke="red">70 50 m 170 50 l 120 130 l h</path>
+</page></ipe>

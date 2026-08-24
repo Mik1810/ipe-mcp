@@ -475,6 +475,8 @@ Ogni milestone termina con un gate di revisione; non si procede su una decisione
 
 ### M0 — Contratti e ADR
 
+**Stato: completata il 2026-08-24.** Gate dimostrato da `bash scripts/check-m0.sh` su Ipe `7.2.30-1build2`, con review avversariale e test indipendenti completati.
+
 Deliverable:
 
 - `docs/adr/0001-compatibility-baseline.md`: Ipe 7.2.30, formato 70218 e lane 7.3.x;

@@ -1,0 +1,12 @@
+{
+  "format_version": "70218",
+  "baseline": "ipe-7.2.30",
+  "seeds": [
+    {"file":"minimal.ipe","purpose":"smallest valid document","features":["minimal"],"invariants":["root version 70218","explicit layer and view"]},
+    {"file":"positions-matrices.ipe","purpose":"object positions and affine matrices","features":["positions","matrices"],"invariants":["finite non-singular matrices","explicit object layer"]},
+    {"file":"layers-views.ipe","purpose":"layer visibility and marked views","features":["layers","views"],"invariants":["unique layers","active and marked explicit"]},
+    {"file":"geometry-z-order.ipe","purpose":"overlapping geometry and global stacking","features":["geometry","z-order"],"invariants":["first object is behind last","every top-level object has layer"]},
+    {"file":"custom-metadata.ipe","purpose":"custom object identity metadata","features":["custom metadata"],"invariants":["custom value is XML-safe","metadata is attached to an object"]},
+    {"file":"text-minipage.ipe","purpose":"label and fixed-width minipage text","features":["text","minipage"],"invariants":["text objects have explicit type","no external asset"]}
+  ]
+}

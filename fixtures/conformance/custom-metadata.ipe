@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m0">
+<info title="M0 custom metadata"/>
+<ipestyle name="m0"><layout paper="200 150" origin="0 0" frame="200 150"/></ipestyle>
+<page><layer name="metadata"/><view layers="metadata" active="metadata" marked="no"/>
+<path layer="metadata" custom="ipe-mcp:4f9865f8-7f11-4f24-a279-1d4c8ac87ce7" stroke="black">30 30 m 170 30 l 100 120 l h</path>
+</page></ipe>

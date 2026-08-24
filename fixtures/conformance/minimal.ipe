@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m0">
+<ipestyle name="m0"><layout paper="200 150" origin="0 0" frame="200 150"/></ipestyle>
+<page><layer name="base"/><view layers="base" active="base" marked="no"/>
+<path layer="base" stroke="black">20 20 m 180 20 l 180 130 l 20 130 l h</path>
+</page></ipe>

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m0">
+<preamble>\usepackage{amsmath}</preamble>
+<ipestyle name="m0"><layout paper="240 180" origin="0 0" frame="240 180"/></ipestyle>
+<page><layer name="text"/><view layers="text" active="text" marked="no"/>
+<text layer="text" pos="30 145" type="label" stroke="black" size="12">M0 label</text>
+<text layer="text" pos="30 120" type="minipage" width="170" height="30" stroke="black">A fixed-width minipage with $x^2$.</text>
+</page></ipe>
