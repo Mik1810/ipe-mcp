@@ -1,18 +1,18 @@
-# ADR-0001 — Baseline di compatibilità
+# ADR-0001 — Compatibility Baseline
 
-- Stato: **Accepted**
-- Data: 2026-08-24
+- Status: **Accepted**
+- Date: 2026-08-24
 
-## Decisione
+## Decision
 
-La baseline normativa dell'MVP è Ipe **7.2.30**, su Ubuntu 26.04/WSL, con `FILE_FORMAT` XML **70218**. Il serializer deve emettere esplicitamente `version="70218"`; la versione della libreria (70230) non viene usata come versione del file. La compatibilità stabile richiede il percorso `full` descritto in `docs/compatibility-modes.md`.
+The normative MVP baseline is Ipe **7.2.30**, on Ubuntu 26.04/WSL, with XML `FILE_FORMAT` **70218**. The serializer must emit `version="70218"` explicitly; the library version (70230) is not used as the file version. Stable compatibility requires the `full` lane described in `docs/compatibility-modes.md`.
 
-Sono mantenute tre lane indipendenti: `full-7.2.30` (release), `structural-only` (controlli locali senza Ipe) e `nightly-7.3.x` (sperimentale/allowed-failure). Il contratto MVP non usa API 7.3.x; la nightly non riscrive un file stabile senza consenso. Lo smoke 7.2.29 è solo un controllo esterno.
+Three independent lanes are maintained: `full-7.2.30` (release), `structural-only` (local checks without Ipe), and `nightly-7.3.x` (experimental/allowed-failure). The MVP contract does not use 7.3.x APIs; nightly does not rewrite a stable file without consent. The 7.2.29 smoke test is only an external check.
 
-## Conseguenze e confini
+## Consequences and Boundaries
 
-Il supporto a divergenze DTD/runtime, helper nativi, viewer PDF e feature sperimentali viene chiuso da probe M1/M6/M7. M0 fissa nomi, invarianti e criteri di esito, senza dichiarare risolta alcuna divergenza empirica. Ogni diagnostica riporta lane, versione rilevata, formato XML e livello di validazione.
+Support for DTD/runtime divergences, native helpers, PDF viewers, and experimental features is closed by M1/M6/M7 probes. M0 fixes names, invariants, and outcome criteria without claiming that any empirical divergence is resolved. Every diagnostic reports the lane, detected version, XML format, and validation level.
 
-## Deferral approvato
+## Approved Deferral
 
-La strategia distributiva (bundle, npm, helper installabile e supporto oltre Ubuntu 26.04/WSL) è **rinviata dopo la validazione dell'MVP locale**. È una decisione approvata di deferral, non una decisione mancante; sarà rivalutata in M10 con evidenze di conformance, licenze e riproducibilità.
+The distribution strategy (bundle, npm, installable helper, and support beyond Ubuntu 26.04/WSL) is **deferred until after local MVP validation**. This is an approved deferral decision, not a missing decision; it will be reassessed in M10 using conformance, licensing, and reproducibility evidence.

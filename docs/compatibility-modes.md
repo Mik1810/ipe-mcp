@@ -1,15 +1,15 @@
-# Modalità di compatibilità e criteri di verifica
+# Compatibility Modes and Verification Criteria
 
-Questa matrice è il contratto operativo M0. `verified` è vincolato alla lane e ai controlli realmente eseguiti; non garantisce che ogni viewer interpreti allo stesso modo transizioni o feature sperimentali.
+This matrix is the M0 operating contract. `verified` is bound to the lane and checks actually executed; it does not guarantee that every viewer interprets transitions or experimental features in the same way.
 
-| Modalità | Runtime/versione | Capability | Failure mode | Label diagnostica | Quando può dire `verified` |
+| Mode | Runtime/version | Capability | Failure mode | Diagnostic label | When it may say `verified` |
 |---|---|---|---|---|---|
-| `structural-only` | Nessun Ipe; XML target 70218 | Schema, IR, riferimenti, layer/view, z-order, numeri finiti, XML well-formed/canonico e policy locali | Mancano native, style, TeX, PDF e render; warning espliciti | `STRUCTURAL_ONLY_UNVERIFIED_NATIVE` | Solo **structural verified** se tutti i controlli locali passano. Mai `full`, `native` o `render verified`. |
-| `full-7.2.30` | Ipe 7.2.30; writer XML 70218 | Tutti i controlli structural + DTD consultiva, load-save-reload nativo, style, pdfLaTeX sandbox, PDF, PNG e mapping page/view | Un livello fallito fallisce la verifica; timeout/feature non supportata è errore o warning classificato | `FULL_7_2_30_VERIFIED` / `FULL_7_2_30_FAILED` | Solo dopo tutti i livelli e conferma root `version="70218"` prima/dopo round-trip. |
-| `nightly-7.3.x` | master/7.3.x, allowed-failure | Probe e controlli disponibili per la versione rilevata | Divergenza separata; non blocca stable e non riscrive file stabile | `NIGHTLY_EXPERIMENTAL_VERIFIED` / `NIGHTLY_DIVERGENCE` | Solo **nightly verified** per versione e corpus passati. Mai `full-7.2.30 verified`; API 7.3.x fuori dal MVP. |
+| `structural-only` | No Ipe; target XML 70218 | Schema, IR, references, layer/view, z-order, finite numbers, well-formed/canonical XML, and local policies | Native, style, TeX, PDF, and rendering checks are unavailable; explicit warnings | `STRUCTURAL_ONLY_UNVERIFIED_NATIVE` | Only **structural verified** when all local checks pass. Never `full`, `native`, or `render verified`. |
+| `full-7.2.30` | Ipe 7.2.30; XML writer 70218 | All structural checks plus advisory DTD, native load-save-reload, style, pdfLaTeX sandbox, PDF, PNG, and page/view mapping | A failed level fails verification; timeout/unsupported feature is a classified error or warning | `FULL_7_2_30_VERIFIED` / `FULL_7_2_30_FAILED` | Only after all levels and confirmation of root `version="70218"` before/after round trip. |
+| `nightly-7.3.x` | master/7.3.x, allowed-failure | Probes and checks available for the detected version | Separate divergence; does not block stable or rewrite a stable file | `NIGHTLY_EXPERIMENTAL_VERIFIED` / `NIGHTLY_DIVERGENCE` | Only **nightly verified** for a passed version and corpus. Never `full-7.2.30 verified`; 7.3.x APIs are outside the MVP. |
 
-## Regole di reporting
+## Reporting Rules
 
-Ogni risultato include modalità, versione, formato, livelli eseguiti, warning/errori e artefatti. `verified` non viene emesso se un controllo è saltato, simulato o disponibile solo in un'altra lane.
+Every result includes mode, version, format, executed levels, warnings/errors, and artifacts. `verified` is not emitted if a check was skipped, simulated, or available only in another lane.
 
-Transizioni PDF, layer transform, differenze DTD/runtime e viewer sono diagnostica separata: la static correctness di ogni view può essere verificata, ma l'effetto dipendente dal viewer non diventa garanzia universale. Le note 7.3.x sono sempre `future/nightly`.
+PDF transitions, layer transforms, DTD/runtime differences, and viewers are separate diagnostics: the static correctness of each view can be verified, but a viewer-dependent effect does not become a universal guarantee. 7.3.x notes are always `future/nightly`.

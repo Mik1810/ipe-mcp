@@ -1,317 +1,317 @@
-# Roadmap proposta — MCP server per Ipe
+# Proposed Roadmap — MCP Server for Ipe
 
-Stato: **baseline progettuale approvata il 2026-08-24; pronta per M0**.  
-Baseline: **Ipe 7.2.30 stabile**, formato file `70218`.  
-Obiettivo: consentire a Codex e ad altri agenti MCP di creare, modificare, verificare e renderizzare presentazioni Ipe senza esporre loro la complessità del formato XML.
+Status: **implementation in progress; M0–M4 completed as of 2026-08-25**.
+Baseline: **stable Ipe 7.2.30**, file format `70218`.
+Goal: enable Codex and other MCP agents to create, modify, verify, and render Ipe presentations without exposing them to the complexity of the XML format.
 
-## 1. Risultato atteso
+## 1. Expected Outcome
 
-Il prodotto sarà un server MCP locale e host-agnostic che offre due livelli d'uso:
+The product will be a local, host-agnostic MCP server offering two usage levels:
 
-1. **Composizione semantica**: “crea una slide, disponi titolo e tre pannelli, aggiungi un diagramma, costruisci quattro reveal”. È il percorso normale per gli agenti.
-2. **Controllo preciso**: coordinate in punti Ipe, matrici, path strutturati, layer, view e stili. Serve per diagrammi scientifici, correzioni e round-trip.
+1. **Semantic composition**: “create a slide, arrange a title and three panels, add a diagram, build four reveals”. This is the normal path for agents.
+2. **Precise control**: coordinates in Ipe points, matrices, structured paths, layers, views, and styles. This is for scientific diagrams, corrections, and round-trips.
 
-Il server produrrà `.ipe` editabili, PDF e anteprime raster. Ogni mutazione sarà atomica, revisionata, validata e recuperabile. La correttezza statica di ogni view sarà un requisito; gli effetti animati dipendenti dal viewer saranno dichiarati esplicitamente come tali.
+The server will produce editable `.ipe` files, PDFs, and raster previews. Every mutation will be atomic, revisioned, validated, and recoverable. Static correctness of every view is a requirement; viewer-dependent animated effects will be explicitly declared as such.
 
-## 2. Decisioni architetturali proposte
+## 2. Proposed Architectural Decisions
 
-Queste sono le scelte approvate per avviare il lavoro. Il registro decisionale è raccolto in fondo.
+These are the decisions approved to start the work. The decision register is collected at the end.
 
-| Decisione | Proposta | Motivazione |
+| Decision | Proposal | Rationale |
 |---|---|---|
-| Versione | 7.2.30 stabile; smoke 7.2.29; nightly 7.3.1/master | Ultima release verificabile, senza progettare contro codice non rilasciato |
-| Linguaggio server | TypeScript ESM, Node 20+, SDK MCP ufficiale v2, Zod v4 | Contratti tool forti, distribuzione semplice, supporto MCP diretto |
-| Trasporto MVP | stdio | Compatibile con Codex e altri host, superficie di sicurezza minima |
-| Modello | IR semantica propria, versionata | Separa intenzione, layout e formato Ipe |
-| Backend Ipe | Ibrido: serializer XML deterministico + helper ufficiale `ipescript`/Ipelib per import, mutazioni sensibili, canonicalizzazione e validazione | Evita FFI fragile ma non reimplementa ciecamente il runtime Ipe |
-| Stato | Sessioni su working copy con revision counter | Evita sovrascritture e conflitti fra agenti |
-| Layout | Frame-relative come default; paper/normalized/bp disponibili | Naturale per slide, ma senza perdere precisione |
-| Animazione | View discrete; copie/varianti robuste come default | È il modello realmente portabile di Ipe/PDF |
-| Identità | `custom="ipe-mcp:<uuid>"` + sidecar opzionale | ID stabili senza affidarsi a indici o nomi |
-| Compatibilità | Contratto stretto e serializzazione esplicita | DTD, manuale e parser divergono in alcuni default |
-| LaTeX MVP | pdfLaTeX e set minimo iniziale | Riduce superficie, dipendenze e variabilità nella prima fase |
-| Piattaforma MVP | Ubuntu 26.04 su WSL, Ipe 7.2.30 dai repository Ubuntu | Corrisponde all'ambiente attuale e alla baseline esatta |
-| Distribuzione | Rinviata a una decisione post-MVP | Prima validare core e workflow locali |
+| Version | Stable 7.2.30; smoke 7.2.29; nightly 7.3.1/master | Last verifiable release, without designing against unreleased code |
+| Server language | TypeScript ESM, Node 20+, official MCP SDK v2, Zod v4 | Strong tool contracts, simple distribution, direct MCP support |
+| MVP transport | stdio | Compatible with Codex and other hosts, minimal security surface |
+| Model | Own, versioned semantic IR | Separates intent, layout, and Ipe format |
+| Ipe backend | Hybrid: deterministic XML serializer + official `ipescript`/Ipelib helpers for import, sensitive mutations, canonicalization, and validation | Avoids fragile FFI without blindly reimplementing the Ipe runtime |
+| State | Working-copy sessions with revision counter | Prevents overwrites and conflicts between agents |
+| Layout | Frame-relative by default; paper/normalized/bp available | Natural for slides without sacrificing precision |
+| Animation | Discrete views; robust copies/variants by default | The actually portable Ipe/PDF model |
+| Identity | `custom="ipe-mcp:<uuid>"` + optional sidecar | Stable IDs without relying on indices or names |
+| Compatibility | Strict contract and explicit serialization | DTD, manual, and parser diverge on some defaults |
+| LaTeX MVP | pdfLaTeX and a minimal initial set | Reduces surface area, dependencies, and variability in the first phase |
+| MVP platform | Ubuntu 26.04 on WSL, Ipe 7.2.30 from Ubuntu repositories | Matches the current environment and exact baseline |
+| Distribution | Deferred to a post-MVP decision | Validate the core and local workflows first |
 
-L'uso diretto di Ipelib C++ resta un'alternativa futura se i test mostrassero che `ipescript` non copre operazioni necessarie. `ipepython` non è proposto come fondazione: è un bridge non allineato alla release e ha limitazioni dichiarate sugli iteratori e sul packaging.
+Direct use of C++ Ipelib remains a future alternative if tests show that `ipescript` does not cover required operations. `ipepython` is not proposed as a foundation: it is a bridge not aligned with the release and has documented iterator and packaging limitations.
 
-## 3. Modello concettuale da implementare
+## 3. Conceptual Model to Implement
 
 ```text
 Document
 ├── metadata, preamble, stylesheets, assets
 └── Page[]
     ├── title, section, subsection, notes
-    ├── Layer[]                 visibilità/editabilità/snapping
-    ├── View[]                  stato di presentazione
+    ├── Layer[]                 visibility/editability/snapping
+    ├── View[]                  presentation state
     │   ├── visibleLayerIds[]
     │   ├── activeLayerId
     │   ├── attributeMaps[]
     │   ├── layerTransforms{}
     │   └── transition?
-    └── Object[]                unica sequenza back-to-front
-        ├── layerId             appartenenza, non z-order
-        ├── zOrder              posizione nella sequenza
+    └── Object[]                single back-to-front sequence
+        ├── layerId             membership, not z-order
+        ├── zOrder              position in the sequence
         ├── matrix, pin, transformationMode
         └── Path | Text | Image | Group | SymbolReference
 ```
 
-Vincoli obbligatori:
+Mandatory constraints:
 
-- almeno una pagina, un layer e una view;
-- layer esplicito su ogni oggetto top-level;
-- nomi layer unici e senza whitespace;
-- active layer esistente, non bloccato e normalmente visibile;
-- ogni riferimento a stile, simbolo, asset, layer e oggetto deve risolversi;
-- primo oggetto = più indietro, ultimo = più avanti; append porta davanti;
-- `marked` e `active` sempre serializzati esplicitamente;
-- nomi pagina/view impiegati come destinazioni unici;
-- nomi Ipe speciali riservati e usabili solo tramite API dedicate.
+- at least one page, layer, and view;
+- explicit layer on every top-level object;
+- unique layer names with no whitespace;
+- existing, unlocked, and normally visible active layer;
+- every reference to a style, symbol, asset, layer, and object must resolve;
+- first object = furthest back, last = furthest forward; append puts an object in front;
+- `marked` and `active` always serialized explicitly;
+- page/view names used as unique destinations;
+- special Ipe names reserved and usable only through dedicated APIs.
 
-## 4. Posizioni e layout
+## 4. Positions and Layout
 
-### 4.1 Spazi di coordinate
+### 4.1 Coordinate Spaces
 
-L'API deve accettare esplicitamente:
+The API must accept explicitly:
 
-- `frame`: origine in basso a sinistra del frame; default;
-- `paper`: origine in basso a sinistra del foglio;
-- `normalized`: `(0,0)`–`(1,1)` rispetto a frame o paper;
-- `ipe`: punti bp esatti con asse y-up;
-- `object-local`: coordinate locali prima della matrice dell'oggetto.
+- `frame`: origin at the frame's bottom left; default;
+- `paper`: origin at the paper's bottom left;
+- `normalized`: `(0,0)`–`(1,1)` relative to frame or paper;
+- `ipe`: exact bp points with y-up axis;
+- `object-local`: local coordinates before the object's matrix.
 
-Il core converte tutto in bp. L'API non invertirà implicitamente y senza che lo spazio scelto lo dichiari. Un helper UI opzionale potrà offrire coordinate top-left, ma dovrà serializzarle come una trasformazione esplicita e testata.
+The core converts everything to bp. The API will not implicitly invert y unless the selected space declares it. An optional UI helper may offer top-left coordinates, but must serialize them as an explicit, tested transformation.
 
-### 4.2 Ancore e box
+### 4.2 Anchors and Boxes
 
-Ogni oggetto esporrà:
+Every object will expose:
 
-- anchor: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`, `baseline-left` per testo;
-- box logico, box geometrico e box visuale comprensivo di stroke;
-- position, size, rotation, scale e transform origin;
-- padding e margini dichiarativi.
+- anchor: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`, `baseline-left` for text;
+- logical, geometric, and visual boxes including stroke;
+- position, size, rotation, scale, and transform origin;
+- declarative padding and margins.
 
-Il layout distinguerà:
+The layout will distinguish:
 
-- **misure note**: forme e immagini con dimensioni esplicite;
-- **misure differite**: testo LaTeX;
-- **misure dipendenti dalla view**: oggetti trasformati o visibili selettivamente.
+- **known measurements**: shapes and images with explicit dimensions;
+- **deferred measurements**: LaTeX text;
+- **view-dependent measurements**: transformed or selectively visible objects.
 
-### 4.3 Primitive di layout
+### 4.3 Layout Primitives
 
-Il livello semantico offrirà:
+The semantic layer will offer:
 
 - `place`, `move`, `resize`, `rotate`, `transform`;
 - `align`, `distribute`, `center`, `fit`, `contain`, `cover`;
-- container `row`, `column`, `grid`, `stack`;
-- gap, padding, min/max size e aspect ratio;
-- ancore fra oggetti: `below`, `rightOf`, `sameWidth`, `alignBaseline`;
-- guide frame/paper e safe area;
-- connector che ricalcola gli endpoint quando cambiano i box.
+- `row`, `column`, `grid`, `stack` containers;
+- gap, padding, min/max size, and aspect ratio;
+- anchors between objects: `below`, `rightOf`, `sameWidth`, `alignBaseline`;
+- frame/paper guides and safe area;
+- connector that recalculates endpoints when boxes change.
 
-Non verrà promesso un sistema CAD parametrico persistente: Ipe salva coordinate, non constraint. Il sidecar può conservare le intenzioni di layout per una futura ricomposizione, mentre il `.ipe` resta autonomo e modificabile.
+No persistent parametric CAD system will be promised: Ipe saves coordinates, not constraints. The sidecar may preserve layout intent for future recomposition, while the `.ipe` remains self-contained and editable.
 
-### 4.4 Matrici
+### 4.4 Matrices
 
-Rappresentazione canonica `[a b c d s t]`:
+Canonical representation `[a b c d s t]`:
 
 ```text
 x' = a*x + c*y + s
 y' = b*x + d*y + t
 ```
 
-Ordine di composizione: `viewLayerMatrix * objectMatrix * localPoint`. Il server deve:
+Composition order: `viewLayerMatrix * objectMatrix * localPoint`. The server must:
 
-- offrire costruttori semantici per translate/rotate/scale/shear;
-- pre-moltiplicare in modo coerente con `Page::transform`;
-- rifiutare NaN, infinito e matrici singolari/quasi singolari;
-- interpolare movimento mediante componenti semantiche, non elemento per elemento, per evitare shear e degenerazioni inattese;
-- testare composizione, inversione e round-trip con property-based testing.
+- provide semantic constructors for translate/rotate/scale/shear;
+- pre-multiply consistently with `Page::transform`;
+- reject NaN, infinity, and singular/nearly singular matrices;
+- interpolate motion through semantic components, not element by element, to avoid unexpected shear and degeneracy;
+- test composition, inversion, and round-trip with property-based testing.
 
-## 5. Pagine, layer e view
+## 5. Pages, Layers, and Views
 
-### 5.1 Pagine
+### 5.1 Pages
 
-Operazioni previste:
+Planned operations:
 
-- creare, duplicare, spostare ed eliminare una pagina;
-- impostare title, section, subsection, notes e stato marked;
-- scegliere layout/stile e dimensioni;
-- clonare una pagina preservando o rigenerando gli ID;
-- ispezionare conteggio e mapping pagina Ipe → pagine PDF prodotte dalle view.
+- create, duplicate, move, and delete a page;
+- set title, section, subsection, notes, and marked state;
+- choose layout/style and dimensions;
+- clone a page while preserving or regenerating IDs;
+- inspect count and mapping from Ipe pages to PDF pages produced by views.
 
-Le note native sono per-page e vengono replicate su tutte le view. Note per-view, se richieste, saranno metadati MCP con una politica esplicita di aggregazione per IpePresenter.
+Native notes are per-page and are replicated across all views. Per-view notes, if requested, will be MCP metadata with an explicit aggregation policy for IpePresenter.
 
-### 5.2 Layer
+### 5.2 Layers
 
-Operazioni previste:
+Planned operations:
 
 - add/rename/remove/reorder metadata;
-- lock/unlock (`edit`) e politica di snapping;
-- spostamento di oggetti fra layer senza cambiarne lo z-order;
-- show/hide in una o più view;
-- layer dedicato per un oggetto animato indipendentemente;
-- operazioni intenzionali per `BBOX`, `VIEWBBOX`, `BACKGROUND`, `GRID`, `NOPDF`.
+- lock/unlock (`edit`) and snapping policy;
+- move objects between layers without changing their z-order;
+- show/hide in one or more views;
+- dedicated layer for an independently animated object;
+- intentional operations for `BBOX`, `VIEWBBOX`, `BACKGROUND`, `GRID`, `NOPDF`.
 
-L'ordine della lista layer non sarà mai usato come ordine di disegno. Il server esporrà separatamente `moveForward`, `moveBackward`, `bringToFront`, `sendToBack` e inserimento relativo a un object ID.
+The layer-list order will never be used as drawing order. The server will expose `moveForward`, `moveBackward`, `bringToFront`, `sendToBack`, and insertion relative to an object ID separately.
 
-### 5.3 View
+### 5.3 Views
 
-Operazioni previste:
+Planned operations:
 
-- creare da una view precedente o da una lista di layer;
-- visibilità cumulativa e non cumulativa;
-- active layer esplicito;
-- marked per handout;
-- mappe simboliche per colore, pen, dash, opacity, symbol size, arrow size e symbol;
-- matrice per layer con warning di compatibilità;
-- transizione PDF e durate intere per il target 7.2.30;
-- nome univoco e lookup stabile tramite ID MCP.
+- create from a previous view or a list of layers;
+- cumulative and non-cumulative visibility;
+- explicit active layer;
+- marked for handouts;
+- symbolic maps for color, pen, dash, opacity, symbol size, arrow size, and symbol;
+- per-layer matrix with compatibility warning;
+- PDF transition and integer durations for target 7.2.30;
+- unique name and stable lookup through MCP ID.
 
-Ogni modifica mostrerà il numero di pagine PDF risultanti, per rendere evidente il costo degli overlay.
+Every modification will show the resulting PDF page count, making the cost of overlays explicit.
 
-## 6. Oggetti e forme geometriche
+## 6. Objects and Geometric Shapes
 
-### 6.1 Operazioni comuni
+### 6.1 Common Operations
 
-Tutti gli oggetti supporteranno:
+All objects will support:
 
 - insert, replace, duplicate, delete, group, ungroup;
-- layer e z-order indipendenti;
-- matrice, pin e transformation mode (`affine`, `rigid`, `translations`);
-- style patch, link, custom ID e metadata sidecar;
-- bbox, hit region e diagnostica;
-- mutazioni tramite replace/transform o invalidazione esplicita della cache bbox nel backend nativo.
+- independent layer and z-order;
+- matrix, pin, and transformation mode (`affine`, `rigid`, `translations`);
+- style patch, link, custom ID, and sidecar metadata;
+- bbox, hit region, and diagnostics;
+- mutations through replace/transform or explicit bbox-cache invalidation in the native backend.
 
-### 6.2 IR geometrica
+### 6.2 Geometric IR
 
-Primitive pubbliche:
+Public primitives:
 
 - point, segment, polyline, polygon;
-- rectangle e rounded rectangle;
-- circle ed ellipse, anche ruotata;
-- arc circolare/ellittico tramite centro, raggi, rotazione e angoli;
+- rectangle and rounded rectangle;
+- circle and ellipse, including rotated ellipses;
+- circular/elliptical arc through center, radii, rotation, and angles;
 - quadratic/cubic Bézier;
 - uniform spline, closed spline, cardinal/Catmull–Rom, clothoid/Spiro;
-- compound path con buchi;
-- connector straight/orthogonal/curved con frecce;
-- raw structured path come escape hatch avanzata, mai stringa postfix non validata nell'uso normale.
+- compound path with holes;
+- straight/orthogonal/curved connector with arrows;
+- raw structured path as an advanced escape hatch, never an unvalidated postfix string in normal use.
 
-Il compilatore deve preservare open/closed, fill rule, orientamento, frecce e degenerazioni. Le frecce sono ammesse soltanto su una singola subpath aperta; gradienti/tiling richiedono fill; un simbolo non definito è errore o warning configurabile.
+The compiler must preserve open/closed state, fill rule, orientation, arrows, and degeneracies. Arrows are allowed only on a single open subpath; gradients/tiling require fill; an undefined symbol is an error or configurable warning.
 
-### 6.3 Stile
+### 6.3 Style
 
-Supporto previsto:
+Planned support:
 
 - stroke/fill, pen, dash, cap, join, winding/even-odd;
-- arrow e reverse arrow;
-- opacity e stroke opacity simboliche;
-- gradienti axial/radial;
-- tiling lineare nativo;
-- pathstyle, textstyle, size e simboli;
-- import, merge e precedenza degli stylesheet;
-- `checkStyle()` come gate prima del salvataggio/export.
+- arrow and reverse arrow;
+- symbolic opacity and stroke opacity;
+- axial/radial gradients;
+- native linear tiling;
+- pathstyle, textstyle, size, and symbols;
+- stylesheet import, merge, and precedence;
+- `checkStyle()` as a gate before save/export.
 
-I valori assoluti saranno normalizzati; i valori simbolici dovranno esistere nella cascade. Non si farà affidamento sui default DTD controversi.
+Absolute values will be normalized; symbolic values must exist in the cascade. Controversial DTD defaults will not be relied upon.
 
-### 6.4 Testo
+### 6.4 Text
 
-API distinte:
+Distinct APIs:
 
-- `label`: testo breve/formula e allineamento sul baseline;
-- `textBox`: compilato in minipage con larghezza;
-- `title`, `subtitle`, `body`, `caption`, `code` come preset di stile, non nuovi tipi Ipe.
+- `label`: short text/formula and baseline alignment;
+- `textBox`: compiled as a minipage with width;
+- `title`, `subtitle`, `body`, `caption`, `code` as style presets, not new Ipe types.
 
 Pipeline:
 
-1. validazione/policy del frammento LaTeX;
-2. layout provvisorio;
-3. compilazione in sandbox;
-4. aggiornamento width/height/depth;
-5. risoluzione di allineamenti e connector dipendenti;
-6. secondo passaggio limitato e errore di non convergenza esplicito.
+1. validate/apply policy to the LaTeX fragment;
+2. provisional layout;
+3. compilation in a sandbox;
+4. update width/height/depth;
+5. resolve dependent alignments and connectors;
+6. bounded second pass and explicit non-convergence error.
 
-### 6.5 Immagini, gruppi e simboli
+### 6.5 Images, Groups, and Symbols
 
-- PNG e JPEG garantiti; altri formati convertiti in modo esplicito da adapter installabili.
-- Deduplica bitmap per hash; policy per profili colore e alpha.
-- Aspect ratio `contain|cover|stretch`; crop mediante gruppo con clip.
-- SVG/PDF importati mediante tool ufficiali/converter e poi validati, non mascherati da image raster.
-- Group con clip/link/decorazione e ordine interno back-to-front.
-- Symbol reference (`use`) con parametri ammessi, punti snap e XForm solo quando compatibile.
+- PNG and JPEG guaranteed; other formats explicitly converted by installable adapters.
+- Bitmap deduplication by hash; policy for color profiles and alpha.
+- Aspect ratio `contain|cover|stretch`; crop through a group with clip.
+- SVG/PDF imported through official tools/converters and then validated, not disguised as raster images.
+- Group with clip/link/decoration and internal back-to-front order.
+- Symbol reference (`use`) with permitted parameters, snap points, and XForm only when compatible.
 
-## 7. Animazioni, reveal e scorrimento
+## 7. Animation, Reveal, and Scrolling
 
-### 7.1 Contratto onesto
+### 7.1 Honest Contract
 
-Ipe non ha una timeline continua. Il server distinguerà quattro prodotti:
+Ipe has no continuous timeline. The server will distinguish four products:
 
-1. **Reveal nativo**: visibilità layer fra view.
-2. **Motion discreto**: stati intermedi generati fra view.
-3. **Transizione PDF**: effetto dell'intera pagina, viewer-dependent.
-4. **Video continuo**: pipeline opzionale futura, non parte del `.ipe` nativo.
+1. **Native reveal**: layer visibility across views.
+2. **Discrete motion**: intermediate states generated between views.
+3. **PDF transition**: whole-page effect, viewer-dependent.
+4. **Continuous video**: optional future pipeline, not part of the native `.ipe`.
 
-Nessun tool chiamerà “fluida” una sequenza di view. L'anteprima deve poter mostrare ogni stato statico anche se il viewer non supporta transizioni.
+No tool will call a view sequence “fluid”. The preview must be able to show every static state even when the viewer does not support transitions.
 
-### 7.2 Operazioni ad alto livello
+### 7.2 High-Level Operations
 
 `buildReveal`:
 
 - target object/layer IDs;
-- ordine o gruppi simultanei;
+- order or simultaneous groups;
 - cumulative/non-cumulative;
-- stato iniziale e finale;
-- creazione/riuso dei layer;
-- marking per handout.
+- initial and final state;
+- layer creation/reuse;
+- marking for handout.
 
 `buildScroll` / `buildMotion`:
 
-- target e asse x/y o percorso;
-- offset/pose iniziale e finale;
-- numero di step con limite configurabile;
-- easing semantico;
-- regione di clipping;
-- strategia `duplicate` (default) o `layer-transform` (opt-in);
-- politica bbox (`fixed`, `per-view`, `explicit`);
-- viewer target e fallback statico.
+- target and x/y axis or path;
+- initial and final offset/pose;
+- number of steps with configurable limit;
+- semantic easing;
+- clipping region;
+- `duplicate` strategy (default) or `layer-transform` (opt-in);
+- bbox policy (`fixed`, `per-view`, `explicit`);
+- target viewer and static fallback.
 
 `setTransition`:
 
-- enum tipizzato dei 28 effetti;
-- durata pagina e transizione intere per 7.2.30;
-- warning se il viewer dichiarato non le supporta;
-- preset push/cover/uncover solo per intera slide.
+- typed enum of the 28 effects;
+- page duration and integer transition values for 7.2.30;
+- warning when the declared viewer does not support them;
+- push/cover/uncover presets only for the entire slide.
 
-### 7.3 Limiti e guardrail
+### 7.3 Limits and Guardrails
 
-- Default massimo di view generate per singola operazione; preventivo prima di espandere.
-- Nessun tentativo di simulare 30/60 fps in PDF.
-- Layer dedicato quando un oggetto deve muoversi indipendentemente.
-- `BBOX` esplicito quando le trasformazioni potrebbero uscire dal box originale.
-- Clip fisso o duplicazione per pannelli scrollabili; trasformare il gruppo sposterebbe anche il clip.
-- Titolo e Background automatici non seguono una camera pan: vanno materializzati come oggetti se devono muoversi.
-- Link, hit testing e bbox su layer transform generano diagnostiche di compatibilità.
+- Default maximum number of views generated per operation; estimate before expansion.
+- No attempt to simulate 30/60 fps in PDF.
+- Dedicated layer when an object must move independently.
+- Explicit `BBOX` when transformations could leave the original box.
+- Fixed clip or duplication for scrollable panels; transforming the group would also move the clip.
+- Automatic title and Background do not follow a camera pan: they must be materialized as objects if they need to move.
+- Links, hit testing, and bbox on transformed layers generate compatibility diagnostics.
 
-### 7.4 Matrice di compatibilità viewer
+### 7.4 Viewer Compatibility Matrix
 
-Da verificare almeno su:
+At least verify on:
 
-| Viewer | View statiche | Note | `/Trans` | `/Dur` | Stato |
+| Viewer | Static views | Notes | `/Trans` | `/Dur` | Status |
 |---|---:|---:|---:|---:|---|
-| Ipe editor | sì | editing | n/a | n/a | fixture automatica/manuale |
-| IpePresenter | sì | sì | non interpretato dal sorgente | non interpretato | test runtime |
-| Adobe Acrobat | sì | n/a | da misurare per effetto | da misurare | test manuale |
-| Okular/Evince | sì | n/a | da misurare | da misurare | test manuale |
-| pdfpc | sì | presenter | da misurare | da misurare | test manuale |
-| Browser PDF | sì | variabile | non affidabile | non affidabile | test manuale |
+| Ipe editor | yes | editing | n/a | n/a | automated/manual fixture |
+| IpePresenter | yes | yes | not interpreted by the source | not interpreted | runtime test |
+| Adobe Acrobat | yes | n/a | measure effect | measure | manual test |
+| Okular/Evince | yes | n/a | measure | measure | manual test |
+| pdfpc | yes | presenter | measure | measure | manual test |
+| Browser PDF | yes | variable | unreliable | unreliable | manual test |
 
-## 8. Architettura del server
+## 8. Server Architecture
 
-### 8.1 Moduli
+### 8.1 Modules
 
 ```text
 MCP adapter
-├── tool schemas e resources
+├── tool schemas and resources
 ├── session/document manager
 └── job/diagnostic facade
 Domain core
@@ -334,42 +334,42 @@ Persistence
 └── artifact/resource store
 ```
 
-Il domain core non dipenderà dal trasporto MCP. `createServer()` costruirà lo stesso server per stdio e, in futuro, Streamable HTTP.
+The domain core will not depend on MCP transport. `createServer()` will build the same server for stdio and, in the future, Streamable HTTP.
 
-### 8.2 Sessioni e concorrenza
+### 8.2 Sessions and Concurrency
 
-- `open` crea una working copy; l'originale non cambia fino a `save` esplicito.
-- Ogni risposta mutante restituisce `documentId`, `revision`, IDs creati e diagnostica.
-- Ogni mutazione accetta `expectedRevision`; un conflitto non viene sovrascritto.
-- Batch atomici: o tutte le operazioni passano, o nessuna viene applicata.
-- Rilevazione del cambio hash del file sorgente fuori sessione.
-- Scrittura su temporaneo + rename; backup/snapshot recuperabile.
-- Undo/redo per transazioni semantiche, non per singola scrittura XML.
+- `open` creates a working copy; the original does not change until explicit `save`.
+- Every mutating response returns `documentId`, `revision`, created IDs, and diagnostics.
+- Every mutation accepts `expectedRevision`; a conflict is not overwritten.
+- Atomic batches: either all operations pass or none is applied.
+- Detection of an out-of-session source-file hash change.
+- Write to temporary + rename; recoverable backup/snapshot.
+- Undo/redo for semantic transactions, not individual XML writes.
 
-### 8.3 Tool surface proposta
+### 8.3 Proposed Tool Surface
 
-Una superficie piccola riduce la scelta errata del modello. I dettagli vivono in union tipizzate.
+A small surface reduces incorrect model choices. Details live in typed unions.
 
-| Tool | Mutazione | Scopo |
+| Tool | Mutation | Purpose |
 |---|---:|---|
-| `ipe_get_capabilities` | no | Versioni, backend, TeX, converter, limiti e viewer profile |
-| `ipe_create_document` | sì | Nuovo documento da layout/style/template |
-| `ipe_open_document` | no sulla sorgente | Sessione/working copy e diagnostica iniziale |
-| `ipe_inspect` | no | Outline, pagina/view, oggetti, stili, bbox e ID |
-| `ipe_apply_operations` | sì | Batch tipizzato di mutazioni documentali/layout/geometria |
-| `ipe_compose_slide` | sì | Composizione semantica ad alto livello |
-| `ipe_build_views` | sì | Reveal, motion discreto, scroll e transizioni |
-| `ipe_validate` | no | Livelli structural/native/latex/render |
-| `ipe_render_preview` | no | PNG di pagina/view e diagnostica visuale |
-| `ipe_save_document` | sì su file | Commit atomico della working copy |
-| `ipe_export_document` | sì su artefatto | PDF, marked-view PDF, PNG/SVG dove supportato |
-| `ipe_history` | sì/no | Elenco revisioni, undo, redo, snapshot |
+| `ipe_get_capabilities` | no | Versions, backend, TeX, converters, limits, and viewer profile |
+| `ipe_create_document` | yes | New document from layout/style/template |
+| `ipe_open_document` | no on source | Session/working copy and initial diagnostics |
+| `ipe_inspect` | no | Outline, page/view, objects, styles, bbox, and IDs |
+| `ipe_apply_operations` | yes | Typed batch of document/layout/geometry mutations |
+| `ipe_compose_slide` | yes | High-level semantic composition |
+| `ipe_build_views` | yes | Reveal, discrete motion, scrolling, and transitions |
+| `ipe_validate` | no | Structural/native/latex/render levels |
+| `ipe_render_preview` | no | Page/view PNG and visual diagnostics |
+| `ipe_save_document` | yes on file | Atomic working-copy commit |
+| `ipe_export_document` | yes on artifact | PDF, marked-view PDF, PNG/SVG where supported |
+| `ipe_history` | yes/no | Revision list, undo, redo, snapshot |
 
-`ipe_apply_operations` non accetterà XML arbitrario nel percorso normale. Le operazioni saranno una discriminated union: document/page/layer/view/object/layout/style/asset. L'escape hatch raw sarà sperimentale, disabilitata di default e comunque parse/round-trip validata.
+`ipe_apply_operations` will not accept arbitrary XML in the normal path. Operations will be a discriminated union: document/page/layer/view/object/layout/style/asset. The raw escape hatch will be experimental, disabled by default, and still parse/round-trip validated.
 
-### 8.4 Resources e output
+### 8.4 Resources and Output
 
-Resources proposte:
+Proposed resources:
 
 - `ipe://documents/{id}/summary`
 - `ipe://documents/{id}/source`
@@ -378,338 +378,377 @@ Resources proposte:
 - `ipe://styles/{styleId}`
 - `ipe://artifacts/{artifactId}`
 
-Le anteprime richieste restituiscono una PNG compatta come content image e un resource link all'artefatto completo. `structuredContent` contiene revision, dimensioni, page/view mapping, IDs e warnings. Bitmap/PDF grandi non vengono riversati nel contesto del modello.
+Requested previews return a compact PNG as a content image and a resource link to the complete artifact. `structuredContent` contains revision, dimensions, page/view mapping, IDs, and warnings. Large bitmaps/PDFs are not dumped into the model context.
 
-### 8.5 Integrazione Codex e altri host
+### 8.5 Codex and Other Host Integration
 
-- Configurazione progetto in `.codex/config.toml` e istruzioni server concise per Codex.
-- stdio con stdout riservato al protocollo e log su stderr.
-- Smoke test con Codex app/CLI, MCP Inspector e almeno un secondo host.
-- Contratti indipendenti da direttive o skill proprietarie di Codex.
-- Streamable HTTP solo dopo l'MVP, con localhost, Origin validation e autenticazione.
+- Project configuration in `.codex/config.toml` and concise server instructions for Codex.
+- stdio with stdout reserved for the protocol and logs on stderr.
+- Smoke test with Codex app/CLI, MCP Inspector, and at least one second host.
+- Contracts independent of Codex-specific directives or skills.
+- Streamable HTTP only after the MVP, with localhost, Origin validation, and authentication.
 
-## 9. Validazione, sicurezza e modalità degradate
+## 9. Validation, Security, and Degraded Modes
 
-### 9.1 Livelli di validazione
+### 9.1 Validation Levels
 
-| Livello | Controlli | Disponibilità senza Ipe |
+| Level | Checks | Available without Ipe |
 |---|---|---:|
-| Schema | input/output, enum, limiti, numeri finiti | sì |
-| IR | riferimenti, unicità, layer/view, z-order, stili | sì |
-| XML | well-formed, serializer canonico, no XXE | sì |
-| DTD consultiva | differenze note escluse/versionate | opzionale |
-| Native | load → save → reload con Ipelib | no |
+| Schema | input/output, enum, limits, finite numbers | yes |
+| IR | references, uniqueness, layer/view, z-order, styles | yes |
+| XML | well-formed, canonical serializer, no XXE | yes |
+| Consultative DTD | known differences excluded/versioned | optional |
+| Native | load → save → reload with Ipelib | no |
 | Style | `checkStyle()` | no |
-| LaTeX | compilazione e metriche testo | no |
-| Export | PDF e mapping view/pagine | no |
+| LaTeX | compilation and text metrics | no |
+| Export | PDF and view/page mapping | no |
 | Render | PNG, bbox, crop, clip, blank/overflow | no |
 
-Modalità:
+Modes:
 
-- **structural-only**: genera/ispeziona ma marca chiaramente l'assenza di convalida nativa;
-- **full 7.2.30**: percorso supportato per release;
-- **nightly 7.3.x**: compatibilità sperimentale, mai usata per riscrivere un file stabile senza consenso.
+- **structural-only**: generate/inspect but clearly mark the absence of native validation;
+- **full 7.2.30**: supported release path;
+- **nightly 7.3.x**: experimental compatibility, never used to rewrite a stable file without consent.
 
-### 9.2 Sicurezza
+### 9.2 Security
 
-- Root di workspace allowlisted; canonicalizzazione path e verifica symlink.
-- Nessun URL/media remoto di default; download separato con allowlist, size e MIME checks.
-- Limiti su file, asset, pixel, oggetti, pagine, view e profondità gruppi.
-- XML parser con DTD/entità esterne disabilitate durante il parsing normale.
-- LaTeX in temp isolata, senza shell escape, rete, scrittura fuori temp o `TEXINPUTS` non controllato; timeout, RAM, processi e output limitati.
-- Preambolo libero classificato come capability avanzata e soggetto a policy.
-- Nessun tool shell o command arbitrario.
-- Log senza contenuto LaTeX completo, file sensibili o dati binari; diagnostica redatta.
-- HTTP futuro: bind localhost, Origin validation, auth e protezione DNS rebinding.
+- Allowlisted workspace root; path canonicalization and symlink verification.
+- No remote URL/media by default; separate download with allowlist, size, and MIME checks.
+- Limits on files, assets, pixels, objects, pages, views, and group depth.
+- XML parser with DTD/external entities disabled during normal parsing.
+- LaTeX in an isolated temp directory, without shell escape, network, writes outside temp, or uncontrolled `TEXINPUTS`; bounded timeout, RAM, processes, and output.
+- Free preamble classified as an advanced capability and subject to policy.
+- No shell tool or arbitrary command.
+- Logs without complete LaTeX content, sensitive files, or binary data; redacted diagnostics.
+- Future HTTP: localhost bind, Origin validation, auth, and DNS rebinding protection.
 
-## 10. Strategia di test
+## 10. Test Strategy
 
-### Unit e property test
+### Unit and Property Tests
 
-- matrici: composizione, inversa, decomposition/interpolation;
-- conversione frame/paper/normalized e anchor;
-- parser/serializer path e archi;
-- fill rule, orientamento, frecce e compound path;
-- style cascade e mapping per-view;
-- invariant generator su pagine/layer/view;
-- convergenza del layout testuale.
+- matrices: composition, inverse, decomposition/interpolation;
+- frame/paper/normalized conversion and anchors;
+- path and arc parser/serializer;
+- fill rule, orientation, arrows, and compound path;
+- style cascade and per-view mapping;
+- invariant generator for pages/layers/views;
+- text-layout convergence.
 
-### Fixture golden
+### Golden Fixtures
 
-- tutti i cinque object type;
-- ogni primitiva geometrica, inclusi casi degeneri;
-- z-order sovrapposto e group nesting;
+- all five object types;
+- every geometric primitive, including degenerate cases;
+- overlapping z-order and group nesting;
 - clip, link, BBOX/VIEWBBOX/crop;
-- PNG/JPEG/alpha e deduplica;
-- label/minipage/formule/Unicode con engine dichiarati;
-- overlay cumulativi e arbitrari;
-- layer map e transform;
-- marked handout e note replicate;
-- 28 effetti PDF come fixture strutturali.
+- PNG/JPEG/alpha and deduplication;
+- label/minipage/formulas/Unicode with declared engines;
+- cumulative and arbitrary overlays;
+- layer map and transform;
+- marked handout and replicated notes;
+- 28 PDF effects as structural fixtures.
 
-### Round-trip e integrazione
+### Round-Trip and Integration
 
-- IR → XML → Ipelib → XML → Ipelib; confronto semantico, non byte-for-byte;
-- import/edit/save di documenti creati a mano;
-- `custom` e metadati sconosciuti senza perdita;
-- LaTeX → PDF → PNG di tutte le view selezionate;
-- conteggio view = pagine PDF attese;
-- MCP Inspector e contract tests su errori/structured output;
-- smoke host Codex e altro client;
-- CI 7.2.30 da sorgente, 7.2.29 binario dove disponibile, master nightly allowed-failure.
+- IR → XML → Ipelib → XML → Ipelib; semantic comparison, not byte-for-byte;
+- import/edit/save of hand-created documents;
+- `custom` and unknown metadata without loss;
+- LaTeX → PDF → PNG of all selected views;
+- view count = expected PDF pages;
+- MCP Inspector and contract tests for errors/structured output;
+- Codex host and another client smoke test;
+- CI 7.2.30 from source, 7.2.29 binary where available, master nightly allowed-failure.
 
-### Verifica visuale
+### Visual Verification
 
-Non basta “il file si apre”. I gate includeranno:
+“The file opens” is not enough. Gates will include:
 
-- render non vuoto;
-- oggetti entro safe area o overflow dichiarato;
-- testo non troncato;
-- bbox/crop coerenti fra view;
-- clip e link nella regione attesa;
-- confronto percettivo con tolleranza e revisione umana dei cambi golden.
+- non-empty render;
+- objects within safe area or declared overflow;
+- text not truncated;
+- consistent bbox/crop across views;
+- clip and link in the expected region;
+- perceptual comparison with tolerance and human review of golden changes.
 
-## 11. Piano di esecuzione per milestone
+## 11. Milestone Execution Plan
 
-Ogni milestone termina con un gate di revisione; non si procede su una decisione strutturale non accettata.
+Each milestone ends with a review gate; work does not proceed on an unaccepted structural decision.
 
-### M0 — Contratti e ADR
+### M0 — Contracts and ADRs
 
-**Stato: completata il 2026-08-24.** Gate dimostrato da `bash scripts/check-m0.sh` su Ipe `7.2.30-1build2`, con review avversariale e test indipendenti completati.
+**Status: completed on 2026-08-24.** Gate demonstrated by `bash scripts/check-m0.sh` on Ipe `7.2.30-1build2`, with adversarial review and independent tests completed.
 
-Deliverable:
+Deliverables:
 
-- `docs/adr/0001-compatibility-baseline.md`: Ipe 7.2.30, formato 70218 e lane 7.3.x;
-- `docs/adr/0002-domain-model-and-layout.md`: IR, coordinate, matrici, z-order e page/layer/view;
-- `docs/adr/0003-backend-persistence-and-identifiers.md`: backend ibrido, transazioni, `custom` e sidecar;
-- `docs/adr/0004-security-and-trust-boundaries.md`: sezioni canoniche `TM-XML`, `TM-TEX`, `TM-FS`, `TM-ASSET`, `TM-PROC`, `TM-CONCURRENCY`, `TM-METADATA` e `TM-HTTP`;
-- `docs/compatibility-modes.md`: matrice structural-only/full/nightly con capability, failure mode e label di diagnostica;
-- `fixtures/conformance/manifest.json` e almeno sei seed `.ipe` manuali: minimal, positions/matrices, layers/views, geometry/z-order, custom metadata, text/minipage;
-- `scripts/check-m0.sh`: smoke riproducibile di ADR/manifest, versione installata e round-trip di ogni seed con `ipetoipe -xml`, usando output temporanei.
-
-Gate:
-
-- tutti gli ADR hanno stato `Accepted`; la distribuzione è registrata come deferral approvato, non come decisione mancante;
-- threat model contiene tutti gli otto ID canonici: XML/parser, LaTeX, filesystem/path, asset/rete, subprocess/CLI native, concorrenza/atomicità, metadata/sidecar e futuro HTTP; ogni rischio è collegato a una mitigazione/gate futuro;
-- la matrice definisce esattamente cosa può essere dichiarato “verificato” nelle tre modalità;
-- il manifest inventaria scopo, feature e invarianti di ogni seed, senza asset generati o binari superflui;
-- `bash scripts/check-m0.sh` verifica gli otto ID, richiede che `dpkg-query -W -f='${Version}' ipe` inizi con `7.2.30`, mostra la versione rilevata e conferma root `version="70218"` prima e dopo il round-trip;
-- nessun ADR o seed dipende da API 7.3.x; eventuali note 7.3.x sono marcate future/nightly.
-
-Confine M0/M1: i seed di M0 fissano casi e invarianti minimi, ma non pretendono di risolvere le divergenze native. M1 implementa probe, golden e decisioni empiriche e può estendere il corpus senza cambiare retroattivamente i contratti approvati.
-
-### M1 — Laboratorio di conformance Ipe
-
-**Stato: completata il 2026-08-25.** Gate stabile dimostrato da `bash scripts/check-m1.sh` su Ipe `7.2.30-1build2`, con golden, review avversariale Sol e test indipendenti Luna; la lane build-sorgente resta opzionale e riproducibile tramite binari 7.2.30 forniti esplicitamente.
-
-Deliverable:
-
-- ambiente riproducibile con pacchetto Ubuntu Ipe/`ipescript` 7.2.30 e probe delle capability; build da sorgente mantenuta come controllo CI opzionale;
-- probe automatici per divergenze DTD/runtime;
-- esperimenti su `custom`, `x-*`, z-order, bbox, link e layer transform;
-- confronto serializer diretto vs helper Lua;
-- prima matrice viewer sugli effetti.
+- `docs/adr/0001-compatibility-baseline.md`: Ipe 7.2.30, format 70218, and 7.3.x lane;
+- `docs/adr/0002-domain-model-and-layout.md`: IR, coordinates, matrices, z-order, and page/layer/view;
+- `docs/adr/0003-backend-persistence-and-identifiers.md`: hybrid backend, transactions, `custom`, and sidecar;
+- `docs/adr/0004-security-and-trust-boundaries.md`: canonical sections `TM-XML`, `TM-TEX`, `TM-FS`, `TM-ASSET`, `TM-PROC`, `TM-CONCURRENCY`, `TM-METADATA`, and `TM-HTTP`;
+- `docs/compatibility-modes.md`: structural-only/full/nightly matrix with capability, failure mode, and diagnostic labels;
+- `fixtures/conformance/manifest.json` and at least six manual `.ipe` seeds: minimal, positions/matrices, layers/views, geometry/z-order, custom metadata, text/minipage;
+- `scripts/check-m0.sh`: reproducible ADR/manifest smoke test, installed version, and round-trip of every seed with `ipetoipe -xml`, using temporary output.
 
 Gate:
 
-- strategia ID sopravvive a load/save/copy;
-- ordine visuale e default controversi coperti da golden;
-- decisione definitiva su quali mutazioni richiedono `ipescript`.
+- all ADRs have `Accepted` status; distribution is recorded as an approved deferral, not as a missing decision;
+- the threat model contains all eight canonical IDs: XML/parser, LaTeX, filesystem/path, asset/network, native subprocess/CLI, concurrency/atomicity, metadata/sidecar, and future HTTP; every risk is linked to a future mitigation/gate;
+- the matrix defines exactly what may be declared “verified” in the three modes;
+- the manifest inventories the purpose, features, and invariants of every seed, without generated assets or unnecessary binaries;
+- `bash scripts/check-m0.sh` verifies the eight IDs, requires `dpkg-query -W -f='${Version}' ipe` to begin with `7.2.30`, shows the detected version, and confirms root `version="70218"` before and after the round-trip;
+- no ADR or seed depends on 7.3.x APIs; any 7.3.x notes are marked future/nightly.
 
-### M2 — IR, XML e persistenza transazionale
+M0/M1 boundary: M0 seeds fix the minimum cases and invariants, but do not claim to resolve native divergences. M1 implements probes, golden fixtures, and empirical decisions and may extend the corpus without retroactively changing approved contracts.
 
-**Stato: completata il 2026-08-25.** Gate stabile dimostrato da `bash scripts/check-m2.sh` su Ipe `7.2.30-1build2`: 62 test, confronto semantico/fixed-point/reload nativo dei 12 fixture, review avversariale Sol senza finding P0–P2 e test indipendenti Luna. La lane M1 da build sorgente resta opzionale e non eseguita perché `IPE_M1_SOURCE_BIN_DIR` non è configurato.
+### M1 — Ipe Conformance Lab
 
-Deliverable:
+**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/check-m1.sh` on Ipe `7.2.30-1build2`, with golden fixtures, Sol adversarial review, and Luna independent tests; the source-build lane remains optional and reproducible through explicitly supplied 7.2.30 binaries.
 
-- IR versionata e schema Zod;
-- parser/serializer XML canonico;
-- document/session manager, revision e atomic save;
-- sidecar opzionale e migrazioni di schema;
+Deliverables:
+
+- reproducible environment with Ubuntu Ipe/`ipescript` 7.2.30 package and capability probes; source build retained as an optional CI check;
+- automatic probes for DTD/runtime divergences;
+- experiments with `custom`, `x-*`, z-order, bbox, links, and layer transforms;
+- comparison of direct serializer versus Lua helper;
+- initial viewer effects matrix.
+
+Gate:
+
+- ID strategy survives load/save/copy;
+- visual order and controversial defaults covered by golden fixtures;
+- definitive decision on which mutations require `ipescript`.
+
+### M2 — IR, XML, and Transactional Persistence
+
+**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/check-m2.sh` on Ipe `7.2.30-1build2`: 62 tests, semantic/fixed-point/native-reload comparison of the 12 fixtures, Sol adversarial review with no P0–P2 findings, and Luna independent tests. The M1 source-build lane remains optional and was not run because `IPE_M1_SOURCE_BIN_DIR` is not configured.
+
+Deliverables:
+
+- versioned IR and Zod schema;
+- canonical XML parser/serializer;
+- document/session manager, revision, and atomic save;
+- optional sidecar and schema migrations;
 - structural validator.
 
 Gate:
 
-- round-trip semantico del corpus senza perdita supportata;
-- conflitti di revisione e recovery testati;
-- originali mai mutati prima di save.
+- semantic corpus round-trip without supported loss;
+- revision conflicts and recovery tested;
+- originals never mutated before save.
 
-### M3 — Coordinate e layout
+### M3 — Coordinates and Layout
 
-**Stato: completata il 2026-08-25.** Gate stabile dimostrato da `bash scripts/check-m3.sh` su Ipe `7.2.30-1build2`: 85 test complessivi, 46 test M3 focalizzati, fixture standard e presentation 16:9, review avversariale Sol senza finding P0–P2 e test indipendenti Luna. La lane M1 da build sorgente resta opzionale e non eseguita perché `IPE_M1_SOURCE_BIN_DIR` non è configurato.
+**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/check-m3.sh` on Ipe `7.2.30-1build2`: 85 total tests, 46 focused M3 tests, standard and 16:9 presentation fixtures, Sol adversarial review with no P0–P2 findings, and Luna independent tests. The M1 source-build lane remains optional and was not run because `IPE_M1_SOURCE_BIN_DIR` is not configured.
 
-Deliverable:
+Deliverables:
 
-- quattro spazi di coordinate;
-- anchor, box, matrix e transform origin;
+- four coordinate spaces;
+- anchor, box, matrix, and transform origin;
 - row/column/grid/stack, align/distribute/fit;
-- constraint sidecar e connector preliminari;
-- property test numerici.
+- constraint sidecar and preliminary connectors;
+- numerical property tests.
 
 Gate:
 
-- fixture su layout standard e presentation 16:9;
-- nessuna inversione y o errore di composizione nelle golden;
-- policy su tolleranza numerica approvata.
+- fixtures for standard layout and 16:9 presentation;
+- no y inversion or composition error in golden fixtures;
+- approved numerical-tolerance policy.
 
-### M4 — Oggetti, geometria, testo, asset e stili
+### M4 — Objects, Geometry, Text, Assets, and Styles
 
-Deliverable:
+**Status: completed on 2026-08-25.** Stable gate demonstrated by
+`bash scripts/check-m4.sh` on Ipe `7.2.30-1build2`: 113 total tests, exact
+typed-primitive and object coverage, canonical and native round-trips, clean
+`Document:checkStyle()`, semantic asset/reference preservation, complex LaTeX,
+and two-page PDF/SVG/PNG rendering. The candidate also passed Luna independent
+tests; final release evidence is recorded on the milestone issue.
 
-- CRUD e z-order per i cinque tipi;
-- compilatore completo delle primitive geometriche;
+Deliverables:
+
+- CRUD and z-order for the five types;
+- complete compiler for geometric primitives;
 - style registry/cascade;
-- PNG/JPEG, deduplica e clipping;
-- testo LaTeX a due passaggi;
-- symbol/reference e group.
+- PNG/JPEG, deduplication, and clipping;
+- two-pass LaTeX text;
+- symbol/reference and group.
 
 Gate:
 
-- golden per ogni tipo e primitiva;
-- `checkStyle()` pulito;
-- frecce/fill/clip/gradienti e testo complesso validati nativamente.
+- golden fixtures for every type and primitive;
+- clean `checkStyle()`;
+- arrows/fill/clip/gradients and complex text natively validated.
 
-### M5 — Pagine, layer, view e composizione slide
+### M5 — Pages, Layers, Views, and Slide Composition
 
-Deliverable:
+Deliverables:
 
-- API completa page/layer/view;
-- note, section/subsection, title e handout;
-- `compose_slide` con template/preset non distruttivi;
-- layer speciali gestiti intenzionalmente;
-- mapping Ipe page/view → PDF page.
-
-Gate:
-
-- layer e z-order restano indipendenti in ogni operazione;
-- view cumulative e arbitrarie producono il PDF atteso;
-- bbox/crop/title/notes superano le fixture.
-
-### M6 — Adapter nativo, render ed export
-
-Deliverable:
-
-- helper `ipescript`, `runLatex`, `checkStyle`, export;
-- sandbox LaTeX;
-- preview PNG per view e diagnostica visuale;
-- capability detection e modalità structural/full/nightly.
+- complete page/layer/view API;
+- notes, section/subsection, title, and handout;
+- `compose_slide` with non-destructive templates/presets;
+- intentionally managed special layers;
+- Ipe page/view → PDF page mapping.
 
 Gate:
 
-- un documento full passa tutti i livelli di validazione;
-- timeout/errori TeX non corrompono la sessione;
-- output riproducibile in CI.
+- layers and z-order remain independent in every operation;
+- cumulative and arbitrary views produce the expected PDF;
+- bbox/crop/title/notes pass the fixtures.
 
-### M7 — Reveal, motion e scorrimento
+### M6 — Native Adapter, Rendering, and Export
 
-Deliverable:
+Deliverables:
 
-- builder reveal;
-- motion/scroll con copie e layer transform opt-in;
-- bbox/clip policy e limiti di espansione;
-- enum effetti e viewer warnings;
-- handout delle animazioni.
-
-Gate:
-
-- ogni view è staticamente corretta;
-- test su pannello scrollabile e camera pan;
-- IpePresenter non viene dichiarato compatibile con effetti che ignora;
-- matrice viewer pubblicata.
-
-### M8 — Server MCP stdio
-
-Deliverable:
-
-- tool surface, resources, structured output e error taxonomy;
-- istruzioni server e configurazione Codex;
-- MCP Inspector, Codex e secondo host;
-- preview/resource links senza saturare il contesto.
+- `ipescript`, `runLatex`, `checkStyle`, and export helpers;
+- LaTeX sandbox;
+- per-view PNG preview and visual diagnostics;
+- capability detection and structural/full/nightly modes.
 
 Gate:
 
-- scenario end-to-end da prompt a `.ipe`/PDF/PNG;
-- tool mutanti distinguibili e revision-safe;
-- stdout protocol-only e log sicuri.
+- a full document passes all validation levels;
+- TeX timeouts/errors do not corrupt the session;
+- reproducible CI output.
 
-### M9 — Hardening e release
+### M7 — Reveal, Motion, and Scrolling
 
-Deliverable:
+Deliverables:
 
-- limiti, fuzz/property tests e corpus ostile;
-- procedura locale riproducibile su Ubuntu 26.04 WSL;
-- verifica del pacchetto Ubuntu Ipe 7.2.30 e delle capability richieste;
-- manuale per agenti, esempi e troubleshooting;
-- SBOM, licenze e policy di supporto.
+- reveal builder;
+- motion/scroll with copies and opt-in layer transform;
+- bbox/clip policy and expansion limits;
+- effects enum and viewer warnings;
+- animation handout.
 
 Gate:
 
-- suite stable verde su Ubuntu 26.04 WSL;
-- installazione locale pulita e ripetibile;
-- nessun finding critico del threat model aperto;
-- release candidate revisionata con deck reali.
+- every view is statically correct;
+- tests for scrollable panel and camera pan;
+- IpePresenter is not declared compatible with effects it ignores;
+- published viewer matrix.
 
-### M10 — Estensioni post-MVP
+### M8 — MCP stdio Server
 
-- Streamable HTTP autenticato;
-- live bridge con Ipe aperto e sincronizzazione bidirezionale;
-- strategia distributiva, packaging npm e bundle/helper installabile;
-- supporto e CI per Linux non-WSL, macOS e Windows;
-- container/devcontainer se ancora utile dopo la validazione locale;
-- template marketplace/plugin Codex;
-- import SVG/PDF più fedele;
-- presenter web dedicato con interpolazione reale;
-- video continuo, solo dopo uno spike su Manim/licenze/fedeltà;
-- adozione di 7.3.x solo dopo una release stabile e test di migrazione.
+Deliverables:
 
-## 12. Definition of Done dell'MVP
+- tool surface, resources, structured output, and error taxonomy;
+- server instructions and Codex configuration;
+- MCP Inspector, Codex, and second host;
+- preview/resource links without saturating context.
 
-L'MVP è completo soltanto quando un agente può:
+Gate:
 
-1. creare o aprire un documento Ipe senza alterare l'originale;
-2. comporre una slide 16:9 usando coordinate/anchor/layout;
-3. inserire e modificare testo, immagini, gruppi, simboli e tutte le forme geometriche di base;
-4. controllare layer e z-order separatamente;
-5. creare pagine e view, reveal e uno scorrimento discreto con fallback robusto;
-6. validare XML, Ipelib, stili, LaTeX, PDF e anteprima;
-7. ispezionare visivamente ogni view;
-8. salvare atomicamente `.ipe` ed esportare PDF/PNG;
-9. annullare una transazione o recuperare lo snapshot precedente;
-10. eseguire lo stesso flusso da Codex e da almeno un altro host MCP.
+- end-to-end scenario from prompt to `.ipe`/PDF/PNG;
+- distinguishable and revision-safe mutating tools;
+- protocol-only stdout and safe logs.
 
-Non fanno parte dell'MVP: editing live della GUI Ipe, animazione continua nel `.ipe`, garanzia universale delle transizioni PDF, server pubblico remoto, preambolo LaTeX arbitrario senza sandbox, supporto fondato su 7.3.x non rilasciato.
+### M9 — Hardening and Release
 
-## 13. Rischi principali e mitigazioni
+Deliverables:
 
-| Rischio | Impatto | Mitigazione |
+- limits, fuzz/property tests, and hostile corpus;
+- reproducible local procedure on Ubuntu 26.04 WSL;
+- verification of the Ubuntu Ipe 7.2.30 package and required capabilities;
+- agent manual, examples, and troubleshooting;
+- SBOM, licenses, and support policy.
+
+Gate:
+
+- stable suite green on Ubuntu 26.04 WSL;
+- clean and repeatable local installation;
+- no open critical threat-model finding;
+- release candidate reviewed with real decks.
+
+### M10 — Post-MVP Extensions
+
+- authenticated Streamable HTTP;
+- live bridge with open Ipe and bidirectional synchronization;
+- distribution strategy, npm packaging, and installable bundle/helper;
+- support and CI for non-WSL Linux, macOS, and Windows;
+- container/devcontainer if still useful after local validation;
+- Codex marketplace/plugin template;
+- provider-neutral agent harness for repeatable create/edit/validate/export
+  scenarios, regression evaluation, and end-to-end artifact inspection;
+- thin host adapters and capability discovery for Codex and other MCP-capable
+  agents, keeping shared scenarios, expected outcomes, and diagnostics independent
+  of vendor-specific prompts, skills, or UI directives;
+- more faithful SVG/PDF import;
+- dedicated web presenter with real interpolation;
+- continuous video, only after a Manim/licenses/fidelity spike;
+- adoption of 7.3.x only after a stable release and migration tests.
+
+#### Future Agent Harness
+
+The post-MVP harness should exercise the system from an agent's request through
+the produced `.ipe`, PDF, preview, diagnostics, and mutation history. Scenarios
+should be declarative and replayable, with deterministic fixtures, capability
+requirements, bounded execution, machine-readable results, and retained artifacts
+for adversarial or human review.
+
+The harness should define a small adapter contract rather than encode Codex
+behavior in the scenarios. A Codex adapter may be the first implementation, but
+other MCP-capable agents and hosts should be able to provide prompts, tool-call
+transcripts, approvals, and resource retrieval through the same contract. Vendor
+extensions may add richer checks without changing the portable baseline.
+
+Future acceptance criteria:
+
+- the same core scenario suite runs through Codex and at least one independent
+  agent or MCP host;
+- results distinguish agent-planning failures, protocol failures, server
+  diagnostics, native Ipe failures, and artifact-quality failures;
+- conformance is based on semantic and visual outcomes, not exact prose or an
+  exact tool-call sequence;
+- secrets, local paths, model-specific reasoning, and proprietary transcript
+  fields are excluded or redacted from portable result bundles;
+- adding an agent requires an adapter and capability declaration, not a fork of
+  the scenario corpus.
+
+## 12. MVP Definition of Done
+
+The MVP is complete only when an agent can:
+
+1. create or open an Ipe document without altering the original;
+2. compose a 16:9 slide using coordinates/anchor/layout;
+3. insert and modify text, images, groups, symbols, and all basic geometric shapes;
+4. control layers and z-order separately;
+5. create pages and views, reveals, and discrete scrolling with robust fallback;
+6. validate XML, Ipelib, styles, LaTeX, PDF, and preview;
+7. visually inspect every view;
+8. atomically save `.ipe` and export PDF/PNG;
+9. undo a transaction or recover the previous snapshot;
+10. run the same workflow from Codex and at least one other MCP host.
+
+The following are not part of the MVP: live editing of the Ipe GUI, continuous animation in `.ipe`, universal guarantee of PDF transitions, public remote server, arbitrary LaTeX preamble without sandboxing, support based on unreleased 7.3.x.
+
+## 13. Main Risks and Mitigations
+
+| Risk | Impact | Mitigation |
 |---|---|---|
-| Manuale/DTD/runtime divergono | file formalmente valido ma semanticamente errato | contract stretto, valori espliciti, conformance suite Ipelib |
-| Upstream 7.2.30 è source-only e i pacchetti distro possono divergere | installazione/versione non uniforme fuori dall'ambiente iniziale | pin e capability probe del pacchetto Ubuntu 26.04; strategia distributiva rinviata |
-| LaTeX non fidato | lettura/scrittura o DoS | sandbox e policy pacchetti/preambolo |
-| Layer transform sperimentale | bbox/link/editing errati | copie default, warning e BBOX esplicito |
-| Troppe view | PDF enorme e lentezza | preventivo, limiti e handout |
-| Round-trip di file complessi | perdita di feature ignote | working copy, semantic diff, native canonicalization, backup |
-| Differenze viewer | animazione non riprodotta | static correctness e matrice viewer |
-| Metadata ID persi | impossibile aggiornare oggetti | `custom` testato + sidecar/fingerprint |
-| Testo modifica il layout dopo TeX | overlap/troncamento | due passaggi limitati e diagnostica |
-| FFI/native ABI | distribuzione fragile | subprocess `ipescript`; C++ solo se necessario |
-| Licenza Ipe GPLv3 | vincoli di distribuzione | review legale/licenze prima del bundle; confine subprocess |
+| Manual/DTD/runtime diverge | formally valid but semantically incorrect file | strict contract, explicit values, Ipelib conformance suite |
+| Upstream 7.2.30 is source-only and distro packages may diverge | non-uniform installation/version outside the initial environment | pin and capability probe of Ubuntu 26.04 package; distribution strategy deferred |
+| Untrusted LaTeX | read/write or DoS | sandbox and package/preamble policy |
+| Experimental layer transform | incorrect bbox/links/editing | default copies, warning, and explicit BBOX |
+| Too many views | huge PDF and slowness | estimate, limits, and handout |
+| Complex-file round-trip | loss of unknown features | working copy, semantic diff, native canonicalization, backup |
+| Viewer differences | animation not reproduced | static correctness and viewer matrix |
+| Metadata IDs lost | objects cannot be updated | tested `custom` + sidecar/fingerprint |
+| Text changes layout after TeX | overlap/truncation | bounded two passes and diagnostics |
+| FFI/native ABI | fragile distribution | `ipescript` subprocess; C++ only if necessary |
+| Ipe GPLv3 license | distribution constraints | legal/license review before bundling; subprocess boundary |
 
-## 14. Registro delle decisioni approvate
+## 14. Approved Decision Register
 
-| # | Decisione | Esito 2026-08-24 |
+| # | Decision | Outcome 2026-08-24 |
 |---:|---|---|
-| 1 | Ambito MVP | Create + edit + render/export |
-| 2 | Backend | Ibrido XML deterministico + `ipescript`; Ipelib C++ resta fallback futuro |
-| 3 | Dipendenza Ipe | Modalità structural-only ammessa; Ipe 7.2.30 richiesto per output “verificato” |
-| 4 | Layout | `frame`/y-up predefinito; helper top-left esplicito |
-| 5 | Animazione | Copie/varianti predefinite; layer transform opt-in |
-| 6 | Scorrimento | Inclusi sia pannelli interni sia pan dell'intera composizione |
-| 7 | LaTeX | Profilo minimo pdfLaTeX nell'MVP |
-| 8 | Metadata | ID `custom` + sidecar opzionale approvati |
-| 9 | Distribuzione | Decisione rinviata a dopo la validazione dell'MVP locale |
-| 10 | Piattaforma iniziale | Ubuntu 26.04 WSL; altre piattaforme post-MVP |
+| 1 | MVP scope | Create + edit + render/export |
+| 2 | Backend | Deterministic XML + `ipescript` hybrid; C++ Ipelib remains future fallback |
+| 3 | Ipe dependency | Structural-only mode allowed; Ipe 7.2.30 required for “verified” output |
+| 4 | Layout | `frame`/y-up default; explicit top-left helper |
+| 5 | Animation | Default copies/variants; opt-in layer transform |
+| 6 | Scrolling | Both internal panels and whole-composition pan included |
+| 7 | LaTeX | Minimal pdfLaTeX profile in MVP |
+| 8 | Metadata | `custom` IDs + optional sidecar approved |
+| 9 | Distribution | Decision deferred until after local MVP validation |
+| 10 | Initial platform | Ubuntu 26.04 WSL; other platforms post-MVP |
 
-## 15. Fonti e tracciabilità
+## 15. Sources and Traceability
 
-Il dossier dettagliato, incluse contraddizioni, limiti e gap sperimentali, è in [`report-source.md`](./report-source.md). Le fonti normative principali sono la [release Ipe 7.2.30](https://github.com/otfried/ipe/releases/tag/v7.2.30), il [manuale ufficiale](https://ipe.otfried.org/ipe-manual.pdf), i [sorgenti del tag](https://github.com/otfried/ipe/tree/v7.2.30), la [specifica MCP stabile 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) e la [documentazione MCP di Codex](https://developers.openai.com/codex/mcp).
+The detailed dossier, including contradictions, limitations, and experimental gaps, is in [`report-source.md`](./report-source.md). The primary normative sources are the [Ipe 7.2.30 release](https://github.com/otfried/ipe/releases/tag/v7.2.30), the [official manual](https://ipe.otfried.org/ipe-manual.pdf), the [tag sources](https://github.com/otfried/ipe/tree/v7.2.30), the [stable MCP specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25), and the [Codex MCP documentation](https://developers.openai.com/codex/mcp).

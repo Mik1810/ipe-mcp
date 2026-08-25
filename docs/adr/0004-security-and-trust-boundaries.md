@@ -1,48 +1,48 @@
-# ADR-0004 — Sicurezza e confini di fiducia
+# ADR-0004 — Security and Trust Boundaries
 
-- Stato: **Accepted**
-- Data: 2026-08-24
+- Status: **Accepted**
+- Date: 2026-08-24
 
-Il server tratta documento, LaTeX, asset e metadati come input non fidati. Gli unici ID canonici del threat model M0 sono quelli sotto; ciascuno ha rischio, mitigazione e gate futuro.
+The server treats documents, LaTeX, assets, and metadata as untrusted input. The canonical IDs in the M0 threat model are listed below; each has a risk, mitigation, and future gate.
 
 ## TM-XML
-- Rischio: XXE, entity expansion, XML ambiguo o perdita dati.
-- Mitigazione: parser senza DTD/entità esterne, limiti, XML canonico, schema/IR e round-trip separati.
-- Gate futuro: M1 probe DTD/runtime, fuzz corpus e golden round-trip.
+- Risk: XXE, entity expansion, ambiguous XML, or data loss.
+- Mitigation: parser without DTD/external entities, limits, canonical XML, separate schema/IR and round-trip checks.
+- Future gate: M1 DTD/runtime probe, fuzz corpus, and golden round trip.
 
 ## TM-TEX
-- Rischio: LaTeX/preambolo causa esecuzione, lettura file o DoS.
-- Mitigazione: temp isolata, shell escape/rete disabilitati, `TEXINPUTS` controllato, timeout e limiti di risorse.
-- Gate futuro: M6 sandbox pdfLaTeX con fixture ostili e timeout.
+- Risk: LaTeX/preamble causes execution, file reads, or DoS.
+- Mitigation: isolated temp directory, shell escape/network disabled, controlled `TEXINPUTS`, timeout, and resource limits.
+- Future gate: M6 pdfLaTeX sandbox with hostile fixtures and timeout.
 
 ## TM-FS
-- Rischio: traversal, symlink escape, sovrascrittura o leak.
-- Mitigazione: root allowlist, realpath, working copy, temp+rename, snapshot e nessun path arbitrario.
-- Gate futuro: M1/M9 test di symlink, traversal e recovery atomico.
+- Risk: traversal, symlink escape, overwrite, or leakage.
+- Mitigation: root allowlist, realpath, working copy, temp+rename, snapshot, and no arbitrary paths.
+- Future gate: M1/M9 symlink, traversal, and atomic recovery tests.
 
 ## TM-ASSET
-- Rischio: asset/rete malevoli, MIME falsificato, file o immagini enormi.
-- Mitigazione: remoto disabilitato; download separato con allowlist, size/pixel/MIME/hash checks.
-- Gate futuro: M6/M9 corpus asset e verifica dei limiti.
+- Risk: malicious assets/network, forged MIME, or oversized files/images.
+- Mitigation: remote access disabled; separate downloads with allowlist and size/pixel/MIME/hash checks.
+- Future gate: M6/M9 asset corpus and limit verification.
 
 ## TM-PROC
-- Rischio: subprocess Ipe/CLI o tool arbitrari permettono injection o perdita di stdout MCP.
-- Mitigazione: comandi fissi e argomenti tipizzati, nessun shell tool, env minimo, timeout, stderr per log e stdout protocol-only.
-- Gate futuro: M6/M8 harness di processo e smoke MCP Inspector.
+- Risk: arbitrary Ipe/CLI subprocesses or tools enable injection or loss of MCP stdout.
+- Mitigation: fixed commands and typed arguments, no shell tool, minimal environment, timeout, stderr for logs, and protocol-only stdout.
+- Future gate: M6/M8 process harness and MCP Inspector smoke test.
 
 ## TM-CONCURRENCY
-- Rischio: race, overwrite e working copy incoerenti.
-- Mitigazione: revision counter, `expectedRevision`, batch atomici, lock di sessione, hash sorgente, temp+rename e snapshot.
-- Gate futuro: M1/M9 test concorrenti, crash injection e restore invariants.
+- Risk: races, overwrites, and inconsistent working copies.
+- Mitigation: revision counter, `expectedRevision`, atomic batches, session lock, source hash, temp+rename, and snapshot.
+- Future gate: M1/M9 concurrency tests, crash injection, and restore invariants.
 
 ## TM-METADATA
-- Rischio: `custom`/sidecar persi, collisioni ID o leakage di dati.
-- Mitigazione: UUID con prefisso `ipe-mcp:`, preservazione custom, sidecar versionato, log redatti e semantic diff.
-- Gate futuro: M1 test `custom`/`x-*`, collision/fuzz e audit redaction.
+- Risk: lost `custom`/sidecar data, ID collisions, or data leakage.
+- Mitigation: UUIDs with `ipe-mcp:` prefix, custom preservation, versioned sidecar, redacted logs, and semantic diff.
+- Future gate: M1 `custom`/`x-*` tests, collision/fuzz testing, and redaction audit.
 
 ## TM-HTTP
-- Rischio: futura superficie HTTP espone sessioni o consente DNS rebinding, CSRF e accesso non autorizzato.
-- Mitigazione: nessun HTTP nell'MVP; in futuro bind localhost, Origin validation, autenticazione e anti-rebinding.
-- Gate futuro: M10 threat review e test auth/Origin/rebinding prima del rilascio.
+- Risk: a future HTTP surface exposes sessions or permits DNS rebinding, CSRF, and unauthorized access.
+- Mitigation: no HTTP in the MVP; future localhost binding, Origin validation, authentication, and anti-rebinding.
+- Future gate: M10 threat review and auth/Origin/rebinding tests before release.
 
-La distribuzione resta un deferral approvato: sarà rivalutata con licenze, packaging e sandbox.
+Distribution remains an approved deferral: it will be reassessed with licensing, packaging, and sandboxing.

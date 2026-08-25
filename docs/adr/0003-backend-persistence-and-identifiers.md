@@ -1,20 +1,20 @@
-# ADR-0003 — Backend, persistenza e identificatori
+# ADR-0003 — Backend, Persistence, and Identifiers
 
-- Stato: **Accepted**
-- Data: 2026-08-24
+- Status: **Accepted**
+- Date: 2026-08-24
 
-## Decisione
+## Decision
 
-Il backend è ibrido: serializer/parser XML deterministico per il formato e helper ufficiale `ipescript`/Ipelib per import, mutazioni sensibili, probe di canonicalizzazione e validazione nativa. Il serializer del server possiede la forma finale: un output nativo che omette default espliciti viene ricondotto nell'IR e riserializzato, non copiato direttamente sul file destinazione. Il core non dipende dal trasporto MCP. Ipelib C++ è fallback futuro, non fondazione MVP; `ipepython` non è la base.
+The backend is hybrid: a deterministic XML serializer/parser for the format and the official `ipescript`/Ipelib helper for import, sensitive mutations, canonicalization probes, and native validation. The server serializer owns the final representation: native output that omits explicit defaults is brought back into the IR and reserialized, rather than copied directly to the destination file. The core does not depend on MCP transport. C++ Ipelib is a future fallback, not the MVP foundation; `ipepython` is not the basis.
 
-Ogni `open` crea una working copy. Le mutazioni sono batch atomici con `expectedRevision`; conflitti e hash sorgente cambiato falliscono senza sovrascrittura. Il salvataggio usa temporaneo + rename e snapshot recuperabile. La sorgente non cambia prima di un `save` esplicito.
+Every `open` creates a working copy. Mutations are atomic batches with `expectedRevision`; conflicts and a changed source hash fail without overwriting. Saving uses a temporary file plus rename and a recoverable snapshot. The source does not change before an explicit `save`.
 
-Gli oggetti creati dal server ricevono `custom="ipe-mcp:<uuid>"`; i custom presenti sono preservati. Un sidecar opzionale versionato conserva metadati ricchi, provenienza e intenzioni di layout senza rendere il `.ipe` dipendente dal sidecar. Nessun indice XML, nome o ordine di pagina è un identificatore persistente sufficiente.
+Objects created by the server receive `custom="ipe-mcp:<uuid>"`; existing custom values are preserved. An optional versioned sidecar stores rich metadata, provenance, and layout intent without making the `.ipe` dependent on the sidecar. No XML index, name, or page order is a sufficient persistent identifier.
 
-## Validazione e round-trip
+## Validation and Round Trip
 
-La pipeline è stratificata: schema/IR, XML well-formed senza entità esterne, DTD consultiva, load-save-reload nativo, stylesheet, LaTeX, export PDF e render. Una feature non conservata dal round-trip produce diagnostica; non viene silenziosamente promessa. La versione XML resta `70218` anche dopo canonicalizzazione. La lane `full` richiede runtime 7.2.30; `structural-only` non può chiamare il round-trip nativo “verified”.
+The pipeline is layered: schema/IR, well-formed XML without external entities, advisory DTD, native load-save-reload, stylesheet, LaTeX, PDF export, and rendering. A feature not preserved by the round trip produces a diagnostic; it is not silently promised. The XML version remains `70218` after canonicalization. The `full` lane requires runtime 7.2.30; `structural-only` cannot call the native round trip “verified”.
 
-## Conseguenze
+## Consequences
 
-La separazione riduce dipendenze ABI e mantiene il documento editabile, ma richiede semantic diff, fixture e probe di conformance. Backup e revisioni sono parte della correttezza. La distribuzione del bundle/helper è il deferral approvato dell'ADR-0001.
+The separation reduces ABI dependencies and keeps the document editable, but requires semantic diffs, fixtures, and conformance probes. Backups and revisions are part of correctness. Bundle/helper distribution is the approved deferral from ADR-0001.

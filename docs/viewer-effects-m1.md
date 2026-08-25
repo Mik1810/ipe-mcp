@@ -1,20 +1,20 @@
-# Matrice viewer iniziale M1
+# Initial M1 Viewer Matrix
 
-Questa è una matrice di conformance iniziale, non una dichiarazione universale di compatibilità. M1 verifica struttura statica, export e presenza delle transizioni nel PDF; la riproduzione interattiva multi-viewer resta un gate M7.
+This is an initial conformance matrix, not a universal compatibility claim. M1 verifies static structure, export, and the presence of PDF transitions; interactive multi-viewer playback remains an M7 gate.
 
-| Viewer/percorso | Staticità delle 28 view | Transizioni PDF | Stato M1 |
+| Viewer/path | Staticness of the 28 views | PDF transitions | M1 status |
 |---|---:|---:|---|
-| Ipelib/`ipetoipe` 7.2.30 | PASS, 28 pagine PDF | PASS strutturale, 27 dizionari `/Trans` | Verificato automaticamente |
-| `iperender` 7.2.30 | PASS per le view campionate | Non riproduce transizioni | Verificato automaticamente |
-| IpePresenter 7.2.30 | PDF navigabile per pagina/view | Nessuna garanzia di interpolazione degli effetti | Installato; playback manuale non verificato |
-| Acrobat Reader | Atteso dal formato PDF | Supporto dipendente da versione/piattaforma | Non testato |
-| Okular/Evince | Atteso per pagine statiche | Supporto parziale o ignorato possibile | Non testato |
-| pdfpc | Atteso per pagine statiche | Supporto non dichiarato da M1 | Non testato |
-| Viewer browser | Atteso per pagine statiche | Spesso ignorato | Non testato |
+| Ipelib/`ipetoipe` 7.2.30 | PASS, 28 PDF pages | Structural PASS, 27 `/Trans` dictionaries | Automatically verified |
+| `iperender` 7.2.30 | PASS for sampled views | Does not reproduce transitions | Automatically verified |
+| IpePresenter 7.2.30 | Navigable PDF by page/view | No guarantee of effect interpolation | Installed; manual playback not verified |
+| Acrobat Reader | Expected from the PDF format | Version/platform-dependent support | Not tested |
+| Okular/Evince | Expected for static pages | Partial or ignored support possible | Not tested |
+| pdfpc | Expected for static pages | Support not declared by M1 | Not tested |
+| Browser viewer | Expected for static pages | Often ignored | Not tested |
 
-## Enum 7.2.30 coperto dal corpus
+## 7.2.30 Enum Covered by the Corpus
 
-| ID | Effetto | ID | Effetto |
+| ID | Effect | ID | Effect |
 |---:|---|---:|---|
 | 0 | Normal | 14 | Glitter left-right |
 | 1 | Split horizontal in | 15 | Glitter top-bottom |
@@ -31,4 +31,4 @@ Questa è una matrice di conformance iniziale, non una dichiarazione universale 
 | 12 | Wipe top-bottom | 26 | Uncover top-bottom |
 | 13 | Dissolve | 27 | Fade |
 
-Il nome leggibile non è serializzato: il contratto normativo è l'ID enum 0–27 e la relativa struttura PDF. Le view restano staticamente corrette anche quando il viewer ignora `/Trans`.
+The readable name is not serialized: the normative contract is enum ID 0–27 and its corresponding PDF structure. Views remain statically correct even when the viewer ignores `/Trans`.

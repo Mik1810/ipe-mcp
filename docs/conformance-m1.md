@@ -1,50 +1,50 @@
-# Laboratorio di conformance M1
+# M1 Conformance Lab
 
-Baseline verificata il 2026-08-25: Ubuntu 26.04/WSL, pacchetto Ipe `7.2.30-1build2`, runtime Lua `Ipe 7.2.30`, formato XML `70218`.
+Baseline verified on 2026-08-25: Ubuntu 26.04/WSL, Ipe package `7.2.30-1build2`, Lua runtime `Ipe 7.2.30`, XML format `70218`.
 
-Il gate riproducibile è:
+The reproducible gate is:
 
 ```bash
 bash scripts/check-m1.sh
 ```
 
-Il gate esegue M0, capability probe, load/save nativo, copia tramite Ipelib Lua, export PDF/SVG e confronto con un golden JSON deterministico. Gli output vivono esclusivamente in una directory temporanea. La lane opzionale da build sorgente usa binari già costruiti, senza scaricare o compilare implicitamente:
+The gate runs M0, a capability probe, native load/save, copying through Lua Ipelib, PDF/SVG export, and comparison with a deterministic golden JSON. Outputs exist exclusively in a temporary directory. The optional source-build lane uses already-built binaries without implicitly downloading or compiling:
 
 ```bash
 IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/check-m1.sh
 ```
 
-## Evidenze empiriche 7.2.30
+## 7.2.30 Empirical Evidence
 
-| Esperimento | Risultato | Decisione |
+| Experiment | Result | Decision |
 |---|---|---|
-| Documento senza layer/view | Il runtime accetta il file e salva `alpha`, una view e `active="alpha"` | Il serializer MCP emette sempre layer/view/active; il comportamento permissivo resta solo import compatibility |
-| `marked="no"` | Il writer nativo lo omette come default falso | Il serializer MCP lo rimaterializza esplicitamente |
-| `custom="ipe-mcp:<uuid>"` | Conservato da load/save e da `obj:clone()` | Canale stabile per l'identità, con nuovo UUID obbligatorio per ogni copia |
-| Attributi ignoti e nodi `x-*` | Accettati in input ma persi al save nativo | Non sono un canale metadata supportato; il sidecar conserva i dati ricchi |
-| Sequenza oggetti | Conservata dal load/save; l'inserimento Lua ha una posizione esplicita | La sequenza globale resta l'unica fonte dello z-order |
-| `BBOX`, `VIEWBBOX`, link gruppo e transform view/layer | CropBox/ArtBox distinti e transform visivi conservati; il writer XML elide `crop="yes"`, mentre i layer riservati mantengono i box; il rettangolo link resta non trasformato | Il serializer rimaterializza `crop`; il transform per-view resta opt-in con warning esplicito su link e hit test |
-| Effetti 0–27 | 28 view esportate; Normal non crea `/Trans`, gli altri 27 sì | La presenza nel PDF è verificabile; la riproduzione resta viewer-dependent |
+| Document without layer/view | Runtime accepts the file and saves `alpha`, one view, and `active="alpha"` | MCP serializer always emits layer/view/active; permissive behavior remains import compatibility only |
+| `marked="no"` | Native writer omits it as a false default | MCP serializer materializes it explicitly |
+| `custom="ipe-mcp:<uuid>"` | Preserved by load/save and `obj:clone()` | Stable identity channel, with a new UUID mandatory for every copy |
+| Unknown attributes and `x-*` nodes | Accepted on input but lost on native save | Not a supported metadata channel; the sidecar preserves rich data |
+| Object sequence | Preserved by load/save; Lua insertion has an explicit position | Global sequence remains the sole source of z-order |
+| `BBOX`, `VIEWBBOX`, group link, and view/layer transform | Distinct CropBox/ArtBox and visual transforms preserved; XML writer elides `crop="yes"`, while reserved layers retain the boxes; link rectangle remains untransformed | Serializer materializes `crop`; per-view transform remains opt-in with an explicit warning about links and hit testing |
+| Effects 0–27 | 28 views exported; Normal creates no `/Trans`, the other 27 do | Presence in the PDF is verifiable; playback remains viewer-dependent |
 
-Il golden confronta semantica normalizzata, non whitespace, creator o formattazione del writer.
+The golden compares normalized semantics, not whitespace, creator, or writer formatting.
 
-## Serializer diretto e helper Lua
+## Direct Serializer and Lua Helper
 
-La forma persistita appartiene al serializer XML deterministico. `ipescript` non è un secondo serializer generale: è l'adapter nativo per operazioni in cui Ipelib possiede semantica non ricostruibile in sicurezza.
+The persisted representation belongs to the deterministic XML serializer. `ipescript` is not a second general-purpose serializer: it is the native adapter for operations whose semantics are not safely reconstructible outside Ipelib.
 
-| Mutazione | Backend definitivo |
+| Mutation | Definitive backend |
 |---|---|
-| Creazione di documenti e oggetti interamente rappresentati nell'IR | XML deterministico, seguito da validazione nativa nella lane full |
-| Aggiornamento di attributi, layer/view e z-order già supportati dall'IR | XML deterministico; layer e z-order rimangono operazioni separate |
-| Import di un documento esistente | Load Ipelib obbligatorio per capability/diagnostica; parsing XML lossless mantiene la sorgente finché non viene salvata |
-| Copia di oggetti/pagine importati | `obj:clone()`/Page/Document via `ipescript`, poi assegnazione di un nuovo `ipe-mcp:<uuid>` |
-| Bbox nativo, layer matrices, view maps, style check, LaTeX, export/render | `ipescript`/CLI Ipe obbligatori |
-| Nodo o attributo ignoto non rappresentato nell'IR | Nessuna mutazione silenziosa: preservazione byte/sidecar oppure errore di capability |
+| Creation of documents and objects fully represented in the IR | Deterministic XML, followed by native validation in the full lane |
+| Updating attributes, layer/view, and z-order already supported by the IR | Deterministic XML; layer and z-order remain separate operations |
+| Import of an existing document | Ipelib load mandatory for capability/diagnostics; lossless XML parsing keeps the source unchanged until saved |
+| Copying imported objects/pages | `obj:clone()`/Page/Document through `ipescript`, then assignment of a new `ipe-mcp:<uuid>` |
+| Native bbox, layer matrices, view maps, style check, LaTeX, export/render | `ipescript`/Ipe CLI mandatory |
+| Unknown node or attribute not represented in the IR | No silent mutation: byte/sidecar preservation or capability error |
 
-Ogni salvataggio full rientra nell'IR e viene riserializzato per ripristinare gli attributi espliciti del contratto. Il corpus M1 rende osservabile ogni divergenza prima che M2 implementi parser e persistenza.
+Every full save returns to the IR and is reserialized to restore the contract's explicit attributes. The M1 corpus makes every divergence observable before M2 implements parsing and persistence.
 
-## Fonti tecniche
+## Technical Sources
 
-- Ipe 7.2.30, `manual/90_file_format.rst`: attributi ignoti, elementi `x-*`, view transform ed effetti.
-- Ipe 7.2.30, `src/ipelua/bindings.txt`: `Document`, `Page`, `Object`, clone, custom, bbox e layer matrices.
-- `report-source.md`: incompatibilità e scelte normative del progetto.
+- Ipe 7.2.30, `manual/90_file_format.rst`: unknown attributes, `x-*` elements, view transforms, and effects.
+- Ipe 7.2.30, `src/ipelua/bindings.txt`: `Document`, `Page`, `Object`, clone, custom, bbox, and layer matrices.
+- `report-source.md`: project incompatibilities and normative choices.

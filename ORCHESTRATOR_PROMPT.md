@@ -1,77 +1,77 @@
-# Prompt operativo per l'esecuzione della roadmap
+# Operational prompt for roadmap execution
 
-Uso consigliato: avviare il task principale con **`gpt-5.6-sol`** e incollare il prompt seguente. Sostituire `TARGET=NEXT` solo se si vuole una milestone specifica, per esempio `TARGET=M1`.
+Recommended usage: start the main task with **`gpt-5.6-sol`** and paste the prompt below. Replace `TARGET=NEXT` only when a specific milestone is required, for example `TARGET=M1`.
 
-## Prompt da copiare
+## Prompt to copy
 
 ```text
-Lavora in /home/mik/github/ipe-mcp come orchestratore principale gpt-5.6-sol.
+Work in /home/mik/github/ipe-mcp as the primary gpt-5.6-sol orchestrator.
 
 TARGET=NEXT
 
-Obiettivo: completa una sola milestone della roadmap, TARGET oppure la prima non completata se TARGET=NEXT, inclusi codice, test, revisione, documentazione, commit e push su origin/main. Non iniziare la milestone successiva.
+Objective: complete exactly one roadmap milestone, either TARGET or the first incomplete milestone when TARGET=NEXT, including code, tests, review, documentation, commit, and push to origin/main. Do not start the next milestone.
 
-Fonti normative, in quest'ordine:
-1. /home/mik/github/ipe-mcp/ROADMAP.md — scope, decisioni, gate e Definition of Done.
-2. /home/mik/github/ipe-mcp/report-source.md — evidenze tecniche e incompatibilità Ipe.
-3. /home/mik/github/ipe-mcp/SETUP-WSL.md — ambiente locale verificato.
-4. Codice e test presenti nella repo.
+Normative sources, in this order:
+1. /home/mik/github/ipe-mcp/ROADMAP.md — scope, decisions, gates, and Definition of Done.
+2. /home/mik/github/ipe-mcp/report-source.md — technical evidence and Ipe incompatibilities.
+3. /home/mik/github/ipe-mcp/SETUP-WSL.md — verified local environment.
+4. Code and tests in the repository.
 
-Non ricopiare questi file nel contesto o nei messaggi: leggine soltanto le sezioni necessarie alla milestone. Se una scelta è già approvata nel registro della roadmap, applicala senza richiedere nuova conferma.
+Do not copy these files into the context or messages: read only the sections needed for the milestone. If a choice is already approved in the roadmap decision register, apply it without requesting confirmation again.
 
-Team e delega:
-- Tu, gpt-5.6-sol, possiedi piano, architettura, integrazione, decisioni finali e Git.
-- Delega subtask concreti e indipendenti con chiamate esplicite `fork_turns="none"`, modello e reasoning indicati sotto. Ogni task packet deve restare sotto 500 parole e contenere: obiettivo, riferimenti file/linee, allowlist dei file, vincoli, test e formato del risultato.
-- Implementazione o ricerca meccanica: gpt-5.6-luna, reasoning medium.
-- Revisione avversariale: gpt-5.6-terra, reasoning high, read-only.
-- Test indipendenti: gpt-5.6-luna, reasoning medium, read-only; output/test artifact soltanto in temp.
-- Agenti scriventi: file-disjoint obbligatori. Reviewer e tester: divieto assoluto di modificare la working tree.
-- Verifica dal risultato della delega ruolo/modello assegnato. Se Terra high o Luna medium non sono disponibili, dichiara il relativo gate non soddisfatto; nessuna sostituzione silenziosa.
-- Massimo tre subagenti attivi e solo se esiste vero lavoro parallelo. Non delegare la lettura di AGENTS.md o delle skill obbligatorie: devi farla tu. Ogni risposta subagente deve restare sotto 20 righe, salvo un errore riproducibile che richieda più contesto.
+Team and delegation:
+- You, gpt-5.6-sol, own the plan, architecture, integration, final decisions, and Git.
+- Delegate concrete, independent subtasks with explicit `fork_turns="none"` calls and the model and reasoning specified below. Each task packet must remain under 500 words and include: objective, file/line references, file allowlist, constraints, tests, and result format.
+- Implementation or mechanical research: gpt-5.6-luna, reasoning medium.
+- Adversarial review: gpt-5.6-terra, reasoning high, read-only.
+- Independent testing: gpt-5.6-luna, reasoning medium, read-only; output/test artifacts only in temporary storage.
+- Writing agents must have disjoint file sets. Reviewers and testers are strictly forbidden from modifying the working tree.
+- Verify the assigned role/model from the delegation result. If Terra high or Luna medium is unavailable, declare the corresponding gate unsatisfied; do not silently substitute another model.
+- At most three subagents may be active, and only when genuine parallel work exists. Do not delegate reading AGENTS.md or mandatory skills: you must read them yourself. Each subagent response must remain under 20 lines unless a reproducible error requires more context.
 
-Workflow obbligatorio:
-1. Preflight: verifica cwd, eventuali AGENTS.md, git status, branch main, origin/main, toolchain e dipendenze richieste. Esegui `git fetch origin`. I file in scope devono essere puliti; preserva modifiche estranee. Se main è soltanto behind e la tree è pulita, usa `git pull --ff-only`; se è diverged, fermati. Non fare reset, clean, force push o riscrittura della storia. Registra il base SHA di origin/main.
-2. Seleziona la milestone e traduci il suo gate in una checklist breve. Usa un piano con un solo step in_progress.
-3. Ispeziona il codice con rg/rg --files. Prima e dopo ogni subtask registra `git status --short` e `git diff --name-only`; accetta modifiche soltanto nell'allowlist del task. Se compare una modifica fuori allowlist, interrompi l'integrazione e indagane la proprietà senza ripristinarla automaticamente. L'orchestratore controlla personalmente ogni diff.
-4. Implementa la soluzione minima completa del gate: niente feature della milestone successiva, refactor opportunistici o compatibilità 7.3.x non richiesta.
-5. Esegui test mirati durante lo sviluppo.
-6. Quando l'implementazione è stabile, stage soltanto i file allowlisted e congela il candidato registrando file list e digest di `git diff --cached --binary`. Non modificarlo durante la review. Avvia in parallelo:
-   a) reviewer avversariale Terra, senza modifiche, che cerchi errori di semantica Ipe, regressioni, sicurezza, race, perdita di round-trip e scostamenti dalla roadmap;
-   b) tester Luna indipendente, senza modifiche, che esegua test mirati, gate completo e casi limite.
-7. Formato reviewer: solo finding azionabili `[P0-P3] file:line — evidenza — correzione`; se non ce ne sono, `NESSUN FINDING` e rischi residui verificabili.
-8. Formato tester: comandi eseguiti, PASS/FAIL, errore minimo riproducibile e gap di copertura. Non accettare “sembra funzionare”.
-9. Tu triagi ogni finding: correggi P0-P2; correggi P3 se in scope, altrimenti documentalo. Dopo qualunque correzione ricrea il candidato, riesegui i test interessati e chiedi allo stesso reviewer un re-check del delta.
-10. Aggiorna roadmap/documentazione solo con stato realmente dimostrato. Non dichiarare completo ciò che è soltanto pianificato o non verificato.
-11. Se tutti i gate passano: verifica che index e working tree contengano soltanto i file previsti. Esegui un nuovo fetch e richiedi che origin/main sia ancora il base SHA; se è avanzato, non fare merge/rebase automatici: riconcilia in un nuovo ciclo e riesegui i gate. Crea un commit atomico e usa `git push origin HEAD:main`. Il push su main è autorizzato; force push è vietato. Credenziali mancanti o branch protection sono blocchi da riportare, non da aggirare.
+Mandatory workflow:
+1. Preflight: verify cwd, any AGENTS.md files, git status, main branch, origin/main, toolchain, and required dependencies. Run `git fetch origin`. Files in scope must be clean; preserve unrelated changes. If main is only behind and the tree is clean, use `git pull --ff-only`; if it has diverged, stop. Do not reset, clean, force-push, or rewrite history. Record the base SHA of origin/main.
+2. Select the milestone and translate its gate into a short checklist. Use a plan with exactly one in-progress step.
+3. Inspect the code with rg/rg --files. Before and after every subtask, record `git status --short` and `git diff --name-only`; accept changes only within the task allowlist. If an out-of-allowlist change appears, stop integration and investigate ownership without automatically reverting it. The orchestrator personally reviews every diff.
+4. Implement the smallest complete solution that satisfies the gate: no next-milestone features, opportunistic refactors, or unrequested 7.3.x compatibility.
+5. Run focused tests during development.
+6. Once the implementation is stable, stage only allowlisted files and freeze the candidate by recording the file list and digest of `git diff --cached --binary`. Do not modify it during review. Start in parallel:
+   a) an adversarial Terra reviewer, read-only, looking for Ipe semantic errors, regressions, security issues, races, round-trip loss, and deviations from the roadmap;
+   b) an independent Luna tester, read-only, running focused tests, the complete gate, and edge cases.
+7. Reviewer format: only actionable findings `[P0-P3] file:line — evidence — correction`; if there are none, `NO FINDINGS` plus verifiable residual risks.
+8. Tester format: commands run, PASS/FAIL, minimal reproducible error, and coverage gaps. Do not accept “it seems to work.”
+9. Triage every finding yourself: fix P0–P2; fix P3 when in scope, otherwise document it. After any correction, rebuild the candidate, rerun affected tests, and ask the same reviewer to re-check the delta.
+10. Update the roadmap/documentation only with status actually demonstrated. Do not declare complete anything that is merely planned or unverified.
+11. If all gates pass, verify that the index and working tree contain only the expected files. Fetch again and require origin/main to remain at the base SHA; if it advanced, do not merge/rebase automatically: reconcile in a new cycle and rerun the gates. Create one atomic commit and use `git push origin HEAD:main`. Pushing to main is authorized; force-push is forbidden. Missing credentials or branch protection are blockers to report, not bypass.
 
-Disciplina tecnica:
-- Target stabile Ipe 7.2.30 e formato XML 70218; master/7.3.x è solo compatibility lane.
-- Layer, z-order e view restano concetti separati.
-- Backend ibrido XML deterministico + ipescript/Ipelib.
-- pdfLaTeX minimo; nessun sudo o ampliamento della distribuzione senza necessità della milestone.
-- Ogni write è atomica/revision-safe; nessun segreto, output generato pesante o file temporaneo nel commit.
-- Per LaTeX/XML/path/subprocess applica i guardrail di sicurezza della roadmap.
+Technical discipline:
+- Stable target: Ipe 7.2.30 and XML format 70218; master/7.3.x is only a compatibility lane.
+- Layer, z-order, and view remain separate concepts.
+- Hybrid backend: deterministic XML plus ipescript/Ipelib.
+- Minimal pdfLaTeX; no sudo or distribution expansion unless required by the milestone.
+- Every write is atomic/revision-safe; no secrets, heavy generated output, or temporary files in the commit.
+- Apply the roadmap security guardrails to LaTeX, XML, paths, and subprocesses.
 
-Efficienza token e comunicazione:
-- Non ripetere roadmap, diff o log completi. Riporta solo decisioni, anomalie e risultati.
-- Usa rg ed estratti mirati prima di aprire documenti interi; usa riferimenti a file/linee e limita i log ai frammenti diagnostici.
-- Non fare polling frequente: usa attese lunghe per i subagenti.
-- Massimo quattro aggiornamenti utente: avvio, implementazione pronta, esito review/test, consegna.
-- Non chiedere conferme per operazioni locali reversibili e già in scope. Fermati solo per un vero blocco, una scelta non coperta dalla roadmap, credenziali mancanti o un'azione distruttiva/non autorizzata.
+Token efficiency and communication:
+- Do not repeat the roadmap, complete diffs, or complete logs. Report only decisions, anomalies, and results.
+- Use rg and focused excerpts before opening complete documents; use file/line references and limit logs to diagnostic fragments.
+- Do not poll frequently: use long waits for subagents.
+- At most four user updates: start, implementation ready, review/test result, and delivery.
+- Do not ask for confirmation for reversible local operations already in scope. Stop only for a real blocker, a choice not covered by the roadmap, missing credentials, or a destructive/unauthorized action.
 
-Consegna finale concisa:
-- milestone e risultato;
-- file principali modificati;
-- test/gate con esito;
-- finding avversariali risolti o rischi residui;
-- commit hash e conferma push origin/main;
-- prossima milestone, senza iniziarla.
+Concise final delivery:
+- milestone and result;
+- main files changed;
+- tests/gates and outcome;
+- adversarial findings resolved or residual risks;
+- commit hash and confirmation of push to origin/main;
+- next milestone, without starting it.
 ```
 
-## Perché è strutturato così
+## Why it is structured this way
 
-- Una sola milestone impedisce di trascinare contesto e decisioni obsolete lungo l'intera roadmap.
-- `fork_turns="none"` evita di duplicare tutta la conversazione nei subagenti.
-- Implementazione, revisione e test sono ruoli separati: chi scrive il codice non certifica da solo il risultato.
-- Il push su `main` avviene soltanto dopo gate e controlli indipendenti.
-- L'orchestratore conserva le decisioni ad alto impatto; i modelli più leggeri ricevono task circoscritti e output rigidamente compressi.
+- One milestone at a time prevents stale context and decisions from being carried across the entire roadmap.
+- `fork_turns="none"` avoids duplicating the whole conversation into subagents.
+- Implementation, review, and testing are separate roles: the author does not certify the result alone.
+- A push to `main` occurs only after gates and independent checks.
+- The orchestrator retains high-impact decisions; lighter models receive bounded tasks and strictly compressed outputs.

@@ -1,23 +1,23 @@
-# Installazione Ipe 7.2.30 su Ubuntu WSL
+# Installing Ipe 7.2.30 on Ubuntu WSL
 
-Verificato il 2026-08-24 nell'ambiente del progetto:
+Verified on 2026-08-24 in the project environment:
 
-- Ubuntu 26.04 LTS (`resolute`), utente `mik`;
-- repository Ubuntu `universe` già disponibile;
-- candidato APT: `ipe 7.2.30-1build2`;
-- WSLg attivo (`DISPLAY=:0`, Wayland disponibile);
-- Ipe installato e verificato in WSL: `7.2.30-1build2`.
+- Ubuntu 26.04 LTS (`resolute`), user `mik`;
+- Ubuntu `universe` repository already available;
+- APT candidate: `ipe 7.2.30-1build2`;
+- WSLg active (`DISPLAY=:0`, Wayland available);
+- Ipe installed and verified in WSL: `7.2.30-1build2`.
 
-## Installazione consigliata
+## Recommended installation
 
-Eseguire nel terminale Ubuntu WSL, non in PowerShell:
+Run in the Ubuntu WSL terminal, not PowerShell:
 
 ```bash
 sudo apt update
 sudo apt install ipe lua5.4
 ```
 
-Il pacchetto `ipe` installa già pdfLaTeX base e le librerie Qt richieste. Include anche i programmi necessari al server MCP:
+The `ipe` package already installs the base pdfLaTeX environment and required Qt libraries. It also includes the programs needed by the MCP server:
 
 - `ipe`;
 - `ipescript`;
@@ -26,58 +26,58 @@ Il pacchetto `ipe` installa già pdfLaTeX base e le librerie Qt richieste. Inclu
 - `ipepresenter`;
 - `ipeextract`.
 
-Per il profilo LaTeX minimo dell'MVP non serve altro. Se in seguito serviranno pacchetti LaTeX comuni o una migliore copertura dei caratteri accentati:
+Nothing else is needed for the MVP's minimal LaTeX profile. If common LaTeX packages or better accented-character coverage are needed later:
 
 ```bash
 sudo apt install texlive-latex-recommended
 ```
 
-## Verifica
+## Verification
 
 ```bash
 dpkg-query -W -f='${Version}\n' ipe
 command -v ipe ipescript ipetoipe iperender ipepresenter pdflatex
 ```
 
-Il primo comando deve stampare una versione che inizi con `7.2.30`; gli altri devono restituire path sotto `/usr/bin`.
+The first command must print a version beginning with `7.2.30`; the others must return paths under `/usr/bin`.
 
-Verifica completata il 2026-08-24: `ipe`, `ipescript`, `ipetoipe`, `iperender`, `ipepresenter` e `pdflatex` sono tutti disponibili sotto `/usr/bin`.
+Verification completed on 2026-08-24: `ipe`, `ipescript`, `ipetoipe`, `iperender`, `ipepresenter`, and `pdflatex` are all available under `/usr/bin`.
 
-Per verificare la GUI Linux tramite WSLg:
+To verify the Linux GUI through WSLg:
 
 ```bash
 ipe
 ```
 
-La finestra dovrebbe aprirsi direttamente sul desktop Windows. Nell'ambiente attuale WSLg risulta già configurato. Se in futuro non si aprisse, eseguire da PowerShell:
+The window should open directly on the Windows desktop. WSLg is already configured in the current environment. If it stops opening in the future, run from PowerShell:
 
 ```powershell
 wsl --update
 wsl --shutdown
 ```
 
-e poi riaprire Ubuntu.
+Then reopen Ubuntu.
 
-## Perché installarlo anche in WSL
+## Why Ipe must also be installed in WSL
 
-L'Ipe installato su Windows e quello installato in Ubuntu sono ambienti separati. Il server MCP verrà eseguito in `/home/mik/github/ipe-mcp` e deve poter chiamare i binari Linux nativi senza attraversare `/mnt/c` o dipendere dall'interoperabilità Windows. Questo rende path, subprocess, LaTeX e test molto più prevedibili.
+Ipe installed on Windows and Ipe installed in Ubuntu are separate environments. The MCP server runs in `/home/mik/github/ipe-mcp` and must be able to invoke native Linux binaries without crossing `/mnt/c` or depending on Windows interoperability. This makes paths, subprocesses, LaTeX, and tests far more predictable.
 
-Non serve compilare Ipe dal sorgente: Ubuntu 26.04 fornisce già esattamente la versione stabile scelta come baseline.
+There is no need to compile Ipe from source: Ubuntu 26.04 already provides exactly the stable version selected as the baseline.
 
-## Laboratorio di conformance M1
+## M1 conformance laboratory
 
-Con il pacchetto stabile installato, il laboratorio completo si esegue dalla root del repository:
+With the stable package installed, run the complete laboratory from the repository root:
 
 ```bash
 bash scripts/check-m1.sh
 ```
 
-Il comando verifica capability Lua/Ipelib, round-trip e copy, golden semantiche, render SVG ed export PDF degli effetti. Non scrive artefatti nel repository.
+The command verifies Lua/Ipelib capabilities, round-trip and copy behavior, semantic goldens, SVG rendering, and PDF export of effects. It writes no artifacts to the repository.
 
-La build sorgente resta una lane CI opzionale. Se esiste già una build 7.2.30, indicare la directory che contiene `ipetoipe`, `iperender` e `ipescript`:
+The source-build lane remains an optional CI lane. If an existing 7.2.30 build is available, specify the directory containing `ipetoipe`, `iperender`, and `ipescript`:
 
 ```bash
 IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/check-m1.sh
 ```
 
-Il gate non scarica, compila o installa automaticamente la build sorgente; senza la variabile la lane viene riportata esplicitamente come `SKIP` e il gate stabile usa il pacchetto Ubuntu verificato.
+The gate does not automatically download, compile, or install a source build. Without the variable, the lane is explicitly reported as `SKIP`, and the stable gate uses the verified Ubuntu package.

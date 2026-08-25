@@ -1,26 +1,26 @@
-# ADR-0002 — Modello di dominio e layout
+# ADR-0002 — Domain Model and Layout
 
-- Stato: **Accepted**
-- Data: 2026-08-24
+- Status: **Accepted**
+- Date: 2026-08-24
 
-## Decisione
+## Decision
 
-Il server usa una IR semantica versionata, indipendente dall'XML Ipe. Il modello minimo è `Document → Page → Layer/View/Object`: ogni documento ha almeno una pagina, un layer e una view; ogni oggetto top-level ha `layerId` esplicito e riferimenti risolvibili.
+The server uses a versioned semantic IR independent of Ipe XML. The minimum model is `Document → Page → Layer/View/Object`: every document has at least one page, one layer, and one view; every top-level object has an explicit `layerId` and resolvable references.
 
-Layer, view e ordine visuale sono assi distinti:
+Layer, view, and visual order are distinct axes:
 
-- il layer determina appartenenza, visibilità, editabilità e snapping;
-- la view determina lo stato di presentazione (layer visibili, active layer, mappe e trasformazioni ammesse);
-- lo z-order è la sequenza globale back-to-front degli oggetti, indipendente dall'ordine dei layer. Il primo oggetto è più indietro, l'ultimo più avanti.
+- the layer determines membership, visibility, editability, and snapping;
+- the view determines presentation state (visible layers, active layer, maps, and permitted transformations);
+- z-order is the global back-to-front sequence of objects, independent of layer order. The first object is farthest back; the last is farthest forward.
 
-L'ordine dei layer non implementa `bringToFront`/`sendToBack`. Le API di z-order operano su object ID; quelle di layer spostano appartenenza senza alterare la sequenza, salvo richiesta esplicita.
+Layer order does not implement `bringToFront`/`sendToBack`. Z-order APIs operate on object IDs; layer APIs move membership without changing the sequence unless explicitly requested.
 
-Lo spazio predefinito è `frame`, con asse y-up e conversione esplicita a punti `bp`; sono supportati `paper`, `normalized`, `ipe` e `object-local`. Le matrici sono `[a b c d s t]`, con `x'=a*x+c*y+s` e `y'=b*x+d*y+t`, e composizione `viewLayerMatrix * objectMatrix * localPoint`. NaN e infinito sono rifiutati. Per la parte lineare, posto `n=max(|a|+|c|, |b|+|d|)`, la matrice è rifiutata se `n=0` oppure `|a*d-b*c| <= 1e-12*n^2`; M3 fisserà i property test e l'eventuale revisione versionata di questa tolleranza.
+The default space is `frame`, with a y-up axis and explicit conversion to `bp` points; `paper`, `normalized`, `ipe`, and `object-local` are supported. Matrices are `[a b c d s t]`, with `x'=a*x+c*y+s` and `y'=b*x+d*y+t`, and composition `viewLayerMatrix * objectMatrix * localPoint`. NaN and infinity are rejected. For the linear part, let `n=max(|a|+|c|, |b|+|d|)`; the matrix is rejected if `n=0` or `|a*d-b*c| <= 1e-12*n^2`; M3 will fix the property tests and any versioned revision of this tolerance.
 
-## View e animazione
+## Views and Animation
 
-Le view sono stati discreti. Reveal e movimento usano copie/varianti come default; le trasformazioni per-layer sono opt-in e accompagnate da warning su bbox, link e hit testing. Il serializer deterministico del server è proprietario della forma salvata e materializza sempre `active`, `marked` e il layer di ogni oggetto top-level. Il writer nativo 7.2.30 può omettere default ridondanti durante un probe: quell'output resta diagnostico e non viene promosso direttamente a salvataggio server; M1 ne fisserà il semantic diff. Le transizioni PDF sono dipendenti dal viewer e non sono prova di movimento continuo.
+Views are discrete states. Reveal and motion use copies/variants by default; per-layer transformations are opt-in and accompanied by warnings about bbox, links, and hit testing. The server's deterministic serializer owns the saved representation and always materializes `active`, `marked`, and the layer of every top-level object. The native 7.2.30 writer may omit redundant defaults during a probe: that output remains diagnostic and is not promoted directly to a server save; M1 will establish its semantic diff. PDF transitions are viewer-dependent and are not evidence of continuous motion.
 
-## Conseguenze
+## Consequences
 
-Il layout può richiedere un secondo passaggio per misure LaTeX, ma non diventa un sistema di constraint persistente. Le fixture M0 verificano coordinate/matrici, layer-view e z-order separatamente; probe e golden M1 chiuderanno divergenze native senza cambiare retroattivamente questo contratto.
+Layout may require a second pass for LaTeX measurements, but it does not become a persistent constraint system. M0 fixtures verify coordinates/matrices, layer-view, and z-order separately; M1 probes and goldens will close native divergences without retroactively changing this contract.
