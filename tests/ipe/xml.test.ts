@@ -102,7 +102,7 @@ describe("Ipe 70218 XML boundary", () => {
     const ids = document.pages[0]!.objects.map((object) => object.id);
     document.pages[0]!.objects[0]!.xml!.children = [{ type: "text", text: "9 9 m" }];
     const output = ipeDocumentCodec.serialize(document);
-    expect(output.match(/custom="legacy"/gu)).toHaveLength(2);
+    expect(output.match(/custom="ipe-mcp:object-id:object-[a-f0-9]{24}\|legacy"/gu)).toHaveLength(2);
     expect(output.match(/x-ipe-mcp-id="object-[a-f0-9]{24}"/gu)).toHaveLength(2);
     const reloaded = ipeDocumentCodec.parse(output);
     expect(reloaded.pages[0]!.objects.map((object) => object.id)).toEqual(ids);

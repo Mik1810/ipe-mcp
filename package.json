@@ -11,14 +11,18 @@
     "test": "vitest run --exclude 'dist/**'",
     "test:watch": "vitest",
     "check:m2": "bash scripts/check-m2.sh",
-    "check:m3": "bash scripts/check-m3.sh"
+    "check:m3": "bash scripts/check-m3.sh",
+    "check:m4": "bash scripts/check-m4.sh"
   },
   "dependencies": {
+    "jpeg-js": "0.4.4",
+    "pngjs": "^7.0.0",
     "saxes": "6.0.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "20.19.43",
+    "@types/pngjs": "^6.0.5",
     "typescript": "7.0.2",
     "vitest": "4.1.11"
   }

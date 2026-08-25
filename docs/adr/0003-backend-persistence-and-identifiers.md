@@ -9,7 +9,7 @@ The backend is hybrid: a deterministic XML serializer/parser for the format and 
 
 Every `open` creates a working copy. Mutations are atomic batches with `expectedRevision`; conflicts and a changed source hash fail without overwriting. Saving uses a temporary file plus rename and a recoverable snapshot. The source does not change before an explicit `save`.
 
-Objects created by the server receive `custom="ipe-mcp:<uuid>"`; existing custom values are preserved. An optional versioned sidecar stores rich metadata, provenance, and layout intent without making the `.ipe` dependent on the sidecar. No XML index, name, or page order is a sufficient persistent identifier.
+Objects created by the server receive `custom="ipe-mcp:<uuid>"`; existing custom values are preserved. Because native Ipe may strip `x-ipe-mcp-id`, an ID that is intentionally independent of editable custom metadata uses the reserved native-preserved envelope `custom="ipe-mcp:object-id:<object-id>|<custom>"`. An optional versioned sidecar stores rich metadata, provenance, and layout intent without making the `.ipe` dependent on the sidecar. No XML index, name, or page order is a sufficient persistent identifier.
 
 ## Validation and Round Trip
 

@@ -1,8 +1,9 @@
 import type { XmlChild, XmlDocument, XmlElement } from "./parser.js";
-import type { DocumentIR, IpeObject, Matrix, Page, View } from "../../domain/ir.js";
+import { stylesheetList, type DocumentIR, type IpeObject, type Matrix, type Page, type View } from "../../domain/ir.js";
 import type { XmlElement as DomainXmlElement, XmlNode as DomainXmlNode } from "../../domain/xml-node.js";
 import { assertValidXml10String } from "../../domain/xml-chars.js";
-import { assertPersistentEntityId } from "../../domain/identity.js";
+import { assertPersistentEntityId, persistentObjectCustom } from "../../domain/identity.js";
+import { assertObjectContent } from "../../objects/content-model.js";
 
 export interface XmlSerializeOptions {
   readonly includeDeclaration?: boolean;
@@ -15,18 +16,18 @@ const KNOWN_ATTRIBUTE_ORDER: Record<string, readonly string[]> = {
   info: ["title", "author", "subject", "keywords", "created", "modified"],
   ipestyle: ["name", "x-ipe-mcp-id"],
   stylesheet: ["name", "x-ipe-mcp-id"],
-  bitmap: ["id", "width", "height", "length", "x-ipe-mcp-id"],
+  bitmap: ["id", "width", "height", "ColorSpace", "Filter", "encoding", "length", "alphaLength", "x-ipe-mcp-id"],
   layout: ["paper", "origin", "frame", "crop"],
   page: ["title", "section", "subsection", "marked", "x-ipe-mcp-id"],
   layer: ["name", "edit", "snap", "x-ipe-mcp-id"],
   view: ["layers", "active", "marked", "name", "effect", "x-ipe-mcp-id"],
   transform: ["layer", "matrix"],
   effect: ["name", "duration", "transition", "effect"],
-  path: ["layer", "matrix", "pos", "pin", "stroke", "fill", "pen", "dash", "cap", "join", "fillrule", "opacity", "custom", "url"],
+  path: ["layer", "matrix", "pos", "pin", "stroke", "fill", "pen", "dash", "cap", "join", "fillrule", "arrow", "rarrow", "opacity", "stroke-opacity", "tiling", "gradient", "custom", "url"],
   text: ["layer", "matrix", "pos", "type", "width", "height", "size", "stroke", "fill", "opacity", "custom", "url"],
-  image: ["layer", "matrix", "rect", "width", "height", "opacity", "custom", "url"],
+  image: ["layer", "matrix", "bitmap", "rect", "opacity", "custom", "url"],
   group: ["layer", "matrix", "clip", "url", "custom"],
-  use: ["layer", "name", "pos", "matrix", "pin", "stroke", "fill", "opacity", "custom", "url"],
+  use: ["layer", "name", "pos", "matrix", "pin", "stroke", "fill", "pen", "size", "custom", "url"],
 };
 
 function escapeText(value: string): string {
@@ -157,12 +158,13 @@ function objectElement(object: IpeObject, names: ReadonlyMap<string, string>): X
   if (object.xml === undefined) {
     throw new Error(`Object '${object.id}' cannot be serialized until its XML payload is compiled`);
   }
+  assertObjectContent(object.xml);
   const element = fromDomainElement(object.xml);
   if (!OBJECT_TAGS.has(element.name)) throw new Error(`Unsupported Ipe object element: ${element.name}`);
   if (object.custom === undefined) throw new Error(`Object '${object.id}' requires persistent custom identity`);
   assertPersistentEntityId("object", object.id);
   element.attributes.layer = layerName(object.layerId, names);
-  element.attributes.custom = object.custom;
+  element.attributes.custom = persistentObjectCustom(object.id, object.custom);
   element.attributes["x-ipe-mcp-id"] = object.id;
   setOptionalAttribute(element.attributes, "matrix", object.matrix === undefined ? undefined : matrixText(object.matrix));
   setOptionalAttribute(element.attributes, "pin", object.pin);
@@ -234,7 +236,7 @@ function normalizeIr(value: DocumentIR & { readonly xml?: XmlDocument }): XmlDoc
     for (const view of page.views) registerId("view", view.id);
     for (const object of page.objects) registerId("object", object.id);
   }
-  const styles = value.stylesheets ?? value.styles ?? [];
+  const styles = stylesheetList(value);
   const styleElements = styles.map((style) => {
     registerId("style", style.id);
     if (style.xml === undefined) throw new Error(`Stylesheet '${style.id}' requires XML payload`);

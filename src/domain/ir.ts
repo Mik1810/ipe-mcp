@@ -134,4 +134,9 @@ export interface DocumentIR {
   source?: SourceInfo;
 }
 
+/** Canonical stylesheet precedence: an explicitly supplied array wins even when empty. */
+export function stylesheetList(document: DocumentIR): readonly Stylesheet[] {
+  return document.stylesheets ?? document.styles ?? [];
+}
+
 export type Document = DocumentIR;

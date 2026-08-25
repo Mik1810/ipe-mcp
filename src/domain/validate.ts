@@ -1,6 +1,9 @@
 import { documentSchema } from "./schema.js";
-import type { DocumentIR, IpeObject, Layer, Page, View } from "./ir.js";
+import { stylesheetList, type DocumentIR, type IpeObject, type Layer, type Page, type View } from "./ir.js";
 import { isPersistentEntityId, type PersistentEntityKind } from "./identity.js";
+import { isXmlElement } from "./xml-node.js";
+import { nestedReferences } from "../objects/references.js";
+import { assertObjectContent } from "../objects/content-model.js";
 
 export type DiagnosticSeverity = "error" | "warning";
 
@@ -53,20 +56,35 @@ function schemaDiagnostics(error: { issues: Array<{ path: PropertyKey[]; message
 }
 
 function checkReferences(document: DocumentIR, page: Page, pageIndex: number, object: IpeObject, objectIndex: number, diagnostics: Diagnostic[]): void {
-  const styles = new Set([...(document.stylesheets ?? []), ...(document.styles ?? [])].map((style) => style.id));
+  const styles = new Set(stylesheetList(document).map((style) => style.id));
   const assets = new Set((document.assets ?? []).map((asset) => asset.id));
+  const symbols = new Set<string>(["arrow/normal(spx)"]);
+  for (const style of stylesheetList(document)) {
+    for (const child of style.xml?.children ?? []) {
+      if (isXmlElement(child) && child.name === "symbol" && child.attributes?.name) symbols.add(child.attributes.name);
+    }
+  }
   const layers = new Set(page.layers.map((layer) => layer.id));
   const objects = new Set(page.objects.map((candidate) => candidate.id));
   const references = object.references ?? [];
   for (let refIndex = 0; refIndex < references.length; refIndex += 1) {
     const ref = references[refIndex];
     if (!ref) continue;
-    const target = ref.kind === "style" ? styles : ref.kind === "asset" || ref.kind === "symbol" ? assets : ref.kind === "layer" ? layers : ref.kind === "object" ? objects : undefined;
+    const target = ref.kind === "style" ? styles : ref.kind === "asset" ? assets : ref.kind === "symbol" ? symbols : ref.kind === "layer" ? layers : ref.kind === "object" ? objects : undefined;
     if (target && !target.has(ref.id)) diagnostic(diagnostics, "REF_UNRESOLVED", ["pages", pageIndex, "objects", objectIndex, "references", refIndex, "id"], `${ref.kind} reference '${ref.id}' does not resolve`);
   }
-  for (const [field, target] of [["styleId", styles], ["assetId", assets], ["symbolId", assets], ["layerId", layers]] as const) {
+  for (const [field, target] of [["styleId", styles], ["assetId", assets], ["symbolId", symbols], ["layerId", layers]] as const) {
     const value = object[field];
     if (typeof value === "string" && target instanceof Set && !target.has(value)) diagnostic(diagnostics, "REF_UNRESOLVED", ["pages", pageIndex, "objects", objectIndex, field], `${field} '${value}' does not resolve`);
+  }
+  if (object.xml !== undefined) {
+    try {
+      assertObjectContent(object.xml);
+      nestedReferences(document, object.xml);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      diagnostic(diagnostics, "OBJECT_XML_UNSUPPORTED", ["pages", pageIndex, "objects", objectIndex, "xml"], message);
+    }
   }
 }
 

@@ -1,0 +1,33 @@
+{
+  "format_version": "70218",
+  "corpus": "M4 object, primitive, style, asset, text and reference golden",
+  "fixtures": [
+    {
+      "file": "golden/m4-object-primitive-matrix.ipe",
+      "object_counts": {"path": 18, "text": 2, "image": 1, "group": 2, "use": 1},
+      "path_sequences": [
+        {"page": 1, "object": 1, "kind": "point", "operators": ["m", "l"]},
+        {"page": 1, "object": 2, "kind": "segment", "operators": ["m", "l"]},
+        {"page": 1, "object": 3, "kind": "rounded-rectangle", "operators": ["m", "l", "a", "l", "a", "l", "a", "l", "a", "h"]},
+        {"page": 1, "object": 4, "kind": "circle", "operators": ["e"]},
+        {"page": 1, "object": 5, "kind": "uniform", "operators": ["m", "c"]},
+        {"page": 1, "object": 6, "kind": "cardinal", "operators": ["m", "C"]},
+        {"page": 1, "object": 7, "kind": "clothoid", "operators": ["m", "L"]},
+        {"page": 1, "object": 8, "kind": "compound", "operators": ["m", "l", "l", "l", "h", "e"]},
+        {"page": 2, "object": 1, "kind": "polyline", "operators": ["m", "l", "l"]},
+        {"page": 2, "object": 2, "kind": "polygon", "operators": ["m", "l", "l", "h"]},
+        {"page": 2, "object": 3, "kind": "rectangle", "operators": ["m", "l", "l", "l", "h"]},
+        {"page": 2, "object": 4, "kind": "ellipse", "operators": ["e"]},
+        {"page": 2, "object": 5, "kind": "arc", "operators": ["m", "a"]},
+        {"page": 2, "object": 6, "kind": "quadratic", "operators": ["m", "c"]},
+        {"page": 2, "object": 7, "kind": "cubic", "operators": ["m", "c"]},
+        {"page": 2, "object": 8, "kind": "uniform-closed", "operators": ["u"]},
+        {"page": 2, "object": 9, "kind": "catmull-rom", "operators": ["m", "C"]},
+        {"page": 2, "object": 10, "kind": "raw-structured", "operators": ["m", "l", "c", "a", "s", "C", "L", "h", "e", "u"]}
+      ],
+      "required_native_semantics": [
+        "arrows", "fillrule", "clip", "gradient", "tiling", "png-alpha", "jpeg-dct", "complex-label", "minipage", "symbol", "nested-identity"
+      ]
+    }
+  ]
+}
