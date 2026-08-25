@@ -1,0 +1,25 @@
+milestone: M4
+status: implementation
+base_revision: "<base-sha>"
+head_revision: "<head-sha>"
+
+goal: "<short milestone goal>"
+
+requirements:
+  - id: R1
+    text: "<requirement>"
+    status: pending
+
+changed_paths: []
+
+review:
+  status: not_started
+  blockers: []
+  majors: []
+  minors: []
+
+verification:
+  targeted: []
+  final: []
+
+next_role: implementer
