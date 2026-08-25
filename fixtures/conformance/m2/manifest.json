@@ -1,0 +1,15 @@
+{
+  "format_version": "70218",
+  "baseline": "ipe-7.2.30",
+  "fixtures": [
+    {
+      "file": "implicit-layer-view-defaults.ipe",
+      "purpose": "native defaults when multiple layers exist but the view and object layer are omitted",
+      "invariants": [
+        "implicit view exposes both declared layers and activates the first",
+        "first implicit object uses the first layer",
+        "an explicit object layer is inherited by the following object"
+      ]
+    }
+  ]
+}

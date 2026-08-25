@@ -518,6 +518,8 @@ Gate:
 
 ### M2 — IR, XML e persistenza transazionale
 
+**Stato: completata il 2026-08-25.** Gate stabile dimostrato da `bash scripts/check-m2.sh` su Ipe `7.2.30-1build2`: 62 test, confronto semantico/fixed-point/reload nativo dei 12 fixture, review avversariale Sol senza finding P0–P2 e test indipendenti Luna. La lane M1 da build sorgente resta opzionale e non eseguita perché `IPE_M1_SOURCE_BIN_DIR` non è configurato.
+
 Deliverable:
 
 - IR versionata e schema Zod;

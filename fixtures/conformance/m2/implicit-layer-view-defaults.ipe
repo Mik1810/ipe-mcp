@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m2">
+<ipestyle name="m2"><layout paper="200 150" origin="0 0" frame="200 150"/></ipestyle>
+<page><layer name="a"/><layer name="b"/>
+<path stroke="black">20 20 m 80 20 l 80 70 l 20 70 l h</path>
+<path layer="b" stroke="red">100 20 m 180 20 l 180 70 l 100 70 l h</path>
+<path stroke="blue">60 90 m 140 90 l 100 135 l h</path>
+</page></ipe>
