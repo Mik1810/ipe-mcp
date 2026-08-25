@@ -66,11 +66,13 @@ function checkReferences(document: DocumentIR, page: Page, pageIndex: number, ob
   }
   const layers = new Set(page.layers.map((layer) => layer.id));
   const objects = new Set(page.objects.map((candidate) => candidate.id));
+  const pages = new Set(document.pages.map((candidate) => candidate.id));
+  const views = new Set(document.pages.flatMap((candidate) => candidate.views.map((entry) => entry.id)));
   const references = object.references ?? [];
   for (let refIndex = 0; refIndex < references.length; refIndex += 1) {
     const ref = references[refIndex];
     if (!ref) continue;
-    const target = ref.kind === "style" ? styles : ref.kind === "asset" ? assets : ref.kind === "symbol" ? symbols : ref.kind === "layer" ? layers : ref.kind === "object" ? objects : undefined;
+    const target = ref.kind === "style" ? styles : ref.kind === "asset" ? assets : ref.kind === "symbol" ? symbols : ref.kind === "layer" ? layers : ref.kind === "object" ? objects : ref.kind === "page" ? pages : ref.kind === "view" ? views : undefined;
     if (target && !target.has(ref.id)) diagnostic(diagnostics, "REF_UNRESOLVED", ["pages", pageIndex, "objects", objectIndex, "references", refIndex, "id"], `${ref.kind} reference '${ref.id}' does not resolve`);
   }
   for (const [field, target] of [["styleId", styles], ["assetId", assets], ["symbolId", symbols], ["layerId", layers]] as const) {
@@ -107,6 +109,7 @@ function validatePage(document: DocumentIR, page: Page, pageIndex: number, diagn
   const viewIds = new Set<string>();
   for (let viewIndex = 0; viewIndex < page.views.length; viewIndex += 1) {
     const view = page.views[viewIndex] as View;
+    if (view.layerTransforms !== undefined && view.transforms !== undefined) diagnostic(diagnostics, "TRANSFORM_REPRESENTATION_CONFLICT", ["pages", pageIndex, "views", viewIndex], "a view must use either layerTransforms or transforms, not both");
     checkEntityId(diagnostics, globalEntityIds, "view", view.id, ["pages", pageIndex, "views", viewIndex, "id"]);
     if (viewIds.has(view.id)) diagnostic(diagnostics, "VIEW_ID_DUPLICATE", ["pages", pageIndex, "views", viewIndex, "id"], `duplicate view id '${view.id}'`);
     viewIds.add(view.id);

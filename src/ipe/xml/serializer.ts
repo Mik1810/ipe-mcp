@@ -9,6 +9,8 @@ export interface XmlSerializeOptions {
   readonly includeDeclaration?: boolean;
   readonly includeDoctype?: boolean;
   readonly indent?: string | false;
+  /** Page names are carried by the composition sidecar for native round-trips. */
+  readonly compositionSidecarAuthoritative?: boolean;
 }
 
 const KNOWN_ATTRIBUTE_ORDER: Record<string, readonly string[]> = {
@@ -18,7 +20,7 @@ const KNOWN_ATTRIBUTE_ORDER: Record<string, readonly string[]> = {
   stylesheet: ["name", "x-ipe-mcp-id"],
   bitmap: ["id", "width", "height", "ColorSpace", "Filter", "encoding", "length", "alphaLength", "x-ipe-mcp-id"],
   layout: ["paper", "origin", "frame", "crop"],
-  page: ["title", "section", "subsection", "marked", "x-ipe-mcp-id"],
+  page: ["title", "section", "subsection", "marked", "x-ipe-mcp-name", "x-ipe-mcp-id"],
   layer: ["name", "edit", "snap", "x-ipe-mcp-id"],
   view: ["layers", "active", "marked", "name", "effect", "x-ipe-mcp-id"],
   transform: ["layer", "matrix"],
@@ -172,7 +174,7 @@ function objectElement(object: IpeObject, names: ReadonlyMap<string, string>): X
   return element;
 }
 
-function pageElement(irPage: Page): XmlElement {
+function pageElement(irPage: Page, compositionSidecarAuthoritative = false): XmlElement {
   assertPersistentEntityId("page", irPage.id);
   const pageSource = irPage.xml as DomainXmlElement | undefined;
   const page = pageSource === undefined
@@ -180,6 +182,7 @@ function pageElement(irPage: Page): XmlElement {
     : fromDomainElement(pageSource);
   page.name = "page";
   page.attributes["x-ipe-mcp-id"] = irPage.id;
+  setOptionalAttribute(page.attributes, "x-ipe-mcp-name", compositionSidecarAuthoritative ? undefined : irPage.name);
   setOptionalAttribute(page.attributes, "title", irPage.title);
   setOptionalAttribute(page.attributes, "section", irPage.section);
   setOptionalAttribute(page.attributes, "subsection", irPage.subsection);
@@ -219,7 +222,7 @@ function pageElement(irPage: Page): XmlElement {
   return page;
 }
 
-function normalizeIr(value: DocumentIR & { readonly xml?: XmlDocument }): XmlDocument {
+function normalizeIr(value: DocumentIR & { readonly xml?: XmlDocument }, compositionSidecarAuthoritative = false): XmlDocument {
   if (value.xml === undefined) throw new Error("IR serializer requires a lossless XML source");
   const root = cloneElement(value.xml.root);
   root.attributes.version = "70218";
@@ -259,7 +262,7 @@ function normalizeIr(value: DocumentIR & { readonly xml?: XmlDocument }): XmlDoc
     ...assetElements,
     ...styleElements,
   ];
-  const pages = value.pages.map((page) => pageElement(page));
+  const pages = value.pages.map((page) => pageElement(page, compositionSidecarAuthoritative));
   const nonPages = root.children.filter((child) => typeof child === "string" || child.name !== "page");
   root.children = [...nonPages, ...pages];
 
@@ -290,7 +293,7 @@ function normalizeIr(value: DocumentIR & { readonly xml?: XmlDocument }): XmlDoc
 }
 
 export function serializeXml(document: XmlDocument | XmlElement | DocumentIR & { readonly xml?: XmlDocument }, options: XmlSerializeOptions = {}): string {
-  if ("schemaVersion" in document) document = normalizeIr(document);
+  if ("schemaVersion" in document) document = normalizeIr(document, options.compositionSidecarAuthoritative);
   const indent = options.indent === undefined ? false : options.indent;
   const root = "root" in document ? document.root : document;
   const includeDeclaration = options.includeDeclaration ?? true;

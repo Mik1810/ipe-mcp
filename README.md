@@ -9,9 +9,9 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 `70218`. The initial target environment is Ubuntu 26.04 on WSL.
 
 > [!IMPORTANT]
-> This repository is pre-MVP. Milestones M0–M3 are complete, covering the
+> This repository is pre-MVP. Milestones M0–M5 are complete, covering the
 > compatibility contracts, conformance lab, semantic IR, transactional
-> persistence, coordinates, and layout. The stdio MCP server is planned for M8,
+> persistence, layout, object authoring, and slide composition. The stdio MCP server is planned for M8,
 > so the repository is not yet an installable MCP integration.
 
 ## Goals
@@ -35,7 +35,7 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 | M2 | Semantic IR, XML, and transactional persistence | Complete |
 | M3 | Coordinates and layout | Complete |
 | [M4](https://github.com/Mik1810/ipe-mcp/issues/1) | Objects, geometry, text, assets, and styles | Complete |
-| [M5](https://github.com/Mik1810/ipe-mcp/issues/2) | Pages, layers, views, and slide composition | Planned |
+| [M5](https://github.com/Mik1810/ipe-mcp/issues/2) | Pages, layers, views, and slide composition | Complete |
 | [M6](https://github.com/Mik1810/ipe-mcp/issues/3) | Native validation, rendering, and export | Planned |
 | [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Planned |
 | [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Planned |

@@ -7,6 +7,7 @@ export * from "./domain/xml-chars.js";
 export * from "./ipe/xml/index.js";
 export * from "./layout/index.js";
 export * from "./objects/index.js";
+export * from "./composition/index.js";
 export * from "./persistence/atomic.js";
 export * from "./persistence/bounded-read.js";
 export * from "./persistence/errors.js";

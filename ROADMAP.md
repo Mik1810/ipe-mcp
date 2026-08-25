@@ -1,6 +1,6 @@
 # Proposed Roadmap — MCP Server for Ipe
 
-Status: **implementation in progress; M0–M4 completed as of 2026-08-25**.
+Status: **implementation in progress; M0–M5 completed as of 2026-08-25**.
 Baseline: **stable Ipe 7.2.30**, file format `70218`.
 Goal: enable Codex and other MCP agents to create, modify, verify, and render Ipe presentations without exposing them to the complexity of the XML format.
 
@@ -577,6 +577,12 @@ Gate:
 - arrows/fill/clip/gradients and complex text natively validated.
 
 ### M5 — Pages, Layers, Views, and Slide Composition
+
+**Status: completed on 2026-08-25.** The issue #2 gate is executable through
+`bash scripts/check-m5.sh`: page/layer/view CRUD, duplication and reference
+remapping, non-destructive layout-compatible templates, special-layer fixtures,
+native composition-sidecar recovery, and exact multi-view PDF mapping all pass
+on Ipe `7.2.30-1build2` while retaining every M0–M4 gate.
 
 Deliverables:
 

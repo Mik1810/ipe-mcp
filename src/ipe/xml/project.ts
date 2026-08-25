@@ -344,7 +344,7 @@ export function projectXml(document: XmlDocument): ProjectedDocument {
       }
     }
     const note = children(pageXml, "notes").map(textOf).join("");
-    pages.push({ id: pageXml.attributes[ID_ATTRIBUTE] ?? stableId("page", `${pageIndex}`), ...(pageXml.attributes.title === undefined ? {} : { title: pageXml.attributes.title }), ...(pageXml.attributes.section === undefined ? {} : { section: pageXml.attributes.section }), ...(pageXml.attributes.subsection === undefined ? {} : { subsection: pageXml.attributes.subsection }), ...(pageXml.attributes.marked === undefined ? {} : { marked: pageXml.attributes.marked !== "no" }), ...(note ? { notes: note } : {}), layers, views, objects, xml: asDomainXml(pageXml) });
+    pages.push({ id: pageXml.attributes[ID_ATTRIBUTE] ?? stableId("page", `${pageIndex}`), ...(pageXml.attributes["x-ipe-mcp-name"] === undefined ? {} : { name: pageXml.attributes["x-ipe-mcp-name"] }), ...(pageXml.attributes.title === undefined ? {} : { title: pageXml.attributes.title }), ...(pageXml.attributes.section === undefined ? {} : { section: pageXml.attributes.section }), ...(pageXml.attributes.subsection === undefined ? {} : { subsection: pageXml.attributes.subsection }), ...(pageXml.attributes.marked === undefined ? {} : { marked: pageXml.attributes.marked !== "no" }), ...(note ? { notes: note } : {}), layers, views, objects, xml: asDomainXml(pageXml) });
   }
   if (pages.length === 0) throw new Error("Ipe document must contain at least one page");
   const metadata = info ? Object.fromEntries(Object.entries(info.attributes)) : undefined;

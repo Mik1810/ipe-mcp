@@ -1,0 +1,9 @@
+{
+  "milestone": "M5",
+  "format": 70218,
+  "cases": [
+    { "name": "standard", "preset": "standard", "expect": { "paper": [595, 842], "origin": [0, 0], "frame": [595, 842], "views": 2 } },
+    { "name": "presentation-16x9", "preset": "16:9", "expect": { "paper": [1280, 720], "origin": [32, 0], "frame": [1216, 648], "views": 3 } },
+    { "name": "views", "features": ["cumulative", "arbitrary", "marked-handout", "page-view-pdf-mapping"] }
+  ]
+}
