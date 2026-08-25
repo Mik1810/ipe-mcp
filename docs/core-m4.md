@@ -8,6 +8,8 @@ M4 is the typed object and style layer above the M0–M3 document, XML, persiste
 
 The gate checks the operator sequence for each primitive, not only object or token counts. It checks the semantic payload before native normalization and compares identities, object order, text payloads, style attributes, and bitmap reference semantics after native reload. Native Ipe may reorder stylesheet definitions, renumber bitmap IDs, or expand some curve forms; these are accepted only when the semantic checks still pass.
 
+Raw XML `path` payloads are validated at the shared object-content boundary before a builder, domain validation, serializer, or mutation can accept them. Non-empty payloads use ASCII whitespace only (bytes `<= 0x20`), finite project-domain numeric operands, and the Ipe 70218 operators `m`, `l`, `c`, `q`, `a`, `C`, `L`, `h`, `e`, `u`, or historical `s`. Native arity/state is mirrored: `l` and `a` consume exactly one segment/arc record; `c`, `q`, `s`, and `L` consume one or more coordinate pairs; `C` consumes one or more pairs plus one tension; and `e`/`u` may terminate an already-open curve. Arc/ellipse matrices use the same non-singular relative tolerance as document matrices. Empty payloads and native's single trailing `m` compatibility form remain supported, while `m h`, consecutive moves, abandoned empty subpaths before another command, invalid `L *` marker positions, prose, unknown operators, malformed/truncated commands, Unicode whitespace, XML-invalid controls, and trailing operands are rejected before native Ipe can abort or silently canonicalize them.
+
 ## Gate command
 
 Run from the repository root:

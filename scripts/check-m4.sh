@@ -34,7 +34,7 @@ pass "M0-M3 gates, TypeScript build, and tests"
 # validation, and CRUD entry points with inputs that must fail closed.
 node --input-type=module - "$ROOT" <<'NODE' || fail "M4 object validation negative probes"
 const root = process.argv[2];
-const { applyObjectOperations, buildGroupObject, buildPathObject, buildStylesheet, checkStyleStructural, createObjectIdentity, element, validateDocument } = await import(`${root}/dist/src/index.js`);
+const { applyObjectOperations, buildCompiledObject, buildGroupObject, buildPathObject, buildStylesheet, checkStyleStructural, createObjectIdentity, element, ipeDocumentCodec, validateDocument } = await import(`${root}/dist/src/index.js`);
 
 function expectFailure(label, callback, fragment) {
   try {
@@ -57,6 +57,37 @@ const main = path("layer-main", 1);
 const other = path("layer-other", 2);
 expectFailure("cross-layer grouping", () => buildGroupObject({ layerId: "layer-main", children: [main, other] }), "group's layer");
 expectFailure("unsupported raw object tag", () => buildGroupObject({ layerId: "layer-main", children: [element("future-object")] }), "unsupported object tag");
+const malformedPath = element("path", {}, [{ type: "text", text: "this is not an Ipe path" }]);
+expectFailure("malformed raw path builder", () => buildCompiledObject(malformedPath, { layerId: "layer-main" }), "unknown operator");
+for (const [label, payload, fragment] of [
+  ["empty close", "0 0 m h", "empty"],
+  ["consecutive move", "0 0 m 1 1 m", "new subpath"],
+  ["trailing operands", "0 0 m 1 1", "trailing"],
+  ["singular ellipse", "1 0 0 0 0 0 e", "matrix"],
+  ["singular arc", "0 0 m 1 0 0 0 0 0 1 1 a", "matrix"],
+  ["non-ASCII whitespace", "0\u00a00 m", "invalid token"],
+  ["XML-invalid control", "0 0 m\u00001 1 l", "XML 1.0-invalid"],
+]) {
+  expectFailure(`malformed raw path ${label}`, () => buildCompiledObject(element("path", {}, [{ type: "text", text: payload }]), { layerId: "layer-main" }), fragment);
+}
+const malformedObject = { id: identity(6).id, custom: identity(6).custom, layerId: "layer-main", zOrder: 0, xml: malformedPath };
+const malformedDocument = {
+  schemaVersion: 1,
+  format: 70218,
+  pages: [{ id: "page-main", layers: [{ id: "layer-main", name: "main" }], views: [], objects: [malformedObject] },
+  ],
+};
+if (!validateDocument(malformedDocument).errors.some(({ code, message }) => code === "OBJECT_XML_UNSUPPORTED" && message.includes("unknown operator"))) {
+  throw new Error("malformed raw path unexpectedly passed domain validation");
+}
+const serialDocument = ipeDocumentCodec.parse('<ipe version="70218"><page><layer name="a"/><view layers="a" active="a"/></page></ipe>');
+const serialPage = serialDocument.pages[0];
+serialPage.objects = [{ ...malformedObject, layerId: serialPage.layers[0].id }];
+expectFailure("malformed raw path serializer", () => ipeDocumentCodec.serialize(serialDocument), "unknown operator");
+const mutationDocument = ipeDocumentCodec.parse('<ipe version="70218"><page><layer name="a"/><view layers="a" active="a"/></page></ipe>');
+const mutationPage = mutationDocument.pages[0];
+expectFailure("malformed raw path insertion", () => applyObjectOperations(mutationDocument, mutationPage.id, [{ op: "insert", object: { ...malformedObject, layerId: mutationPage.layers[0].id } }]), "unknown operator");
+if (mutationPage.objects.length !== 0) throw new Error("malformed raw path mutated the caller document");
 const referenced = path("layer-main", 5);
 referenced.references = [{ kind: "object", id: main.id }];
 expectFailure("object-reference grouping", () => buildGroupObject({ layerId: "layer-main", children: [referenced, main] }), "per-child references cannot be preserved");

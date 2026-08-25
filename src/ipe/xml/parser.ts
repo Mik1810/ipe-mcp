@@ -1,4 +1,5 @@
 import { SaxesParser } from "saxes";
+import { isValidXml10String } from "../../domain/xml-chars.js";
 
 /** A lossless, namespace-free XML node used at the Ipe format boundary. */
 export interface XmlElement {
@@ -72,6 +73,9 @@ export function parseXml(input: string | Uint8Array, limits: XmlParseLimits = {}
   }
   const bytes = Buffer.byteLength(source, "utf8");
   if (bytes > opts.maxBytes) throw new XmlParseError(`XML exceeds byte limit (${opts.maxBytes})`);
+  // Saxes reports control characters inconsistently across versions.  Keep
+  // the XML 1.0 boundary diagnostic stable before handing the source to it.
+  if (!isValidXml10String(source)) throw new XmlParseError("XML 1.0-invalid character");
   checkXmlSurface(source);
 
   const parser = new SaxesParser({ xmlns: false, fragment: false, position: true });

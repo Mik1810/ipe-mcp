@@ -555,7 +555,7 @@ Gate:
 ### M4 — Objects, Geometry, Text, Assets, and Styles
 
 **Status: completed on 2026-08-25.** Stable gate demonstrated by
-`bash scripts/check-m4.sh` on Ipe `7.2.30-1build2`: 130 total tests, exact
+`bash scripts/check-m4.sh` on Ipe `7.2.30-1build2`: 137 total tests, exact
 typed-primitive and object coverage, canonical and native round-trips, clean
 `Document:checkStyle()`, semantic asset/reference preservation, complex LaTeX,
 and two-page PDF/SVG/PNG rendering. The candidate also passed Luna independent

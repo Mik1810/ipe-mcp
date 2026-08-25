@@ -139,6 +139,10 @@ describe("Ipe 70218 XML boundary", () => {
     expect(() => ipeDocumentCodec.serialize(document)).toThrow("XML 1.0-invalid");
   });
 
+  it("reports embedded XML 1.0-invalid controls consistently at parse time", () => {
+    expect(() => parseIpeXml('<ipe version="70218"><page><path>0 0 m\u00001 1 l</path></page></ipe>')).toThrow("XML 1.0-invalid");
+  });
+
   it("refuses to serialize a manually constructed object without persistent identity", async () => {
     const document = ipeDocumentCodec.parse(await readFile(resolve(fixtureRoot, "minimal.ipe")));
     document.pages[0]!.objects.push({
