@@ -1,0 +1,29 @@
+{
+  "name": "standard",
+  "coordinateSystem": {
+    "paper": { "x": -10, "y": -10, "width": 200, "height": 150 },
+    "frame": { "x": 0, "y": 0, "width": 180, "height": 130 }
+  },
+  "sentinels": [
+    { "point": { "x": 10, "y": 10 }, "space": { "kind": "paper" }, "ipe": { "x": 0, "y": 0 } },
+    { "point": { "x": 0.25, "y": 0.75 }, "space": { "kind": "normalized", "relativeTo": "frame" }, "ipe": { "x": 45, "y": 97.5 } }
+  ],
+  "layout": {
+    "kind": "row",
+    "container": { "x": 0, "y": 0, "width": 180, "height": 130 },
+    "padding": 10,
+    "gap": 10,
+    "mainAlign": "center",
+    "crossAlign": "center",
+    "items": [
+      { "id": "a", "size": { "width": 30, "height": 20 } },
+      { "id": "b", "size": { "width": 40, "height": 30 } },
+      { "id": "c", "size": { "width": 20, "height": 10 } }
+    ]
+  },
+  "expected": [
+    { "id": "a", "box": { "x": 35, "y": 55, "width": 30, "height": 20 } },
+    { "id": "b", "box": { "x": 75, "y": 50, "width": 40, "height": 30 } },
+    { "id": "c", "box": { "x": 125, "y": 60, "width": 20, "height": 10 } }
+  ]
+}

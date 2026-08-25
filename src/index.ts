@@ -5,6 +5,7 @@ export * from "./domain/schema.js";
 export * from "./domain/validate.js";
 export * from "./domain/xml-chars.js";
 export * from "./ipe/xml/index.js";
+export * from "./layout/index.js";
 export * from "./persistence/atomic.js";
 export * from "./persistence/bounded-read.js";
 export * from "./persistence/errors.js";

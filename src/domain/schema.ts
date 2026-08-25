@@ -1,14 +1,15 @@
 import { z } from "zod";
 import { isValidXml10String } from "./xml-chars.js";
+import { MATRIX_SINGULAR_RELATIVE_TOLERANCE, MAX_DOMAIN_MAGNITUDE } from "./numeric.js";
 
-const finite = z.number().finite().min(-1_000_000_000).max(1_000_000_000);
+const finite = z.number().finite().min(-MAX_DOMAIN_MAGNITUDE).max(MAX_DOMAIN_MAGNITUDE);
 const xmlString = (maximum: number) => z.string().max(maximum).refine(isValidXml10String, "contains XML 1.0-invalid characters");
 const text = xmlString(1_000_000);
 const id = xmlString(256).min(1);
 export const matrixSchema = z.tuple([finite, finite, finite, finite, finite, finite]).refine(
   ([a, b, c, d]) => {
     const norm = Math.max(Math.abs(a) + Math.abs(c), Math.abs(b) + Math.abs(d));
-    return norm > 0 && Math.abs(a * d - b * c) > 1e-12 * norm * norm;
+    return norm > 0 && Math.abs(a * d - b * c) > MATRIX_SINGULAR_RELATIVE_TOLERANCE * norm * norm;
   },
   { message: "matrix linear part is singular or numerically degenerate" },
 );

@@ -536,6 +536,8 @@ Gate:
 
 ### M3 — Coordinate e layout
 
+**Stato: completata il 2026-08-25.** Gate stabile dimostrato da `bash scripts/check-m3.sh` su Ipe `7.2.30-1build2`: 85 test complessivi, 46 test M3 focalizzati, fixture standard e presentation 16:9, review avversariale Sol senza finding P0–P2 e test indipendenti Luna. La lane M1 da build sorgente resta opzionale e non eseguita perché `IPE_M1_SOURCE_BIN_DIR` non è configurato.
+
 Deliverable:
 
 - quattro spazi di coordinate;

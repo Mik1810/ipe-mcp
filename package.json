@@ -10,7 +10,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --exclude 'dist/**'",
     "test:watch": "vitest",
-    "check:m2": "bash scripts/check-m2.sh"
+    "check:m2": "bash scripts/check-m2.sh",
+    "check:m3": "bash scripts/check-m3.sh"
   },
   "dependencies": {
     "saxes": "6.0.0",

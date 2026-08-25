@@ -1,0 +1,33 @@
+{
+  "name": "presentation-16x9",
+  "ipeLayout": { "paper": [1280, 720], "origin": [32, 0], "frame": [1216, 648] },
+  "coordinateSystem": {
+    "paper": { "x": -32, "y": 0, "width": 1280, "height": 720 },
+    "frame": { "x": 0, "y": 0, "width": 1216, "height": 648 }
+  },
+  "sentinels": [
+    { "point": { "x": 32, "y": 648 }, "space": { "kind": "paper" }, "ipe": { "x": 0, "y": 648 } },
+    { "point": { "x": 0.125, "y": 0.875 }, "space": { "kind": "normalized", "relativeTo": "paper" }, "ipe": { "x": 128, "y": 630 } }
+  ],
+  "layout": {
+    "kind": "grid",
+    "container": { "x": 0, "y": 0, "width": 1216, "height": 648 },
+    "padding": 48,
+    "columns": 2,
+    "columnGap": 32,
+    "rowGap": 24,
+    "anchor": "center",
+    "items": [
+      { "id": "a", "size": { "width": 120, "height": 80 } },
+      { "id": "b", "size": { "width": 120, "height": 80 } },
+      { "id": "c", "size": { "width": 120, "height": 80 } },
+      { "id": "d", "size": { "width": 120, "height": 80 } }
+    ]
+  },
+  "expected": [
+    { "id": "a", "box": { "x": 260, "y": 428, "width": 120, "height": 80 } },
+    { "id": "b", "box": { "x": 836, "y": 428, "width": 120, "height": 80 } },
+    { "id": "c", "box": { "x": 260, "y": 140, "width": 120, "height": 80 } },
+    { "id": "d", "box": { "x": 836, "y": 140, "width": 120, "height": 80 } }
+  ]
+}
