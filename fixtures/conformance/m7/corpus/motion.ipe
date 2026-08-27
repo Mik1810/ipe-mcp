@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m7">
+<ipestyle name="m7"><layout paper="320 180" origin="0 0" frame="320 180"/><effect name="m7-fade" duration="1" transition="1" effect="27"/></ipestyle>
+<page title="M7 discrete motion">
+<layer name="base"/><layer name="state0"/><layer name="state1"/><layer name="state2"/>
+<view layers="base state0" active="state0" marked="no" name="motion-0"/>
+<view layers="base state1" active="state1" marked="no" name="motion-1" effect="m7-fade"/>
+<view layers="base state2" active="state2" marked="yes" name="motion-2" effect="m7-fade"/>
+<path layer="base" stroke="black" custom="ipe-mcp:72000000-0000-4000-8000-000000000001">30 90 m 290 90 l</path>
+<path layer="state0" fill="blue" custom="ipe-mcp:72000000-0000-4000-8000-000000000002">15 0 0 15 55 90 e</path>
+<path layer="state1" fill="blue" custom="ipe-mcp:72000000-0000-4000-8000-000000000003">15 0 0 15 160 90 e</path>
+<path layer="state2" fill="blue" custom="ipe-mcp:72000000-0000-4000-8000-000000000004">15 0 0 15 265 90 e</path>
+</page></ipe>

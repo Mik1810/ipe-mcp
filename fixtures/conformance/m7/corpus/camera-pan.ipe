@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m7">
+<ipestyle name="m7"><layout paper="320 180" origin="0 0" frame="320 180"/></ipestyle>
+<page title="M7 whole composition camera pan">
+<layer name="BACKGROUND"/><layer name="camera0"/><layer name="camera1"/><layer name="camera2"/>
+<view layers="BACKGROUND camera0" active="camera0" marked="no" name="camera-0"/>
+<view layers="BACKGROUND camera1" active="camera1" marked="no" name="camera-1"/>
+<view layers="BACKGROUND camera2" active="camera2" marked="yes" name="camera-2"/>
+<path layer="BACKGROUND" fill="white" stroke="black" custom="ipe-mcp:74000000-0000-4000-8000-000000000001">0 0 m 320 0 l 320 180 l 0 180 l h</path>
+<group layer="camera0" custom="ipe-mcp:74000000-0000-4000-8000-000000000002"><path fill="blue">40 0 0 40 80 90 e</path><path fill="red">40 0 0 40 280 90 e</path><text pos="55 30">left</text><text pos="255 30">right</text></group>
+<group layer="camera1" matrix="1 0 0 1 -100 0" custom="ipe-mcp:74000000-0000-4000-8000-000000000003"><path fill="blue">40 0 0 40 80 90 e</path><path fill="red">40 0 0 40 280 90 e</path><text pos="55 30">left</text><text pos="255 30">right</text></group>
+<group layer="camera2" matrix="1 0 0 1 -200 0" custom="ipe-mcp:74000000-0000-4000-8000-000000000004"><path fill="blue">40 0 0 40 80 90 e</path><path fill="red">40 0 0 40 280 90 e</path><text pos="55 30">left</text><text pos="255 30">right</text></group>
+</page></ipe>

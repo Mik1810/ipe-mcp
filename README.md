@@ -9,7 +9,7 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 `70218`. The initial target environment is Ubuntu 26.04 on WSL.
 
 > [!IMPORTANT]
-> This repository is pre-MVP. Milestones M0–M6 are complete, covering the
+> This repository is pre-MVP. Milestones M0–M7 are complete, covering the
 > compatibility contracts, conformance lab, semantic IR, transactional
 > persistence, layout, object authoring, slide composition, and the controlled
 > native validation/render/export adapter. The stdio MCP server is planned for M8,
@@ -38,7 +38,7 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 | [M4](https://github.com/Mik1810/ipe-mcp/issues/1) | Objects, geometry, text, assets, and styles | Complete |
 | [M5](https://github.com/Mik1810/ipe-mcp/issues/2) | Pages, layers, views, and slide composition | Complete |
 | [M6](https://github.com/Mik1810/ipe-mcp/issues/3) | Native validation, rendering, and export | Complete ([details](./docs/core-m6.md)) |
-| [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Planned |
+| [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Complete ([details](./docs/core-m7.md), [matrix](./docs/viewer-effects-m7.md)) |
 | [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Planned |
 | [M9](https://github.com/Mik1810/ipe-mcp/issues/6) | Hardening and MVP release candidate | Planned |
 | [M10](https://github.com/Mik1810/ipe-mcp/issues/7) | Post-MVP extensions and distribution | Future |
@@ -148,6 +148,8 @@ capability and failure matrix.
 - [docs/conformance-m1.md](./docs/conformance-m1.md): native conformance lab;
 - [docs/core-m2.md](./docs/core-m2.md): IR, XML, identity, and persistence;
 - [docs/core-m3.md](./docs/core-m3.md): coordinates and layout;
+- [docs/core-m7.md](./docs/core-m7.md): bounded discrete animation and handout policies;
+- [docs/viewer-effects-m7.md](./docs/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
 - [report-source.md](./report-source.md): source dossier and traceability;
 - [ORCHESTRATOR_PROMPT.md](./ORCHESTRATOR_PROMPT.md): milestone execution and
   review protocol.

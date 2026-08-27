@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m7">
+<ipestyle name="m7"><layout paper="320 180" origin="0 0" frame="320 180"/></ipestyle>
+<page title="M7 reveal handout" marked="yes">
+<notes>Marked initial and final states remain readable in the animation handout.</notes>
+<layer name="base"/><layer name="first"/><layer name="second"/>
+<view layers="base" active="base" marked="yes" name="initial"/>
+<view layers="base first" active="first" marked="no" name="first-step"/>
+<view layers="base first second" active="second" marked="no" name="complete"/>
+<view layers="base first second" active="second" marked="yes" name="handout-final"/>
+<path layer="base" stroke="black" pen="2" custom="ipe-mcp:71000000-0000-4000-8000-000000000001">20 20 m 300 20 l 300 160 l 20 160 l h</path>
+<text layer="base" pos="40 135" size="large" custom="ipe-mcp:71000000-0000-4000-8000-000000000002">Discrete reveal</text>
+<text layer="first" pos="55 90" stroke="blue" custom="ipe-mcp:71000000-0000-4000-8000-000000000003">1. Ordered group</text>
+<text layer="second" pos="55 55" stroke="red" custom="ipe-mcp:71000000-0000-4000-8000-000000000004">2. Readable final state</text>
+</page></ipe>
