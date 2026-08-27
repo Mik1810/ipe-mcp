@@ -324,9 +324,18 @@ export function projectXml(document: XmlDocument): ProjectedDocument {
         const id = layerIds.get(name);
         if (matrix !== undefined && id !== undefined) transforms[id] = matrix;
       }
+      const attributeMaps = children(viewXml, "map").map((map, mapIndex) => {
+        const attribute = map.attributes.kind;
+        const from = map.attributes.from;
+        const to = map.attributes.to;
+        if (attribute === undefined || from === undefined || to === undefined) {
+          throw new Error(`Invalid attribute map at page[${pageIndex}].view[${viewIndex}].map[${mapIndex}]`);
+        }
+        return { attribute, values: { [from]: to } };
+      });
       const activeLayerId = layerIds.get(active) ?? layers[0]!.id;
       const visibleLayerIds = names.map((name) => layerIds.get(name)).filter((id): id is string => id !== undefined);
-      views.push({ id: viewXml.attributes[ID_ATTRIBUTE] ?? stableId("view", `${pageIndex}/${viewIndex}`), ...(viewXml.attributes.name === undefined ? {} : { name: viewXml.attributes.name }), visibleLayerIds: visibleLayerIds.length > 0 ? visibleLayerIds : [activeLayerId], activeLayerId, marked: bool(viewXml.attributes.marked, false), ...(Object.keys(transforms).length > 0 ? { layerTransforms: transforms } : {}), xml: asDomainXml(viewXml) });
+      views.push({ id: viewXml.attributes[ID_ATTRIBUTE] ?? stableId("view", `${pageIndex}/${viewIndex}`), ...(viewXml.attributes.name === undefined ? {} : { name: viewXml.attributes.name }), visibleLayerIds: visibleLayerIds.length > 0 ? visibleLayerIds : [activeLayerId], activeLayerId, marked: bool(viewXml.attributes.marked, false), ...(attributeMaps.length > 0 ? { attributeMaps } : {}), ...(Object.keys(transforms).length > 0 ? { layerTransforms: transforms } : {}), ...(viewXml.attributes.effect === undefined ? {} : { transition: { effect: viewXml.attributes.effect } }), xml: asDomainXml(viewXml) });
     }
     if (views.length === 0) { views.push({ id: stableId("view", `${pageIndex}/0`), visibleLayerIds: layers.map((item) => item.id), activeLayerId: layerIds.get(defaultLayer) ?? layers[0]!.id, marked: false }); }
     const objects: IpeObject[] = [];

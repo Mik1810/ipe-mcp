@@ -13,7 +13,8 @@
     "check:m2": "bash scripts/check-m2.sh",
     "check:m3": "bash scripts/check-m3.sh",
     "check:m4": "bash scripts/check-m4.sh",
-    "check:m5": "bash scripts/check-m5.sh"
+    "check:m5": "bash scripts/check-m5.sh",
+    "check:m6": "bash scripts/check-m6.sh"
   },
   "dependencies": {
     "jpeg-js": "0.4.4",

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m6">
+<info title="M6 fixture" author="ipe-mcp" subject="native semantic round-trip"/>
+<preamble>\usepackage{amsmath}</preamble>
+<bitmap id="1" width="2" height="2" ColorSpace="DeviceRGBAlpha" Filter="FlateDecode" encoding="base64" length="18" alphaLength="12">eNr7Lycn9x+E/9+RAwAiZwWreNr7v+D/fwAI3QOe</bitmap>
+<ipestyle name="m6"><layout paper="320 180" origin="0 0" frame="320 180"/><color name="accent" value="0.1 0.3 0.8"/><effect name="m6-fade" duration="1" transition="1" effect="27"/><symbol name="mark/m6(sx)" transformations="translations"><path fill="sym-stroke">0.8 0 0 0.8 0 0 e</path></symbol></ipestyle>
+<page title="M6 native validation" section="semantic" subsection="round-trip" marked="yes" x-ipe-mcp-id="page-600000000000000000000001">
+<notes>Preserve native page metadata.</notes>
+<layer name="base" edit="yes" snap="visible" x-ipe-mcp-id="layer-600000000000000000000001"/><layer name="detail" edit="yes" snap="never" x-ipe-mcp-id="layer-600000000000000000000002"/>
+<view layers="base" active="base" marked="no" name="overview" x-ipe-mcp-id="view-600000000000000000000001"><transform layer="base" matrix="1 0 0 1 0 0"/></view>
+<view layers="base detail" active="detail" marked="yes" name="details" effect="m6-fade" x-ipe-mcp-id="view-600000000000000000000002"><map kind="color" from="black" to="accent"/><transform layer="detail" matrix="1 0 0 1 5 0"/></view>
+<path layer="base" stroke="accent" pen="2">30 30 m 290 30 l 290 150 l 30 150 l h</path>
+<text layer="base" pos="50 110" stroke="black" type="label">M6 $x^2 + y^2$</text>
+<path layer="detail" fill="accent">20 0 0 20 230 95 e</path>
+<image layer="base" bitmap="1" rect="250 45 275 70"/>
+<group layer="base"><path stroke="black">45 55 m 85 55 l 85 80 l 45 80 l h</path><path stroke="accent">45 55 m 85 80 l</path></group>
+<use layer="base" name="mark/m6(sx)" pos="110 65" stroke="accent" size="12"/>
+</page>
+</ipe>

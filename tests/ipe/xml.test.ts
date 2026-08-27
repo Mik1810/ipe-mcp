@@ -65,6 +65,24 @@ describe("Ipe 70218 XML boundary", () => {
     });
   });
 
+  it("projects and deterministically serializes view maps, effects, transforms, and retained XML", () => {
+    const source = '<ipe version="70218"><page><layer name="a"/><view layers="a" active="a" effect="old" x-retained="yes"><map kind="color" from="old" to="red"/><transform layer="a" matrix="1 0 0 1 2 3"/><x-view probe="kept"/></view></page></ipe>';
+    const document = ipeDocumentCodec.parse(source);
+    const view = document.pages[0]!.views[0]!;
+    expect(view).toMatchObject({ attributeMaps: [{ attribute: "color", values: { old: "red" } }], transition: { effect: "old" } });
+    view.attributeMaps = [{ attribute: "pen", values: { thick: "normal", thin: "heavier" } }, { attribute: "color", values: { old: "blue" } }];
+    view.transition = { effect: "fade" };
+    view.layerTransforms = { [document.pages[0]!.layers[0]!.id]: [1, 0, 0, 1, 4, 5] };
+    const output = ipeDocumentCodec.serialize(document);
+    expect(output).toMatch(/effect="fade"[^>]*x-retained="yes"/u);
+    expect(output.indexOf('<map kind="color"')).toBeLessThan(output.indexOf('<map kind="pen"'));
+    expect(output).toContain('<map kind="pen" from="thick" to="normal"/>');
+    expect(output).toContain('<map kind="pen" from="thin" to="heavier"/>');
+    expect(output).toContain('<transform layer="a" matrix="1 0 0 1 4 5"/>');
+    expect(output).toContain('<x-view probe="kept"/>');
+    expect(ipeDocumentCodec.serialize(ipeDocumentCodec.parse(output))).toBe(output);
+  });
+
   it("preserves whitespace-only text payloads exactly", () => {
     const source = '<ipe version="70218"><page><layer name="alpha"/><text layer="alpha">   </text></page></ipe>';
     const output = canonicalizeIpe(source);

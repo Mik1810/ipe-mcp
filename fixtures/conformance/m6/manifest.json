@@ -1,0 +1,20 @@
+{
+  "milestone": "M6",
+  "format": 70218,
+  "full": {
+    "file": "full.xml",
+    "pages": 1,
+    "views": 2,
+    "pdfPages": 2,
+    "visualGoldens": [
+      { "format": "png", "page": 1, "view": 1, "width": 320, "height": 180, "sha256": "934452e7d377b8b16c9939ab5ab107334bb1e069031e4557c9a789cc5e5364c5" },
+      { "format": "png", "page": 1, "view": 2, "width": 320, "height": 180, "sha256": "a966c332593d9e4d2779150d47d6138c42676573115c3b64ef4f333d287a2301" },
+      { "format": "svg", "page": 1, "view": 1, "width": 320, "height": 180, "sha256": "8dc8564be4274f97329a75abf9b23302fcd72e56dcc581e4e01d0fe6bd262176" },
+      { "format": "svg", "page": 1, "view": 2, "width": 320, "height": 180, "sha256": "625afafef6c1da3dc8dfe7a42027ad0efe8b77270f682a764ff75bcf73fa9b6f" }
+    ]
+  },
+  "negative": [
+    { "file": "style-error.xml", "error": "NATIVE_STYLE_ERROR" },
+    { "file": "tex-error.xml", "error": "NATIVE_TEX_ERROR" }
+  ]
+}

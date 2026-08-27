@@ -600,6 +600,8 @@ Gate:
 
 ### M6 — Native Adapter, Rendering, and Export
 
+Status: implemented locally; `scripts/check-m6.sh` is the cumulative acceptance gate.
+
 Deliverables:
 
 - `ipescript`, `runLatex`, `checkStyle`, and export helpers;

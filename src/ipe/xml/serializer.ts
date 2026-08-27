@@ -23,6 +23,7 @@ const KNOWN_ATTRIBUTE_ORDER: Record<string, readonly string[]> = {
   page: ["title", "section", "subsection", "marked", "x-ipe-mcp-name", "x-ipe-mcp-id"],
   layer: ["name", "edit", "snap", "x-ipe-mcp-id"],
   view: ["layers", "active", "marked", "name", "effect", "x-ipe-mcp-id"],
+  map: ["kind", "from", "to"],
   transform: ["layer", "matrix"],
   effect: ["name", "duration", "transition", "effect"],
   path: ["layer", "matrix", "pos", "pin", "stroke", "fill", "pen", "dash", "cap", "join", "fillrule", "arrow", "rarrow", "opacity", "stroke-opacity", "tiling", "gradient", "custom", "url"],
@@ -142,7 +143,18 @@ function viewElement(view: View, names: ReadonlyMap<string, string>): XmlElement
   element.attributes.active = layerName(view.activeLayerId, names);
   element.attributes.marked = view.marked ? "yes" : "no";
   setOptionalAttribute(element.attributes, "name", view.name);
-  const retained = element.children.filter((child) => typeof child === "string" || child.name !== "transform");
+  const effect = view.transition?.effect;
+  if (effect !== undefined && typeof effect !== "string") throw new Error(`View '${view.id}' transition.effect must be a string`);
+  setOptionalAttribute(element.attributes, "effect", effect as string | undefined);
+  const retained = element.children.filter((child) => typeof child === "string" || (child.name !== "map" && child.name !== "transform"));
+  const maps = (view.attributeMaps ?? []).flatMap((map) => Object.entries(map.values).map(([from, to]) => ({
+    type: "element" as const,
+    name: "map",
+    attributes: { kind: map.attribute, from, to },
+    children: [] as XmlChild[],
+  }))).sort((left, right) => left.attributes.kind.localeCompare(right.attributes.kind)
+    || left.attributes.from.localeCompare(right.attributes.from)
+    || left.attributes.to.localeCompare(right.attributes.to));
   const canonicalTransforms = view.layerTransforms ?? Object.fromEntries(
     (view.transforms ?? []).map((transform) => [transform.layerId, transform.matrix]),
   );
@@ -152,7 +164,7 @@ function viewElement(view: View, names: ReadonlyMap<string, string>): XmlElement
     attributes: { layer: layerName(id, names), matrix: matrixText(matrix) },
     children: [] as XmlChild[],
   }));
-  element.children = [...retained, ...transforms];
+  element.children = [...retained, ...maps, ...transforms];
   return element;
 }
 
