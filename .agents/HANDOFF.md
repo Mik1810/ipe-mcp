@@ -1,45 +1,36 @@
-# Compact Handoff Template
+# Compact Handoff Format
 
-Use this template when moving work to a fresh agent.
+Use compact handoffs between roles. Prefer 500-1500 tokens and usually less.
 
 ```yaml
 kind: agent-handoff
-milestone: "<M# or task id>"
-role_completed: "<implementer|reviewer|gate>"
-base_revision: "<sha/branch>"
-head_revision: "<sha>"
+milestone: M#
+issue: "#123"
+role_completed: implementer|reviewer|corrector|finding-verifier|gate
+base_revision: <sha>
+candidate_digest: <git-index-tree-sha-or-null>
 
-goal: >-
-  <one short paragraph>
+objective: >-
+  <one short sentence>
 
-relevant_constraints:
-  - "<requirement / ADR / invariant>"
+acceptance_status:
+  - criterion: <criterion>
+    status: pending|pass|fail
 
-changed_paths:
-  - "<path>"
-
-findings:
-  blockers: []
-  majors: []
-  minors: []
+review_findings:
+  - id: R1
+    severity: BLOCKER|MAJOR|MINOR|DEFERRED
+    status: open|fixed|verified|deferred
+    summary: <short>
 
 verification:
-  passed:
-    - "<command/check>"
+  passed: []
   failed: []
-  recommended_next:
-    - "<targeted command/check>"
 
-caveats:
-  - "<only if relevant>"
-
-next_role: "<reviewer|implementer|gate|done>"
+changed_paths: []
+deferred_backlog: []
+blockers: []
+next_role: reviewer|corrector|finding-verifier|gate|done
 ```
 
-## Rules
-
-- Prefer 500-1500 tokens total.
-- Never paste complete prior conversations.
-- Never paste large successful test logs.
-- Include only failures that matter to the next worker.
-- Reference files/commits instead of reproducing their entire contents.
+Do not include raw successful logs, old transcripts, or historical discussion.

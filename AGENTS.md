@@ -4,141 +4,285 @@ These rules apply to every agent working in this repository.
 
 ## Primary objective
 
-Produce correct changes while minimizing unnecessary model context, repeated repository reads, repeated test execution, and model/tool round trips.
+Produce correct milestone-sized changes with bounded context, bounded tool/model round trips, and a workflow that **converges to closure**.
+
+Correctness has priority over efficiency budgets. However, open-ended exploration, repeated general reviews, and repeated full-suite execution are not acceptable substitutes for a finite acceptance process.
 
 ## 1. Atomic worker lifetime
 
-- A sub-agent owns exactly one atomic task.
-- Do not reuse a sub-agent across milestones, issues, or unrelated follow-up tasks.
-- Do not carry a reviewer from one milestone into the next.
-- If a substantial new task appears, stop and hand it off to a fresh agent.
-- At most one small follow-up is allowed after the original task. Anything larger requires a fresh worker.
+- A worker owns exactly one atomic role/task.
+- Do not reuse a worker across milestones, issues, or role transitions.
+- Do not carry an implementer into review, a reviewer into correction, or a verifier into a new review.
+- At most one small clarification may be sent to a completed worker. Substantial follow-up requires a fresh worker.
+- When the assigned task is complete, report and terminate.
 
-## 2. Diff-first inspection
+## 2. Explicit non-empty task payload
+
+Every fresh worker must receive an explicit compact payload. Do not spawn repository workers with an empty `Payload:` when the parent can state the task.
+
+Include, when applicable:
+
+- milestone / issue identifier;
+- role;
+- exact atomic goal;
+- base revision;
+- candidate digest for read-only roles;
+- acceptance criteria;
+- relevant docs / ADRs / threat-model requirements;
+- expected/allowed paths;
+- findings to address or verify;
+- verification commands;
+- explicit out-of-scope items.
+
+Use `.agents/TASK_PAYLOAD.template.yaml`.
+
+## 3. Repository-local source of truth
+
+For repository work, authoritative context is:
+
+1. explicit task payload;
+2. referenced issue/milestone and acceptance criteria;
+3. repository files/project documentation;
+4. Git state/diff;
+5. compact handoff from the immediately preceding role.
+
+Do **not** inspect global Codex memories, unrelated conversation/session history, previous agent transcripts, or external scratch memories unless the task explicitly requires them.
+
+Do not reconstruct history that is already encoded in Git, the issue, or the handoff.
+
+## 4. Convergent milestone lifecycle
+
+The default lifecycle is finite:
+
+```text
+IMPLEMENT
+  -> freeze candidate C0
+  -> ONE general REVIEW
+  -> findings F
+  -> batch CORRECTION of accepted blocking findings
+  -> freeze candidate C1
+  -> FINDING VERIFIER checks only F
+  -> FINAL GATE
+  -> CLOSE
+```
+
+### Hard convergence rules
+
+- **At most one general semantic/adversarial review per milestone by default.**
+- After that review, do **not** start another general review merely because fixes were applied.
+- After correction, use a **finding verifier**, not another reviewer.
+- The finding verifier verifies only the designated finite finding set.
+- A newly noticed issue during finding verification blocks closure only when it is an immediate `BLOCKER`/P0/P1 regression directly introduced by the reviewed fixes.
+- Other newly noticed issues are deferred to the hardening/backlog process and do not reopen the milestone.
+- An additional general review requires explicit user/orchestrator justification outside the default workflow.
+
+See `.agents/WORKFLOW.md`.
+
+## 5. Scope bounded by the milestone
+
+Review and verification are against the milestone's stated acceptance criteria, architecture constraints, and explicitly applicable threat model.
+
+Do not silently expand a milestone into an unbounded hardening exercise.
+
+If a valid concern is real but outside the milestone's acceptance scope:
+
+- record it as deferred/backlog work;
+- classify its impact;
+- do not block closure unless it violates an acceptance criterion or is an immediate critical regression.
+
+## 6. Phase barriers and no concurrent mutation
+
+Source-changing workers and read-only workers must never overlap on the same candidate.
+
+Before spawning reviewer, finding verifier, or final gate:
+
+1. all source-changing workers for the phase must have terminated;
+2. intended candidate changes must be staged;
+3. there must be no unstaged tracked changes;
+4. freeze the candidate with `scripts/freeze-candidate.sh`;
+5. pass the resulting candidate digest to the read-only worker.
+
+While a reviewer/verifier/gate is active:
+
+- do not spawn a source-changing worker against the same worktree/candidate;
+- do not modify or restage the candidate;
+- if the candidate digest changes, the read-only worker must abort rather than review a moving target.
+
+## 7. Candidate identity: staged digest is authoritative
+
+Read-only roles review the **staged candidate**, not an ambiguous mixture of staged and unstaged content.
+
+- Candidate digest = Git index tree digest (`git write-tree`).
+- The worktree must match the index for tracked files before read-only work begins.
+- Read-only roles must verify the expected digest before and after their task using `scripts/verify-candidate.sh`.
+- Use `git diff --cached <base>` for candidate review when the candidate is staged but not committed.
+
+Never knowingly review an old staged candidate while newer fixes remain unstaged.
+
+## 8. Diff-first inspection
 
 For review, verification, and follow-up work:
 
-1. Identify the base commit or base branch.
-2. Inspect `git status` and `git diff --stat` first.
-3. Inspect `git diff <base>...HEAD` before opening unrelated files.
-4. Read unchanged files only when the diff references a dependency or the specification requires it.
-5. Never start by recursively reading the whole repository unless explicitly required.
+1. validate candidate identity;
+2. inspect status, diff stat, changed paths, and relevant staged diff together;
+3. open unchanged dependencies only when needed to validate a concrete requirement;
+4. avoid repository-wide reads by default.
 
-Prefer work proportional to the change set rather than work proportional to repository size.
+Prefer work proportional to the change set rather than repository size.
 
-## 3. Tool-call efficiency
+Use `scripts/agent-diff-context.sh <base> --cached` for staged candidates.
 
-- Batch independent shell commands into one tool call whenever possible.
-- Do not execute a sequence of trivial commands one at a time if they can be combined safely.
-- Avoid rereading a file unless it changed or the previous read was insufficient.
-- Avoid repeated `git status`, `git diff`, or equivalent checks without a reason.
-- Stop exploring once enough evidence exists to complete the assigned task.
+## 9. Tool-call efficiency
 
-### Default tool budget
+- Batch independent shell commands into one call when safe.
+- Do not run predictable inspection commands one by one.
+- Avoid rereading unchanged files without a concrete reason.
+- Avoid repeated `git status`, `git diff`, or equivalent checks without new information.
+- Stop once enough evidence exists for the assigned role.
 
-- Small task: target <= 8 tool calls.
-- Normal review/gate: target <= 12 tool calls.
-- Complex task: target <= 20 tool calls.
+### Default round-trip targets
 
-These are budgets, not correctness limits. Exceed them only when necessary and explain why in the final report.
+- Small task: <= 8 tool calls.
+- Normal implementation/correction: <= 15.
+- Normal review/verifier/gate: <= 10-12.
+- Complex atomic task: <= 20 with concrete justification.
 
-## 4. Testing policy
+These are targets, not correctness limits.
 
-During implementation:
+## 10. Tool-output hygiene
 
-- Run the smallest relevant targeted tests after a local change.
-- Do not run the entire test suite after every micro-fix.
-- Batch independent fixes before a full verification run.
+Tool output becomes model context. Keep it bounded.
+
+- Prefer path-scoped diffs and searches.
+- Prefer concise/quiet test reporters.
+- Do not dump generated artifacts, lockfiles, minified files, snapshots, or full successful logs unless required.
+- Show the smallest useful failure excerpt.
+- Batch related diagnostics into one labeled command bundle.
+
+## 11. Patch batching
+
+Do not patch immediately after each discovered issue when related edits can be understood together.
+
+Preferred sequence:
+
+1. inspect enough context to understand the coherent change set;
+2. plan all related edits;
+3. apply one primary patch batch;
+4. run targeted verification;
+5. apply one correction batch if evidence requires it;
+6. reserve a third patch round only for an exceptional final correction.
+
+Target <= 3 patch rounds per atomic implementation/correction task.
+
+## 12. Failure diagnostics
+
+After a failed build/test/check:
+
+```text
+FAIL
+  -> one diagnostic bundle
+  -> reason over combined evidence
+  -> one correction batch
+  -> one focused retest
+```
+
+Do not enter probe-by-probe loops when the likely diagnostics can be collected together.
+
+## 13. Testing policy
+
+During implementation/correction:
+
+- use the smallest relevant targeted tests after coherent change batches;
+- do not run the full suite after every micro-fix;
+- batch independent fixes before broad verification;
+- normally perform at most one broad implementation-time verification before handoff.
 
 During final gate:
 
-- Run the complete required verification suite once after the final candidate is ready.
-- Re-run only the failing or affected checks after a fix, then perform one final complete gate if the fix can affect global correctness.
+- run the complete required verification suite once on the frozen final candidate;
+- if it fails, return `FAIL` with evidence; do not mutate source;
+- any correction creates a new candidate and requires a fresh gate after targeted confirmation.
 
-## 5. Review policy
+## 14. General review policy
 
-Reviewers are read-only.
+General reviewers are read-only and are used once per milestone by default.
 
 A reviewer must:
 
-- inspect the full relevant diff before reporting;
+- validate the candidate digest;
+- inspect the full relevant staged diff before reporting;
+- review against the milestone acceptance criteria and applicable constraints;
 - collect all independent findings before returning;
 - classify findings as `BLOCKER`, `MAJOR`, or `MINOR`;
-- provide file/line evidence where possible;
+- distinguish **in-scope blocking findings** from **deferred hardening/backlog observations**;
 - avoid implementing fixes;
-- avoid interactive `finding -> fix -> finding -> fix` loops.
+- return one findings batch and stop.
 
-Return all findings in one batch.
+Do not run an interactive `finding -> fix -> finding -> fix` loop.
 
-## 6. Gate policy
+## 15. Finding verification policy
 
-Gate agents are read-only except for non-source temporary test artifacts when unavoidable.
+A finding verifier is not a general reviewer.
 
-A gate agent verifies, in this order:
+It receives a finite finding set from the designated general review and returns, for each finding:
 
-1. final diff sanity;
-2. targeted checks if needed;
-3. type/lint/static checks;
-4. unit/integration tests required by the repository;
-5. build/package verification;
-6. unresolved review findings.
+- `FIXED`;
+- `PARTIALLY_FIXED`;
+- `NOT_FIXED`.
 
-Return only `PASS` or `FAIL` plus concise evidence and exact failing commands/checks.
+It must not restart broad architectural/security/adversarial exploration.
 
-## 7. Context discipline
+New observations are non-blocking backlog items unless they are immediate P0/P1 regressions directly introduced by the fixes being verified.
 
-- Do not depend on long conversational history when repository artifacts can carry the state.
-- Persist cross-agent state in concise files or structured handoffs.
-- Keep handoffs focused on current goal, base/head revisions, constraints, unresolved findings, and verification commands.
-- Do not copy full prior conversations into a new agent.
-- Do not include old milestone history unless it directly constrains the current task.
+See `.agents/FINDING_VERIFIER.md`.
 
-### Context thresholds
+## 16. Gate policy
 
-If context usage is observable, use these operating thresholds:
+Gate workers are read-only.
 
-- < 80k tokens: normal operation.
-- 80k-120k: finish the current atomic task; do not accept a new substantial task.
-- > 120k: create a concise handoff and use a fresh worker.
-- > 160k: do not continue exploratory work; hand off immediately.
+A gate verifies the frozen final candidate and acceptance criteria. It does not search for a new unbounded set of design/security findings.
 
-If context usage is not observable, use task boundaries as the reset mechanism.
+Return `PASS` or `FAIL` plus concise evidence and stop.
 
-## 8. Handoff size
+## 17. Context discipline
 
-A handoff should normally fit in roughly 500-1500 tokens.
+- Persist cross-agent state in compact structured payloads/handoffs.
+- Do not copy transcripts or large logs into fresh workers.
+- Do not include old milestone history unless it directly constrains the task.
 
-Include only:
+If context usage is observable:
 
-- task/milestone;
-- base revision and current HEAD;
-- goal;
-- relevant constraints/ADRs/spec sections;
-- changed paths;
-- unresolved findings;
-- targeted verification commands;
-- known caveats.
+- < 80k: normal operation;
+- 80k-120k: finish current atomic task; accept no substantial new task;
+- > 120k: hand off follow-up work to a fresh worker;
+- > 160k: stop exploration and hand off immediately.
 
-Do not include raw logs unless a specific failure requires them.
+## 18. Handoff size
 
-## 9. Role separation
+Handoffs should normally fit in roughly 500-1500 tokens and preferably less.
 
-Use separate workers for separate roles:
+Include only state needed by the next role: milestone/issue, candidate/base, acceptance status, findings, changed paths, verification results, caveats, and next role.
 
-- Implementer: writes code and runs targeted checks.
-- Reviewer: semantic/correctness review; read-only.
-- Gate: final verification; read-only.
+## 19. Role separation
 
-Do not assign multiple agents to repeat the same full-repository review unless independent redundancy is explicitly required.
+Use distinct roles:
 
-## 10. Stop conditions
+- **Orchestrator**: owns finite state machine and phase barriers.
+- **Implementer/Corrector**: writes source and targeted tests.
+- **General Reviewer**: one bounded semantic/adversarial review.
+- **Finding Verifier**: verifies only the finite review finding set.
+- **Gate**: executes final acceptance verification.
+
+See `.agents/ORCHESTRATOR.md`, `.agents/IMPLEMENTER.md`, `.agents/REVIEWER.md`, `.agents/FINDING_VERIFIER.md`, and `.agents/GATE.md`.
+
+## 20. Stop conditions
 
 An agent must stop when:
 
-- the assigned atomic task is complete;
-- enough evidence exists for the requested conclusion;
-- the task has changed materially;
-- a follow-up would require substantial new repository exploration;
-- the worker should be replaced by a fresh role-specific agent.
+- its assigned atomic task is complete;
+- enough evidence exists for its role-specific conclusion;
+- the candidate digest changes unexpectedly;
+- the task changes materially;
+- the role has reached its handoff boundary.
 
-Do not continue work merely to increase confidence after the acceptance criteria are already satisfied.
+Do not continue merely to increase confidence after the finite acceptance process has been satisfied.

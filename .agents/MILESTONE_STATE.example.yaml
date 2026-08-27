@@ -1,25 +1,37 @@
-milestone: M4
-status: implementation
-base_revision: "<base-sha>"
-head_revision: "<head-sha>"
+kind: milestone-state
+milestone: "M#"
+issue: "#<number>"
+base_revision: "<sha>"
+head_revision: "<sha>"
+candidate_digest: null
+phase: "<planning|implementing|review_ready|reviewing|correcting|verify_ready|verifying_findings|gate_ready|gating|done|blocked>"
 
-goal: "<short milestone goal>"
+objective: >-
+  <one short paragraph>
 
-requirements:
-  - id: R1
-    text: "<requirement>"
-    status: pending
+acceptance_criteria:
+  - id: AC1
+    criterion: "<short criterion>"
+    status: "<pending|pass|fail>"
+
+general_review:
+  completed: false
+  candidate_digest: null
+  exceptional_second_review_authorized: false
+  exceptional_reason: null
+  findings: []
+
+finding_verification:
+  verified: []
+  unresolved: []
+  direct_regressions: []
+
+final_gate:
+  candidate_digest: null
+  status: "<pending|pass|fail>"
+  checks: []
 
 changed_paths: []
-
-review:
-  status: not_started
-  blockers: []
-  majors: []
-  minors: []
-
-verification:
-  targeted: []
-  final: []
-
-next_role: implementer
+deferred_backlog: []
+known_caveats: []
+next_role: "<implementer|reviewer|corrector|finding-verifier|gate|done>"

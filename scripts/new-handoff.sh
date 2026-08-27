@@ -1,48 +1,66 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Creates a compact handoff skeleton populated with git revisions.
-# Usage: scripts/new-handoff.sh <milestone> <base-revision> [output-file]
+# Create a compact handoff skeleton populated with Git revisions and changed paths.
+# Usage: scripts/new-handoff.sh <milestone> <base-revision> [output-file] [issue] [candidate-digest]
 
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 <milestone> <base-revision> [output-file]" >&2
+  echo "usage: $0 <milestone> <base-revision> [output-file] [issue] [candidate-digest]" >&2
   exit 2
 fi
 
 MILESTONE="$1"
 BASE="$2"
 OUT="${3:-.agent-handoff.yaml}"
+ISSUE="${4:-null}"
+CANDIDATE="${5:-null}"
 
 BASE_SHA="$(git rev-parse "$BASE")"
 HEAD_SHA="$(git rev-parse HEAD)"
 
-cat > "$OUT" <<YAML
+{
+  cat <<YAML
 kind: agent-handoff
 milestone: "$MILESTONE"
-role_completed: "<implementer|reviewer|gate>"
+issue: "$ISSUE"
+role_completed: "<implementer|reviewer|corrector|finding-verifier|gate>"
 base_revision: "$BASE_SHA"
 head_revision: "$HEAD_SHA"
+candidate_digest: "$CANDIDATE"
 
-goal: >-
+objective: >-
   <short goal>
 
-relevant_constraints: []
+acceptance_status: []
 
-changed_paths:
-$(git diff --name-only "$BASE_SHA"..."$HEAD_SHA" | sed 's/^/  - "/; s/$/"/' || true)
-
-findings:
-  blockers: []
-  majors: []
-  minors: []
+review_findings: []
 
 verification:
   passed: []
   failed: []
-  recommended_next: []
 
-caveats: []
-next_role: "<reviewer|implementer|gate|done>"
+changed_paths:
 YAML
+
+  # If a staged candidate exists, it is authoritative for the handoff.
+  if ! git diff --cached --quiet --; then
+    mapfile -t changed < <(git diff --cached --name-only "$BASE_SHA")
+  else
+    mapfile -t changed < <(git diff --name-only "$BASE_SHA"..."$HEAD_SHA")
+  fi
+
+  if ((${#changed[@]} == 0)); then
+    printf '  []\n'
+  else
+    printf '  - "%s"\n' "${changed[@]}"
+  fi
+
+  cat <<'YAML'
+
+deferred_backlog: []
+blockers: []
+next_role: "<reviewer|corrector|finding-verifier|gate|done>"
+YAML
+} > "$OUT"
 
 printf 'created %s\n' "$OUT"

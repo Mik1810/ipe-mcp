@@ -1,0 +1,36 @@
+kind: agent-task
+milestone: "<M# or task id>"
+issue: "<#number or null>"
+role: "<implementer|corrector|reviewer|finding-verifier|gate>"
+base_revision: "<sha/branch>"
+candidate_digest: "<git-index-tree-sha for read-only role, otherwise null>"
+
+goal: >-
+  <one concise sentence describing exactly this worker's atomic task>
+
+acceptance_criteria:
+  - "<criterion 1>"
+
+relevant_context:
+  docs:
+    - "<path#section if needed>"
+  constraints:
+    - "<ADR/invariant/threat-model requirement>"
+
+scope:
+  expected_paths:
+    - "<path or glob>"
+  out_of_scope:
+    - "<explicitly excluded work>"
+
+findings_to_address: []
+findings_to_verify: []
+
+verification:
+  targeted:
+    - "<command>"
+  final:
+    - "<command>"
+
+expected_output: >-
+  <compact role-specific result>

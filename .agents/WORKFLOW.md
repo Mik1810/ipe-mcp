@@ -1,60 +1,73 @@
-# Efficient Milestone Workflow
+# Convergent Milestone Workflow
 
-Use this lifecycle for each milestone or issue.
+Use this finite lifecycle for each milestone/issue.
 
 ```text
-MAIN / IMPLEMENTER
-    |
-    | implement complete atomic task
-    | targeted tests
-    v
-candidate diff
+ORCHESTRATOR
     |
     v
-FRESH REVIEWER (read-only)
+FRESH IMPLEMENTER
     |
-    | complete diff review
-    | all findings in one batch
+    | coherent patch batches + targeted tests
     v
-review report
+stage intended candidate
+    |
+    | freeze C0
+    v
+ONE FRESH GENERAL REVIEWER
+    |
+    | finite findings set F
+    +-------------------------------+
+    | no blocking findings          | accepted BLOCKER/MAJOR findings
+    v                               v
+GATE_READY                    FRESH CORRECTOR
+                                    |
+                                    | batch all accepted fixes
+                                    | targeted verification
+                                    v
+                              stage intended candidate
+                                    |
+                                    | freeze C1
+                                    v
+                           FRESH FINDING VERIFIER
+                           verifies only F
+                                    |
+                         +----------+----------+
+                         | PASS                | unresolved F
+                         v                     v
+                     GATE_READY          bounded correction
+                                              |
+                                              +-> verify only unresolved F
+
+GATE_READY
     |
     v
-MAIN / IMPLEMENTER
+FRESH FINAL GATE
     |
-    | batch ALL accepted fixes
-    | targeted tests
-    v
-final candidate
+    +---- PASS -> CLOSE ISSUE / DONE
     |
-    v
-FRESH GATE (read-only)
-    |
-    | final checks once
-    v
-PASS / FAIL
+    +---- FAIL -> bounded correction for concrete failed check
+                 -> freeze new candidate -> fresh final gate
 ```
 
 ## Mandatory invariants
 
-1. No worker crosses a milestone boundary.
-2. Reviewer and gate are fresh workers.
-3. Reviewer is read-only.
-4. Gate is read-only.
-5. Findings are batched.
-6. Fixes are batched.
-7. Full verification is not run after every micro-fix.
-8. Review starts from the diff, not from a repository-wide scan.
-9. Cross-worker state is passed through compact handoffs.
-10. A completed worker terminates instead of waiting for future tasks.
+1. One atomic role/task per worker.
+2. Every worker gets an explicit non-empty payload.
+3. No source-changing worker runs concurrently with reviewer/verifier/gate on the same candidate.
+4. Read-only roles operate on a frozen staged candidate digest.
+5. No unstaged tracked changes are allowed at freeze/review/verifier/gate boundaries.
+6. At most one general review per milestone by default.
+7. Review findings are returned as one finite set.
+8. Corrections batch all accepted blocking findings.
+9. After correction, a finding verifier checks only that finite set.
+10. New non-critical/out-of-scope observations during verification are deferred, not used to reopen review.
+11. Final gate checks acceptance; it is not another adversarial review.
+12. Gate failure produces a bounded correction task, not a new general review.
+13. Related fixes target <= 3 patch rounds.
+14. Failed checks trigger one diagnostic bundle before correction.
+15. Cross-worker state is compact and repository-local.
 
-## Recommended model allocation
+## Exceptional second general review
 
-Use the cheapest model/reasoning level that reliably satisfies the role:
-
-- routine implementation: normal/high reasoning;
-- targeted testing/gate: normal reasoning unless failures are complex;
-- semantic review: high reasoning;
-- architecture/security/concurrency audit: strongest model/high reasoning;
-- exceptional final audit only: maximum reasoning.
-
-Do not spend maximum reasoning on mechanical test execution or trivial repository inspection.
+Only when explicitly justified by material scope/redesign change or explicit redundant-review request. Record the reason before spawning it.
