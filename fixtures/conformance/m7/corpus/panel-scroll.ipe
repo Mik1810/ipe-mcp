@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE ipe SYSTEM "ipe.dtd">
+<ipe version="70218" creator="ipe-mcp-m7">
+<ipestyle name="m7"><layout paper="320 180" origin="0 0" frame="320 180"/></ipestyle>
+<page title="M7 internal panel scroll">
+<layer name="base"/><layer name="scroll0"/><layer name="scroll1"/><layer name="scroll2"/>
+<view layers="base scroll0" active="scroll0" marked="no" name="panel-0"/>
+<view layers="base scroll1" active="scroll1" marked="no" name="panel-1"/>
+<view layers="base scroll2" active="scroll2" marked="yes" name="panel-2"/>
+<path layer="base" stroke="black" pen="2" custom="ipe-mcp:73000000-0000-4000-8000-000000000001">80 30 m 240 30 l 240 150 l 80 150 l h</path>
+<text layer="base" pos="20 160" custom="ipe-mcp:73000000-0000-4000-8000-000000000002">Fixed panel clip</text>
+<group layer="scroll0" clip="80 30 m 240 30 l 240 150 l 80 150 l h" custom="ipe-mcp:73000000-0000-4000-8000-000000000003"><text pos="100 125">Row A</text><text pos="100 85">Row B</text><text pos="100 45">Row C</text><text pos="100 5">Row D</text></group>
+<group layer="scroll1" clip="80 30 m 240 30 l 240 150 l 80 150 l h" custom="ipe-mcp:73000000-0000-4000-8000-000000000004"><group matrix="1 0 0 1 0 40"><text pos="100 125">Row A</text><text pos="100 85">Row B</text><text pos="100 45">Row C</text><text pos="100 5">Row D</text></group></group>
+<group layer="scroll2" clip="80 30 m 240 30 l 240 150 l 80 150 l h" custom="ipe-mcp:73000000-0000-4000-8000-000000000005"><group matrix="1 0 0 1 0 80"><text pos="100 125">Row A</text><text pos="100 85">Row B</text><text pos="100 45">Row C</text><text pos="100 5">Row D</text></group></group>
+</page></ipe>

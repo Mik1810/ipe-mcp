@@ -14,3 +14,4 @@ export * from "./persistence/errors.js";
 export * from "./persistence/session-manager.js";
 export * from "./persistence/sidecar.js";
 export * from "./native/index.js";
+export * from "./animation/index.js";

@@ -1,0 +1,18 @@
+{
+  "milestone": "M7",
+  "format": 70218,
+  "fixtures": {
+    "reveal": { "file": "corpus/reveal.ipe", "views": 4, "markedViews": 2 },
+    "motion": { "file": "corpus/motion.ipe", "views": 3, "effect": 27 },
+    "panelScroll": { "file": "corpus/panel-scroll.ipe", "views": 3, "visualGoldens": [
+      { "view": 1, "width": 320, "height": 180, "sha256": "bbb0bb5019d880dac18cee8198df522b28bd768a84e24b0f866de52512587356" },
+      { "view": 2, "width": 320, "height": 180, "sha256": "d78e1ec3a8513749e62d1097ab7e14521706058390a888b46b85569aac809e13" },
+      { "view": 3, "width": 320, "height": 180, "sha256": "22bca87620a6e48de3e31c7053bf6d0e07a921c57f8ba6091cb0172ca3ffac99" }
+    ] },
+    "cameraPan": { "file": "corpus/camera-pan.ipe", "views": 3, "visualGoldens": [
+      { "view": 1, "width": 320, "height": 180, "sha256": "4433dee455b3ef2a93d3a866fe31917420ff2bc5fb46393eea3a53b2c1ed2c99" },
+      { "view": 2, "width": 320, "height": 180, "sha256": "eb25a66b9914a3dc2f545a8597ef5810f58aae8b96a29726cc7dfcad6ae4ae7b" },
+      { "view": 3, "width": 320, "height": 180, "sha256": "9221d028231661d78746006dd2397e3b7da4e95fb0a0654f0788e6b153817dc3" }
+    ] }
+  }
+}

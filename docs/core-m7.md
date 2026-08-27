@@ -1,0 +1,13 @@
+# M7 discrete animation
+
+M7 exposes one deliberate facade from `src/animation/index.ts`: `buildReveal`, `buildMotion`, `buildPanelScroll`, `buildCameraPan`, `setTransition`, and expansion/viewer vocabulary. Ipe XML stays at `70218`, targeting native Ipe 7.2.30. An animation is a bounded sequence of static views, never continuous interpolation.
+
+Reveal groups are ordered; targets inside one group appear simultaneously. Cumulative and one-group-at-a-time states, explicit initial/final visibility, created or reused layers, and handout marking are supported. Creating object-specific layers is the safe default. Reusing a layer emits a warning because every object on it shares visibility.
+
+Motion retains originals on compatibility layers for pre-existing views and creates independently identified object variants on state-specific layers by default. Variants occupy their source object's global z-order slot regardless of caller target order, preserving overlap in every generated state. `layer-transform` is explicit opt-in, requires a static fallback, and diagnoses shared-layer movement plus link, hit-test, and bbox risk. Panel scrolling translates content inside an invariant clip. Camera panning variants the composition while leaving `BACKGROUND`, `BBOX`, and `VIEWBBOX` fixed unless explicitly included.
+
+`fixed`, `per-view`, and explicit bbox policies materialize or select intentional reserved-layer rectangle geometry. Fixed and explicit policies use `BBOX`; per-view policy uses `VIEWBBOX` plus a state-specific layer transform. Panel clips and explicit boxes must be finite positive rectangles. Fixed-paper `-nocrop` previews are the canonical visual comparison. Automatic title/background metadata is not moved by camera pan; materialize it as an object when it must participate.
+
+Every operation estimates generated views, object copies, and resulting PDF pages before cloning or expansion. Defaults are 64 generated views, 512 copies, and 1000 PDF pages; per-call limits can only be positive safe integers. The candidate is validated and swapped atomically, so any limit or invariant failure leaves the input unchanged.
+
+Transition styles are keyed by effect, duration, and transition duration, so identical configurations are reused while later calls with different timing cannot alter earlier views. Animation handouts mark explicit static views (`none`, `final`, `initial-and-final`, or `all`). The M7 animated reveal fixture demonstrates readable initial/final marked states after real PDF export. Run `bash scripts/check-m7.sh` for all earlier gates, focused tests, native fixture and bbox-policy reload/render, per-view visual goldens, and handout evidence.
