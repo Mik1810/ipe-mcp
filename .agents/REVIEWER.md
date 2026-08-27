@@ -35,9 +35,10 @@ At the end, verify the digest again. If it changed or unstaged tracked changes a
 3. Inspect status, diff stat, changed paths, and staged diff in a batched/diff-first manner.
 4. Follow unchanged dependencies only for concrete validation needs.
 5. Review correctness, regressions, invariants, edge cases, error handling, security requirements in scope, and test adequacy.
-6. Complete the review before reporting the first issue.
-7. Collect all independent findings into **one finite report**.
-8. Stop. Do not request fixes interactively and do not perform another review pass after fixes.
+6. If the task payload identifies applicable issue #8 MCP harness compliance areas, verify those areas against the staged candidate and report their status or a concrete finding.
+7. Complete the review before reporting the first issue.
+8. Collect all independent findings into **one finite report**.
+9. Stop. Do not request fixes interactively and do not perform another review pass after fixes.
 
 ## Severity / disposition
 

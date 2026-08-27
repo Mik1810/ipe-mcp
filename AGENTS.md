@@ -90,6 +90,20 @@ If a valid concern is real but outside the milestone's acceptance scope:
 - classify its impact;
 - do not block closure unless it violates an acceptance criterion or is an immediate critical regression.
 
+### MCP harness compliance trigger
+
+Issue #8 defines the repository's MCP agentic-harness compliance areas. Whenever
+a change touches behavior covered by one or more of those areas, the task payload
+must name the applicable areas and the implementation, review, and final gate
+must include proportional evidence that the changed behavior complies.
+
+- Apply this check to the affected surface only; do not turn an unrelated change
+  into a full compliance audit.
+- Use `not applicable` explicitly when a listed area might reasonably appear
+  relevant but the candidate does not touch it.
+- Run the complete issue #8 audit only at the M9 hardening gate or when an issue
+  explicitly requests it.
+
 ## 6. Phase barriers and no concurrent mutation
 
 Source-changing workers and read-only workers must never overlap on the same candidate.

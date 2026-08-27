@@ -36,8 +36,9 @@ Verify the digest again before returning.
    - unit/integration tests;
    - build/package checks;
    - milestone-specific acceptance checks.
-4. Map results to the milestone acceptance criteria.
-5. Return `PASS` or `FAIL` and stop.
+4. Verify the task payload's applicable issue #8 MCP harness compliance evidence; at the M9 hardening gate, verify the complete audit required by that issue.
+5. Map results to the milestone acceptance criteria.
+6. Return `PASS` or `FAIL` and stop.
 
 ## Important boundary
 
@@ -60,6 +61,7 @@ Return:
 - `PASS` or `FAIL`;
 - candidate digest;
 - acceptance criteria status;
+- applicable MCP harness compliance status;
 - commands/checks executed;
 - concise failure evidence if any;
 - exact correction target if `FAIL`.

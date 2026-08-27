@@ -17,6 +17,12 @@ relevant_context:
   constraints:
     - "<ADR/invariant/threat-model requirement>"
 
+mcp_harness_compliance:
+  applicable_areas:
+    - "<issue #8 area touched by this task, or none>"
+  evidence_required:
+    - "<targeted check or not applicable rationale>"
+
 scope:
   expected_paths:
     - "<path or glob>"
