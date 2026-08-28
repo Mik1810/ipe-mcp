@@ -50,6 +50,8 @@ Do **not** inspect global Codex memories, unrelated conversation/session history
 
 Do not reconstruct history that is already encoded in Git, the issue, or the handoff.
 
+Do not add `Co-authored-by` trailers to commit messages unless explicitly requested by the user.
+
 ## 4. Convergent milestone lifecycle
 
 The default lifecycle is finite:
