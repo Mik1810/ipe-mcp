@@ -26,7 +26,7 @@ Read and obey `AGENTS.md`. Do not inspect global Codex memories or unrelated ses
 7. Use a third patch round only when truly necessary.
 8. Run at most one broad implementation-time verification when useful.
 9. Leave the intended source candidate coherent and report exactly what should be staged/frozen next.
-10. Stop. Do not start review, gate, or the next milestone.
+10. Stop. Do not start review, integration-client/browser verification, gate, or the next milestone.
 
 ## Efficiency constraints
 
@@ -35,6 +35,8 @@ Read and obey `AGENTS.md`. Do not inspect global Codex memories or unrelated ses
 - Batch shell inspections and diagnostics.
 - Prefer targeted tests over repeated full-suite runs.
 - Do not repeatedly inspect unchanged files.
+- Do not start a new substantial phase after context exceeds the handoff threshold in `AGENTS.md`.
+- Do not use browser automation as an implementation-time substitute for targeted protocol/CLI tests.
 
 ## Correction-worker constraint
 

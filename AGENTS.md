@@ -50,8 +50,6 @@ Do **not** inspect global Codex memories, unrelated conversation/session history
 
 Do not reconstruct history that is already encoded in Git, the issue, or the handoff.
 
-Do not add `Co-authored-by` trailers to commit messages unless explicitly requested by the user.
-
 ## 4. Convergent milestone lifecycle
 
 The default lifecycle is finite:
@@ -91,20 +89,6 @@ If a valid concern is real but outside the milestone's acceptance scope:
 - record it as deferred/backlog work;
 - classify its impact;
 - do not block closure unless it violates an acceptance criterion or is an immediate critical regression.
-
-### MCP harness compliance trigger
-
-Issue #8 defines the repository's MCP agentic-harness compliance areas. Whenever
-a change touches behavior covered by one or more of those areas, the task payload
-must name the applicable areas and the implementation, review, and final gate
-must include proportional evidence that the changed behavior complies.
-
-- Apply this check to the affected surface only; do not turn an unrelated change
-  into a full compliance audit.
-- Use `not applicable` explicitly when a listed area might reasonably appear
-  relevant but the candidate does not touch it.
-- Run the complete issue #8 audit only at the M9 hardening gate or when an issue
-  explicitly requests it.
 
 ## 6. Phase barriers and no concurrent mutation
 
@@ -270,8 +254,8 @@ If context usage is observable:
 
 - < 80k: normal operation;
 - 80k-120k: finish current atomic task; accept no substantial new task;
-- > 120k: hand off follow-up work to a fresh worker;
-- > 160k: stop exploration and hand off immediately.
+- > 120k: **mandatory handoff before any new substantial phase, browser workflow, broad test pass, or exploratory branch**; finish only the current safe checkpoint and stop.
+- > 160k: **hard stop**. Do not continue exploration or implementation. Perform only the minimum actions needed to leave a coherent repository state and emit a compact handoff.
 
 ## 18. Handoff size
 
@@ -279,7 +263,77 @@ Handoffs should normally fit in roughly 500-1500 tokens and preferably less.
 
 Include only state needed by the next role: milestone/issue, candidate/base, acceptance status, findings, changed paths, verification results, caveats, and next role.
 
-## 19. Role separation
+## 19. Integration verification and UI/browser automation
+
+Use the **lowest-cost interface that verifies the required contract**.
+
+### CLI/protocol-first rule
+
+When a target application exposes a CLI, protocol API, test harness, or machine-readable interface capable of verifying the same deterministic behavior:
+
+1. verify the complete deterministic workflow through that interface;
+2. use browser/UI automation only for behavior that specifically requires the graphical/web client;
+3. do not reproduce a protocol/conformance suite through browser clicks merely because a web UI exists.
+
+Browser/UI automation is a **last-mile integration verification tool**, not the default functional test mechanism.
+
+### Browser smoke scope
+
+A normal browser smoke should cover only the smallest client-specific path, for example:
+
+```text
+open/connect
+  -> discovery visible
+  -> one representative operation
+  -> one representative resource/result
+  -> clean completion/disconnect
+```
+
+Do not replay a long create/edit/undo/render/export/conformance scenario through the browser when CLI/protocol verification already covers it.
+
+### Browser round-trip budget
+
+- Target <= 10 browser automation rounds for a normal smoke.
+- Hard target <= 15 unless the issue explicitly concerns web/UI behavior.
+- Batch deterministic interactions when safe.
+- Do not take a full DOM/accessibility snapshot after every click/fill.
+- Snapshot only when state is unknown, a navigation boundary was crossed, or evidence is required.
+- Once selectors/structure are known, reuse them rather than rediscovering the page repeatedly.
+
+### Preflight before expensive integration workflows
+
+Before a long external-client or UI scenario, prove the environment with the cheapest possible check:
+
+1. executable/client version and required capabilities;
+2. child-process environment/config propagation;
+3. server startup and protocol connection;
+4. workspace/temp-directory isolation;
+5. one cheapest representative request;
+6. expected logging/stdout/stderr boundary if applicable.
+
+If preflight fails, **stop the scenario immediately**. Correct configuration/root cause before retrying. Do not execute 50-80% of a workflow and discover basic environment failure near the end.
+
+### Retry policy
+
+- Do not blindly replay a failed long integration scenario.
+- Diagnose the root cause with one bounded bundle.
+- Re-run the preflight first.
+- After preflight passes, allow one bounded full retry on the same candidate.
+- A second infrastructure/configuration failure should return `BLOCKED`/handoff with evidence rather than starting another full replay.
+
+### MCP Inspector policy
+
+For MCP milestones:
+
+- Use **MCP Inspector CLI** for the complete deterministic MCP workflow whenever it can verify the required protocol behavior.
+- Use Inspector web/TUI only for client-specific integration evidence that cannot be established by CLI alone.
+- A web smoke should normally verify: connect, discovery, one representative tool call, one resource read/result, and clean completion.
+- Do not execute the entire MCP conformance workflow via `agent-browser` unless the acceptance criterion explicitly concerns Inspector web UI behavior.
+- Prefer one repository script that executes the Inspector CLI scenario and emits a compact PASS/FAIL summary over dozens of interactive model/browser turns.
+
+See `.agents/INTEGRATION_VERIFIER.md` and `.agents/MCP_INSPECTOR.md`.
+
+## 20. Role separation
 
 Use distinct roles:
 
@@ -287,11 +341,12 @@ Use distinct roles:
 - **Implementer/Corrector**: writes source and targeted tests.
 - **General Reviewer**: one bounded semantic/adversarial review.
 - **Finding Verifier**: verifies only the finite review finding set.
+- **Integration Verifier**: executes bounded external-client/host evidence using CLI/protocol-first verification and minimal UI smoke.
 - **Gate**: executes final acceptance verification.
 
-See `.agents/ORCHESTRATOR.md`, `.agents/IMPLEMENTER.md`, `.agents/REVIEWER.md`, `.agents/FINDING_VERIFIER.md`, and `.agents/GATE.md`.
+See `.agents/ORCHESTRATOR.md`, `.agents/IMPLEMENTER.md`, `.agents/REVIEWER.md`, `.agents/FINDING_VERIFIER.md`, `.agents/INTEGRATION_VERIFIER.md`, and `.agents/GATE.md`.
 
-## 20. Stop conditions
+## 21. Stop conditions
 
 An agent must stop when:
 

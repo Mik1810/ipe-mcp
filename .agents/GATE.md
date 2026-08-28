@@ -12,6 +12,7 @@ Read and obey `AGENTS.md`. You are not a general reviewer and must not reopen br
 - acceptance criteria;
 - designated-review result;
 - finding-verifier result;
+- integration-verification evidence tied to this candidate, when required;
 - repository-prescribed final verification commands.
 
 ## Candidate identity
@@ -30,13 +31,13 @@ Verify the digest again before returning.
 
 1. Validate candidate digest/status.
 2. Confirm designated blocking review findings have been verified fixed.
-3. Run the repository-required final acceptance checks once, batching compatible commands when safe:
+3. Confirm required external integration evidence exists for this exact candidate digest. Do not replay expensive browser/client workflows when unchanged valid evidence already exists.
+4. Run the repository-required final acceptance checks once, batching compatible commands when safe:
    - formatting/lint/static analysis;
    - type checking;
    - unit/integration tests;
    - build/package checks;
    - milestone-specific acceptance checks.
-4. Verify the task payload's applicable issue #8 MCP harness compliance evidence; at the M9 hardening gate, verify the complete audit required by that issue.
 5. Map results to the milestone acceptance criteria.
 6. Return `PASS` or `FAIL` and stop.
 
@@ -61,7 +62,12 @@ Return:
 - `PASS` or `FAIL`;
 - candidate digest;
 - acceptance criteria status;
-- applicable MCP harness compliance status;
 - commands/checks executed;
 - concise failure evidence if any;
 - exact correction target if `FAIL`.
+
+## External-client evidence
+
+When acceptance requires MCP Inspector or another real host, consume the result of `.agents/INTEGRATION_VERIFIER.md` for the exact candidate digest. For MCP Inspector follow `.agents/MCP_INSPECTOR.md`.
+
+Do not use the final gate to rerun a long `agent-browser` scenario that has already passed on the unchanged candidate.

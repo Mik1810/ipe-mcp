@@ -8,12 +8,14 @@ Read and obey `AGENTS.md`.
 
 1. Fresh worker per atomic role/task.
 2. Explicit non-empty payload for every worker.
-3. Never overlap a source-changing worker with reviewer/verifier/gate on the same candidate.
+3. Never overlap a source-changing worker with reviewer/finding-verifier/integration-verifier/gate on the same candidate.
 4. Freeze a candidate before any read-only role.
 5. At most **one general review per milestone by default**.
 6. After that review, fixes are checked by a **finding verifier**, not another general reviewer.
 7. A final gate checks acceptance; it does not perform another adversarial review.
 8. Newly discovered non-critical/out-of-scope hardening observations go to backlog rather than reopening the milestone.
+9. Deterministic external-client verification is CLI/protocol-first; browser automation is reserved for minimal client-specific smoke.
+10. Never replay a long integration workflow after an environment/configuration failure until a cheap preflight passes.
 
 ## Milestone state machine
 
@@ -27,6 +29,8 @@ planning
   -> correcting          (only if accepted BLOCKER/MAJOR findings exist)
   -> verify_ready
   -> verifying_findings  (only for the designated review finding set)
+  -> integration_ready     (only when external-client/host evidence is required)
+  -> verifying_integration
   -> gate_ready
   -> gating
   -> done | blocked
@@ -73,11 +77,27 @@ After correction:
 
 ## Finding-verifier result
 
-- If every blocking finding in `F` is `FIXED`, advance to `gate_ready`.
+- If every blocking finding in `F` is `FIXED`, advance to `integration_ready` when external-client evidence is required; otherwise advance to `gate_ready`.
 - If a finding is `NOT_FIXED`/`PARTIALLY_FIXED`, spawn one bounded correction worker for only the unresolved finding(s), then verify **only those findings** again.
 - Do not reopen broad review.
 - A new P0/P1 regression directly caused by the fixes may block and become part of the finite correction set.
 - Other new observations are deferred/backlog.
+
+## External integration verification
+
+When the milestone requires evidence from MCP Inspector, Codex, a browser UI, a second host, or another external client:
+
+1. use one fresh `integration-verifier` worker;
+2. give it the frozen candidate digest and explicit acceptance evidence required;
+3. require preflight before any expensive scenario;
+4. execute the complete deterministic workflow through CLI/protocol/test harness where available;
+5. use browser/UI automation only for the minimal client-specific smoke that remains necessary;
+6. persist a concise evidence summary tied to the candidate digest;
+7. do not ask the final gate to replay expensive external-client workflows if valid evidence already exists for the unchanged candidate.
+
+If integration fails because of source behavior, create one bounded correction task. If it fails because of environment/configuration, correct/preflight first and permit at most one bounded full retry before returning `blocked`/handoff.
+
+Do not spawn multiple browser workers to replay the same workflow.
 
 ## Final gate
 
@@ -103,6 +123,8 @@ Routine bug fixes, test fixes, or finding remediation do not qualify.
 
 Prefer 300-1000 tokens. Include only:
 
+Before assigning any new substantial phase to an existing worker, check context/tool-call growth. If the worker is already near the `AGENTS.md` handoff threshold, spawn fresh instead of continuing it.
+
 - milestone/issue;
 - role;
 - exact goal;
@@ -112,6 +134,7 @@ Prefer 300-1000 tokens. Include only:
 - applicable constraints/docs;
 - scoped paths;
 - finite findings to address/verify;
+- integration evidence required and allowed interface(s), when applicable;
 - verification commands;
 - out-of-scope items.
 
@@ -125,6 +148,7 @@ Report:
 - acceptance criteria status;
 - designated review summary;
 - finding-verification status;
+- integration-verification status/evidence when required;
 - final gate status;
 - deferred backlog observations;
 - remaining blocker only if milestone is not done.

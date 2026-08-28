@@ -1,7 +1,7 @@
 kind: agent-task
 milestone: "<M# or task id>"
 issue: "<#number or null>"
-role: "<implementer|corrector|reviewer|finding-verifier|gate>"
+role: "<implementer|corrector|reviewer|finding-verifier|integration-verifier|gate>"
 base_revision: "<sha/branch>"
 candidate_digest: "<git-index-tree-sha for read-only role, otherwise null>"
 
@@ -17,12 +17,6 @@ relevant_context:
   constraints:
     - "<ADR/invariant/threat-model requirement>"
 
-mcp_harness_compliance:
-  applicable_areas:
-    - "<issue #8 area touched by this task, or none>"
-  evidence_required:
-    - "<targeted check or not applicable rationale>"
-
 scope:
   expected_paths:
     - "<path or glob>"
@@ -31,6 +25,13 @@ scope:
 
 findings_to_address: []
 findings_to_verify: []
+
+integration:
+  required: false
+  preferred_interface: "<cli|protocol|test-harness|browser|tui|null>"
+  browser_smoke_only: true
+  preflight:
+    - "<cheap capability/environment check>"
 
 verification:
   targeted:
