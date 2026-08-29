@@ -768,3 +768,5 @@ The M9 property/fuzz battery and its reproducibility contract are documented in 
 The M9 hostile-input corpus, its case inventory, and the stability contract are documented in [`docs/core-m9-hostile.md`](./docs/core-m9-hostile.md); it runs as `bash scripts/check-m9-hostile.sh`.
 
 The M9 clean-setup procedure is documented in [`SETUP-WSL.md`](./SETUP-WSL.md) ("M9 clean-setup verification gate") and runs as `bash scripts/check-m9-setup.sh`.
+
+The M9 agent manual, examples, and troubleshooting are documented in [`docs/m9-agent-manual.md`](./docs/m9-agent-manual.md); they are exercised end to end by `node scripts/m9-agent-workflow.mjs` under `bash scripts/check-m9-manual.sh`.
