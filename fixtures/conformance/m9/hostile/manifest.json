@@ -207,7 +207,7 @@
       "label": "remote URL resources must not be accepted as document sources",
       "provenance": { "kind": "inline", "source": "https://example.invalid/evil.ipe" },
       "oracle": "http-no-remote-source",
-      "expected": { "reject": true, "classification": "no-network-surface" },
+      "expected": { "reject": true, "classification": "ENOENT_LOCAL_PATH" },
       "budget": { "maxInputBytes": 4096, "maxMs": 100 }
     },
     {
@@ -225,8 +225,8 @@
       "label": "unbounded fork loops must be contained by the process cap",
       "provenance": { "kind": "inline", "source": "fork bomb" },
       "oracle": "proc-fork-cap",
-      "expected": { "reject": true, "classification": "PROCESS_LIMIT_OR_ERROR" },
-      "budget": { "maxInputBytes": 4096, "maxMs": 4000 }
+      "expected": { "reject": true, "classification": "PROCESS_LIMIT" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 12000 }
     }
   ]
 }

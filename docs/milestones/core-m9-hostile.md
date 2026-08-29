@@ -45,3 +45,11 @@ budget overrun, oracle exception) surfaces as a case-level failure with the
 exact reason.  HOST-023 drove a contract hardening: the `group_objects`
 hyperlink field now validates absolute `http(s)` URLs only (was permissive
 `z.string().url()`).
+
+The issue #23 audit tightened three false-positive boundaries. HOST-015 now
+requires a real hostile-image rejection, unchanged asset state, and a valid
+PNG control that succeeds. HOST-022 calls the real local session open path;
+the separate threat-audit gate proves the server has no HTTP listener.
+HOST-024 executes valid Python under bubblewrap/prlimit and passes only on the
+exact `PROCESS_LIMIT` sentinel; syntax errors and generic process failures are
+failures. A final bounded JSON line records all 24 PASS results and cleanup.

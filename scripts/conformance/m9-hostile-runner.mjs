@@ -26,7 +26,6 @@ const { DocumentSessionManager } = await import(`${dist}/persistence/session-man
 const { PathOutsideWorkspaceError, SourceChangedError } = await import(`${dist}/persistence/errors.js`);
 const { FileSizeLimitError } = await import(`${dist}/persistence/bounded-read.js`);
 const { migrateSidecar } = await import(`${dist}/persistence/sidecar.js`);
-const { failure } = await import(`${dist}/mcp/errors.js`);
 const { operationSchema } = await import(`${dist}/mcp/contracts.js`);
 const { runControlledProcess } = await import(`${dist}/native/process.js`);
 const { MCP_LIMITS } = await import(`${dist}/limits.js`);
@@ -48,6 +47,7 @@ const temporary = [];
 let passes = 0;
 let failures = 0;
 const details = [];
+const records = [];
 
 const classify = (error) => (error === undefined ? "-" : error?.constructor?.name ?? typeof error);
 const fail = (caseId, reason) => { failures += 1; details.push(`  ✗ ${caseId}: ${reason}`); };
@@ -139,25 +139,24 @@ const oracles = {
     try { await sessions.open(join(workspaceRoot, "big.ipe")); } catch (error) { rejection = error; }
     return { ok: rejection instanceof FileSizeLimitError, reason: `got ${classify(rejection)}` };
   },
-  "asset-ihdr-bomb": async () => {
-    const source = await readFile(join(manifestRoot, "inputs/asset-oversized-ihdr.ipe"), "utf8");
-    let declined = false;
+  "asset-ihdr-bomb": async (_caseDef, source) => {
+    let rejection = null;
+    const encoded = /<bitmap[^>]*>([^<]+)<\/bitmap>/u.exec(source)?.[1];
+    if (encoded === undefined) return { ok: false, reason: "hostile bitmap payload is missing" };
+    const document = { schemaVersion: 1, format: 70218, pages: [] };
+    const before = document.assets?.length ?? 0;
     try {
-      const document = ipeDocumentCodec.parse(source);
-      const page = document.pages[0];
-      if (page === undefined) return { ok: false, reason: "hostile page parsed but empty" };
-      for (const object of page.objects) {
-        if (object.xml?.name !== "image") continue;
-        const assetRef = document.assets?.find((asset) => asset.id === object.assetId);
-        if (assetRef?.data !== undefined) {
-          addBitmapAsset(document, Buffer.from(assetRef.data, "base64"), assetRef.mediaType ?? "image/png");
-        }
-      }
-      declined = true;
+      addBitmapAsset(document, Buffer.from(encoded, "base64"), "image/png");
     } catch (error) {
-      declined = true;
+      rejection = error;
     }
-    return { ok: declined, reason: "hostile image was not declined" };
+    const unchanged = (document.assets?.length ?? 0) === before;
+    const safe = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAE0lEQVR4AWP8z8DwnwEImBigAAAfFwICgH3ifwAAAABJRU5ErkJggg==", "base64");
+    const control = { schemaVersion: 1, format: 70218, pages: [] };
+    let safeAccepted = false;
+    try { safeAccepted = addBitmapAsset(control, safe, "image/png").created; } catch { safeAccepted = false; }
+    const exactRejection = rejection instanceof Error && rejection.message === "bitmap exceeds pixel limit";
+    return { ok: exactRejection && unchanged && safeAccepted, reason: `rejection=${classify(rejection)} exact=${exactRejection} unchanged=${unchanged} safeAccepted=${safeAccepted}` };
   },
   "asset-png-payload": async () => {
     let declined = false;
@@ -184,16 +183,14 @@ const oracles = {
   },
   "proc-fork-cap": async () => {
     const { work } = await newSessionRoot("hostile-fork-");
-    const limits = { timeoutMs: 3000, maxOutputBytes: 4096, maxMemoryBytes: 256 * 1024 * 1024, maxProcesses: 16, maxFileBytes: 16 * 1024 * 1024 };
-    const bomb = "import os,signal,time\np=[]\ntry:\n while True:\n  pid=os.fork()\n  if pid==0: time.sleep(5); os._exit(0)\n  p.append(pid)\nexcept OSError:\n for pid in p:\n  try: os.kill(pid,signal.SIGKILL)\n  except ProcessLookupError: pass\nprint('PROCESS_LIMIT',end='')";
-    let output = "";
+    const limits = { timeoutMs: 10_000, maxOutputBytes: 4096, maxMemoryBytes: 256 * 1024 * 1024, maxProcesses: 32, maxFileBytes: 16 * 1024 * 1024 };
+    const bomb = "import os,signal,time\nchildren=[]\ntry:\n while True:\n  pid=os.fork()\n  if pid==0: time.sleep(30); os._exit(0)\n  children.append(pid)\nexcept OSError:\n for pid in children: os.kill(pid,signal.SIGKILL)\n for pid in children:\n  try: os.waitpid(pid,0)\n  except ChildProcessError: pass\n print('PROCESS_LIMIT',end='')";
     try {
-      const result = await runControlledProcess(process.execPath, ["-e", bomb], work, limits, "NATIVE_RENDER_ERROR");
-      output = result.stdout;
+      const result = await runControlledProcess("/usr/bin/python3", ["-c", bomb], work, limits, "NATIVE_RENDER_ERROR");
+      return { ok: result.stdout === "PROCESS_LIMIT" && result.stderr === "", reason: `stdout=${JSON.stringify(result.stdout)} stderrBytes=${Buffer.byteLength(result.stderr)}` };
     } catch (error) {
-      return { ok: true };
+      return { ok: false, reason: `fork-limit probe failed: ${classify(error)} code=${error?.code ?? "-"}` };
     }
-    return { ok: /PROCESS_LIMIT/u.test(output), reason: "fork bomb escaped containment" };
   },
   "concurrency-snapshot-uniqueness": async () => {
     const { workspaceRoot, stateRoot } = await newSessionRoot("hostile-race-");
@@ -224,8 +221,12 @@ const oracles = {
     return { ok: rejection !== null, reason: `got ${classify(rejection)}` };
   },
   "http-no-remote-source": async (_caseDef, source) => {
-    const result = failure("open", new Error(`remote source ${source} is not a local path`));
-    return { ok: result.ok === false && typeof result.error?.code === "string" && result.error.code !== "-", reason: "failure envelope implicit" };
+    const { workspaceRoot, stateRoot } = await newSessionRoot("hostile-http-");
+    const sessions = await DocumentSessionManager.create({ workspaceRoots: [workspaceRoot], stateRoot }, ipeDocumentCodec);
+    let rejection = null;
+    try { await sessions.open(source); } catch (error) { rejection = error; }
+    const localMissing = rejection instanceof Error && rejection.code === "ENOENT";
+    return { ok: localMissing, reason: `remote source rejection was ${classify(rejection)} code=${rejection?.code ?? "-"}` };
   },
   "http-link-schema": async (_caseDef, source) => {
     const parsed = operationSchema.safeParse({
@@ -254,7 +255,10 @@ for (const caseDef of manifest.cases) {
     fail(caseDef.id, `budget exceeded (input ${inputBytes} B / ${caseDef.budget.maxInputBytes}, ${Date.now() - start} ms / ${caseDef.budget.maxMs})`);
     continue;
   }
-  if (result.ok) pass(caseDef.id); else fail(caseDef.id, result.reason ?? "oracle failed");
+  if (result.ok) {
+    pass(caseDef.id);
+    records.push({ id: caseDef.id, threatId: caseDef.threatId, result: "PASS", classification: caseDef.expected.classification, inputBytes, maxInputBytes: caseDef.budget.maxInputBytes, maxMs: caseDef.budget.maxMs });
+  } else fail(caseDef.id, result.reason ?? "oracle failed");
 }
 
 for (const directory of temporary) {
@@ -266,3 +270,4 @@ if (failures > 0) {
   process.exit(1);
 }
 console.log(`HOSTILE corpus: ${passes} pass (${manifest.cases.length} cases, no residue)`);
+console.log(JSON.stringify({ scenario: manifest.corpus, milestone: manifest.milestone, result: "PASS", cases: records, cleanup: "PASS" }));
