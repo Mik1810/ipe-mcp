@@ -766,3 +766,5 @@ The M9 release-limit contract is documented in [`docs/core-m9-limits.md`](./docs
 The M9 property/fuzz battery and its reproducibility contract are documented in [`docs/core-m9-testing.md`](./docs/core-m9-testing.md); it runs as `bash scripts/check-m9-fuzz.sh`.
 
 The M9 hostile-input corpus, its case inventory, and the stability contract are documented in [`docs/core-m9-hostile.md`](./docs/core-m9-hostile.md); it runs as `bash scripts/check-m9-hostile.sh`.
+
+The M9 clean-setup procedure is documented in [`SETUP-WSL.md`](./SETUP-WSL.md) ("M9 clean-setup verification gate") and runs as `bash scripts/check-m9-setup.sh`.
