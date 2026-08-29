@@ -15,3 +15,7 @@ export * from "./persistence/session-manager.js";
 export * from "./persistence/sidecar.js";
 export * from "./native/index.js";
 export * from "./animation/index.js";
+export * from "./mcp/contracts.js";
+export * from "./mcp/errors.js";
+export * from "./mcp/service.js";
+export * from "./mcp/server.js";

@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "ipe-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/dist/src/cli/mcp-stdio.js"],
+      "env": {
+        "IPE_MCP_WORKSPACE_ROOT": "${workspaceFolder}",
+        "IPE_MCP_STATE_ROOT": "${workspaceFolder}/.ipe-mcp-state"
+      }
+    }
+  }
+}

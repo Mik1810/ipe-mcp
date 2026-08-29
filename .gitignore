@@ -3,4 +3,6 @@ dist/
 coverage/
 *.tsbuildinfo
 .ipe-mcp-work/
+.ipe-mcp-state/
+fixtures/conformance/m8/generated/
 guide.md

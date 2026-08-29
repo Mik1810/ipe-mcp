@@ -15,15 +15,22 @@
     "check:m4": "bash scripts/check-m4.sh",
     "check:m5": "bash scripts/check-m5.sh",
     "check:m6": "bash scripts/check-m6.sh",
-    "check:m7": "bash scripts/check-m7.sh"
+    "check:m7": "bash scripts/check-m7.sh",
+    "mcp": "node dist/src/cli/mcp-stdio.js",
+    "check:m8": "bash scripts/check-m8.sh"
+  },
+  "bin": {
+    "ipe-mcp": "dist/src/cli/mcp-stdio.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
     "jpeg-js": "0.4.4",
     "pngjs": "^7.0.0",
     "saxes": "6.0.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
     "@types/node": "20.19.43",
     "@types/pngjs": "^6.0.5",
     "typescript": "7.0.2",

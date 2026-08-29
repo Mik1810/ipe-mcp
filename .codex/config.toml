@@ -1,0 +1,10 @@
+[mcp_servers.ipe-mcp]
+command = "node"
+args = ["dist/src/cli/mcp-stdio.js"]
+cwd = "."
+startup_timeout_sec = 30
+tool_timeout_sec = 180
+
+[mcp_servers.ipe-mcp.env]
+IPE_MCP_WORKSPACE_ROOT = "."
+IPE_MCP_STATE_ROOT = ".ipe-mcp-state"

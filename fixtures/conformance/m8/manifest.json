@@ -1,0 +1,7 @@
+{
+  "milestone": "M8",
+  "scenario": "portable-m8-v1",
+  "format": 70218,
+  "requiredArtifacts": ["portable-scenario.ipe", "portable-scenario.pdf", "portable-scenario.png", "portable-scenario-preview.png"],
+  "requiredHosts": ["mcp-inspector", "codex-cli", "official-typescript-sdk"]
+}

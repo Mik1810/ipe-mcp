@@ -283,6 +283,21 @@ export class DocumentSessionManager<Document> {
     };
   }
 
+  /** Start a recoverable session for a new document without touching its eventual save target. */
+  async create(document: Document): Promise<OpenSessionResult<Document>> {
+    const diagnostics = this.#codec.validate(document);
+    if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+      throw new StructuralValidationError(diagnostics);
+    }
+    const source = this.#codec.serialize(document);
+    this.#assertSerializedSize(source);
+    const seedDirectory = join(this.#stateRoot, "created-sources");
+    await mkdir(seedDirectory, { recursive: true, mode: 0o700 });
+    const seedPath = join(seedDirectory, `created-${randomUUID()}.ipe`);
+    await atomicWriteFile(seedPath, source, this.#atomicOptions());
+    return await this.open(seedPath);
+  }
+
   inspect(documentId: string): OpenSessionResult<Document> {
     const session = this.#session(documentId);
     return {
@@ -466,6 +481,57 @@ export class DocumentSessionManager<Document> {
       .filter((name) => /^snapshot-s\d+-r\d+-[a-f0-9]{16}\.ipe$/u.test(name))
       .sort((a, b) => Number(/^snapshot-s(\d+)/u.exec(a)?.[1]) - Number(/^snapshot-s(\d+)/u.exec(b)?.[1]))
       .map((name) => join(session.workDirectory, name));
+  }
+
+  /** Capture the current working revision as a private recovery snapshot. */
+  async createSnapshot(documentId: string, expectedRevision: number): Promise<string> {
+    const session = this.#session(documentId);
+    return await session.mutex.run(async () => {
+      this.#assertRevision(session, expectedRevision);
+      const serialized = this.#codec.serialize(session.document);
+      this.#assertSerializedSize(serialized);
+      const sequence = await this.#allocateSnapshotSequence(session);
+      const snapshotPath = join(
+        session.workDirectory,
+        `snapshot-s${sequence}-r${session.revision}-${hash(serialized).slice(0, 16)}.ipe`,
+      );
+      await atomicWriteFile(snapshotPath, serialized, this.#atomicOptions());
+      return snapshotPath;
+    });
+  }
+
+  /** Promote the immediately preceding durable working revision as a new revision. */
+  async undo(documentId: string, expectedRevision: number): Promise<MutationResult<Document>> {
+    const session = this.#session(documentId);
+    return await session.mutex.run(async () => {
+      this.#assertRevision(session, expectedRevision);
+      if (expectedRevision < 1) throw new Error("session has no previous revision to undo");
+      const prefix = `working-r${expectedRevision - 1}-`;
+      const previousName = (await readdir(session.workDirectory)).find((name) => name.startsWith(prefix) && name.endsWith(".ipe"));
+      if (previousName === undefined) throw new Error("previous working revision is unavailable; use a named snapshot instead");
+      const previousPath = await realpath(join(session.workDirectory, previousName));
+      if (!isInside(session.workDirectory, previousPath)) throw new PathOutsideWorkspaceError(previousPath);
+      const document = this.#codec.parse(await readFileBounded(previousPath, this.#maxSourceBytes));
+      const diagnostics = this.#codec.validate(document);
+      if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) throw new StructuralValidationError(diagnostics);
+      const nextRevision = expectedRevision + 1;
+      const nextWorkingPath = join(session.workDirectory, `working-r${nextRevision}-${randomUUID()}.ipe`);
+      await atomicWriteFile(nextWorkingPath, this.#codec.serialize(document), this.#atomicOptions());
+      try {
+        await this.#writeManifest(session, { revision: nextRevision, workingPath: nextWorkingPath });
+      } catch (error) {
+        if (error instanceof AtomicWriteError && error.committed) {
+          session.document = document;
+          session.revision = nextRevision;
+          session.workingPath = nextWorkingPath;
+        }
+        throw error;
+      }
+      session.document = document;
+      session.revision = nextRevision;
+      session.workingPath = nextWorkingPath;
+      return { documentId, revision: nextRevision, document: clone(document), diagnostics };
+    });
   }
 
   async restoreSnapshot(

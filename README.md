@@ -9,11 +9,11 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 `70218`. The initial target environment is Ubuntu 26.04 on WSL.
 
 > [!IMPORTANT]
-> This repository is pre-MVP. Milestones M0–M7 are complete, covering the
+> This repository is pre-MVP. Milestones M0–M8 are complete, covering the
 > compatibility contracts, conformance lab, semantic IR, transactional
 > persistence, layout, object authoring, slide composition, and the controlled
-> native validation/render/export adapter. The stdio MCP server is planned for M8,
-> so the repository is not yet an installable MCP integration.
+> native validation/render/export adapter, plus the stdio MCP server and host
+> integration. Packaging and the release candidate remain M9 work.
 
 ## Goals
 
@@ -39,7 +39,7 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 | [M5](https://github.com/Mik1810/ipe-mcp/issues/2) | Pages, layers, views, and slide composition | Complete |
 | [M6](https://github.com/Mik1810/ipe-mcp/issues/3) | Native validation, rendering, and export | Complete ([details](./docs/core-m6.md)) |
 | [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Complete ([details](./docs/core-m7.md), [matrix](./docs/viewer-effects-m7.md)) |
-| [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Planned |
+| [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Complete ([details](./docs/core-m8.md)) |
 | [M9](https://github.com/Mik1810/ipe-mcp/issues/6) | Hardening and MVP release candidate | Planned |
 | [M10](https://github.com/Mik1810/ipe-mcp/issues/7) | Post-MVP extensions and distribution | Future |
 
@@ -103,8 +103,8 @@ npm run build
 npm test
 ```
 
-The package is currently private and has no published executable or MCP server
-entry point.
+The package remains private/unpublished, but M8 provides the local `ipe-mcp`
+stdio executable after `npm run build`. See [host integration](./docs/m8-host-integration.md).
 
 ## Verification
 
@@ -115,6 +115,7 @@ bash scripts/check-m0.sh
 bash scripts/check-m1.sh
 bash scripts/check-m2.sh
 bash scripts/check-m3.sh
+bash scripts/check-m8.sh
 ```
 
 The gates build on one another and cover structural checks, native Ipe
@@ -149,6 +150,9 @@ capability and failure matrix.
 - [docs/core-m2.md](./docs/core-m2.md): IR, XML, identity, and persistence;
 - [docs/core-m3.md](./docs/core-m3.md): coordinates and layout;
 - [docs/core-m7.md](./docs/core-m7.md): bounded discrete animation and handout policies;
+- [docs/core-m8.md](./docs/core-m8.md): MCP stdio contracts, resources, and verification;
+- [docs/m8-host-integration.md](./docs/m8-host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
+- [docs/m8-agentic-harness-audit.md](./docs/m8-agentic-harness-audit.md): itemized Issue #8 dispositions;
 - [docs/viewer-effects-m7.md](./docs/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
 - [report-source.md](./report-source.md): source dossier and traceability;
 - [ORCHESTRATOR_PROMPT.md](./ORCHESTRATOR_PROMPT.md): milestone execution and
