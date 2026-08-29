@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+source "$ROOT/scripts/gates/m9-common.sh"
 M9_REAL_TMP=$(mktemp -d)
 trap 'rm -rf "$M9_REAL_TMP"' EXIT
 fail() { echo "M9 REAL FAIL: $*" >&2; exit 1; }
 
-bash "$ROOT/scripts/gates/check-m8.sh" || fail "M8 gate"
+m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
-(cd "$ROOT" && node scripts/conformance/m9-real-runner.mjs "$M9_REAL_TMP/run" "$ROOT/fixtures/conformance/m9/real/evidence.json") || fail "real-document review run"
+(cd "$ROOT" && node scripts/conformance/m9-real-runner.mjs "$M9_REAL_TMP/run" "$M9_REAL_TMP/evidence.json") || fail "real-document review run"
+cmp "$M9_REAL_TMP/evidence.json" "$ROOT/fixtures/conformance/m9/real/evidence.json" || fail "real-document evidence drift"
 
 python3 - "$ROOT" <<'PY' || fail "real-document review audit"
 import hashlib, json, pathlib, sys

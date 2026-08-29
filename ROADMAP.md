@@ -778,3 +778,5 @@ The M9 support policy and supported/degraded/warn/reject mode matrix are documen
 The M9 release notes, migration guidance (config, state, sidecar, contract, clean rebuild), and rollback procedure (source preservation, snapshots, state directory, previous Git revision) are documented in [`docs/guides/m9-release-notes.md`](./docs/guides/m9-release-notes.md); the gate is `bash scripts/gates/check-m9-notes.sh`.
 
 The M9 licensed real-document review (provenance ledger, per-phase evidence matrix, findings, and retention policy) is documented in [`docs/milestones/core-m9-real.md`](./docs/milestones/core-m9-real.md); its runner is `scripts/conformance/m9-real-runner.mjs` and the gate is `bash scripts/gates/check-m9-real.sh`.
+
+The cumulative M9 completion audit is documented in [`docs/milestones/core-m9-completion.md`](./docs/milestones/core-m9-completion.md); `bash scripts/check-m9.sh` freezes the staged tree, creates a fresh read-only gate worktree, and runs the complete M0-M9 acceptance chain exactly once for that candidate.

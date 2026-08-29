@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+source "$ROOT/scripts/gates/m9-common.sh"
 fail() { echo "M9 SUPPORT FAIL: $*" >&2; exit 1; }
 
-bash "$ROOT/scripts/gates/check-m8.sh" || fail "M8 gate"
+m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
 
 python3 - "$ROOT/docs/guides/support-policy.md" "$ROOT/docs/reference/compatibility-modes.md" "$ROOT/docs/reference/viewer-effects-m7.md" <<'PY' || fail "support policy audit"

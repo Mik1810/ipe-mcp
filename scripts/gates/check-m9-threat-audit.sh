@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+source "$ROOT/scripts/gates/m9-common.sh"
 M9_THREAT_TMP=$(mktemp -d)
 trap 'rm -rf "$M9_THREAT_TMP"' EXIT
 fail() { echo "M9 THREAT AUDIT FAIL: $*" >&2; exit 1; }

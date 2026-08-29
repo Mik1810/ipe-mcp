@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+source "$ROOT/scripts/gates/m9-common.sh"
 M9_MANUAL_TMP=$(mktemp -d)
 trap 'rm -rf "$M9_MANUAL_TMP"' EXIT
 fail() { echo "M9 MANUAL FAIL: $*" >&2; exit 1; }
 
-bash "$ROOT/scripts/gates/check-m8.sh" || fail "M8 gate"
+m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
 
 # Every example in docs/guides/m9-agent-manual.md is exercised against the candidate.

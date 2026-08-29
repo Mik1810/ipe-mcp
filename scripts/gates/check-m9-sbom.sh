@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+source "$ROOT/scripts/gates/m9-common.sh"
 M9_SBOM_TMP=$(mktemp -d)
 trap 'rm -rf "$M9_SBOM_TMP"' EXIT
 fail() { echo "M9 SBOM FAIL: $*" >&2; exit 1; }
 
-bash "$ROOT/scripts/gates/check-m8.sh" || fail "M8 gate"
+m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
 
 # Deterministic regeneration: must be byte-identical to the committed artifact.

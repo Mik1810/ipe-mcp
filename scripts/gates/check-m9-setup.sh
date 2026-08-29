@@ -10,7 +10,7 @@ echo "M9 SETUP: node $(node --version) on $(uname -s)-$(uname -m)"
 # --- 1. Clean snapshot install (no inherited node_modules) -------------------
 SNAPSHOT="$M9_SETUP_TMP/snapshot"
 mkdir -p "$SNAPSHOT"
-(cd "$ROOT" && git archive --format=tar HEAD) | tar -xf - -C "$SNAPSHOT" || fail "snapshot extraction"
+(cd "$ROOT" && git archive --format=tar "$(git write-tree)") | tar -xf - -C "$SNAPSHOT" || fail "snapshot extraction"
 [[ ! -d "$SNAPSHOT/node_modules" ]] || fail "snapshot unexpectedly contains node_modules"
 [[ ! -d "$SNAPSHOT/dist" ]] || fail "snapshot unexpectedly contains dist artifacts"
 node_major=$(node -e "console.log(process.versions.node.split('.')[0])")
