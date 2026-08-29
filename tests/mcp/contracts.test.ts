@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { MAX_HINTS, MCP_CONTRACT_VERSION, operationSchema, resultSchema, viewBuildSchema } from "../../src/mcp/contracts.js";
 import { failure, safeLog, sanitizePublicText, success } from "../../src/mcp/errors.js";
+import { MCP_LIMITS } from "../../src/limits.js";
 import { SERVER_INSTRUCTIONS } from "../../src/mcp/server.js";
 
 describe("M8 public contracts", () => {
@@ -49,5 +50,36 @@ describe("M8 public contracts", () => {
     expect(output).toContain('"tool":17');
     expect(output).not.toContain("ipe_open_document");
     expect(output).not.toContain("/private/work");
+  });
+
+  it("enforces per-operation cardinals exactly at boundary and boundary-plus-one", () => {
+    const page = "page-000000000000000000000000";
+    const layers = (count: number) => Array.from({ length: count }, (_, index) => `layer-${index.toString(16).padStart(24, "0")}`);
+    const at = operationSchema.safeParse({ op: "reorder_layers", pageId: page, layerIds: layers(MCP_LIMITS.idListMax) });
+    expect(at.success).toBe(true);
+    const over = operationSchema.safeParse({ op: "reorder_layers", pageId: page, layerIds: layers(MCP_LIMITS.idListMax + 1) });
+    expect(over.success).toBe(false);
+    const views = (count: number) => Array.from({ length: count }, (_, index) => `view-${index.toString(16).padStart(24, "0")}`);
+    expect(operationSchema.safeParse({ op: "reorder_views", pageId: page, viewIds: views(MCP_LIMITS.reorderViewsMax) }).success).toBe(true);
+    expect(operationSchema.safeParse({ op: "reorder_views", pageId: page, viewIds: views(MCP_LIMITS.reorderViewsMax + 1) }).success).toBe(false);
+  });
+
+  it("bounds step counts and LaTeX text at the contract boundary", () => {
+    const page = "page-000000000000000000000000";
+    const object = "object-000000000000000000000000";
+    expect(operationSchema.safeParse({ op: "add_text", pageId: page, layerId: "layer-000000000000000000000000", text: "x".repeat(MCP_LIMITS.latexTextChars), position: { x: 0, y: 0 } }).success).toBe(true);
+    expect(operationSchema.safeParse({ op: "add_text", pageId: page, layerId: "layer-000000000000000000000000", text: "x".repeat(MCP_LIMITS.latexTextChars + 1), position: { x: 0, y: 0 } }).success).toBe(false);
+    expect(viewBuildSchema.safeParse({ kind: "motion", pageId: page, objectIds: [object], from: { x: 0, y: 0 }, to: { x: 10, y: 0 }, steps: MCP_LIMITS.stepsMax }).success).toBe(true);
+    expect(viewBuildSchema.safeParse({ kind: "motion", pageId: page, objectIds: [object], from: { x: 0, y: 0 }, to: { x: 10, y: 0 }, steps: MCP_LIMITS.stepsMax + 1 }).success).toBe(false);
+  });
+
+  it("keeps the base64 image cap consistent with the decoded-byte preflight", () => {
+    expect(MCP_LIMITS.imageDecodedBytes).toBe(9_000_000);
+    expect(MCP_LIMITS.imageBase64Chars).toBeGreaterThanOrEqual(Math.ceil(MCP_LIMITS.imageDecodedBytes * 4 / 3));
+    const operation = operationSchema.safeParse({
+      op: "add_image", pageId: "page-000000000000000000000000", layerId: "layer-000000000000000000000000", mediaType: "image/png",
+      dataBase64: "a".repeat(MCP_LIMITS.imageBase64Chars), target: { x: 0, y: 0, width: 10, height: 10 },
+    });
+    expect(operation.success).toBe(true);
   });
 });

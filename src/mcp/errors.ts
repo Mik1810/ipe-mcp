@@ -1,5 +1,6 @@
 import { NativeIpeError } from "../native/errors.js";
 import { PathOutsideWorkspaceError, RevisionConflictError, SourceChangedError, StructuralValidationError } from "../persistence/errors.js";
+import { LimitsExceededError, MODEL_TEXT_CAPS } from "../limits.js";
 import { MAX_HINTS, MCP_CONTRACT_VERSION, resultSchema, type PublicResult } from "./contracts.js";
 
 export const sanitizePublicText = (value: string): string => value
@@ -8,7 +9,7 @@ export const sanitizePublicText = (value: string): string => value
   // POSIX and Windows separators; diagnostics must not depend on path text.
   .replaceAll(/(?:[A-Za-z]:[\\/]|(?<![\w:/])\/)[^\r\n]*/gu, "<redacted-path>")
   .replaceAll(/[\r\n\t]+/gu, " ")
-  .slice(0, 500);
+  .slice(0, MODEL_TEXT_CAPS.hintMessage);
 
 export function success(kind: string, summary: string, data: Record<string, unknown>, hints: PublicResult["hints"] = []): PublicResult {
   return resultSchema.parse({ contractVersion: MCP_CONTRACT_VERSION, ok: true, kind, summary: sanitizePublicText(summary), data, hints: hints.slice(0, MAX_HINTS) });
@@ -35,6 +36,9 @@ export function failure(kind: string, error: unknown): PublicResult {
   } else if (error instanceof StructuralValidationError) {
     code = error.code; message = "The candidate violated document invariants; the transaction was rolled back."; correction = "Use exact IDs from ipe_inspect and correct the reported invariant."; retryable = true;
     details = { diagnosticCount: error.diagnostics.length };
+  } else if (error instanceof LimitsExceededError) {
+    code = error.code; message = `The document exceeded its ${error.dimension} limit (${error.actual} > ${error.limit}); the transaction was rolled back.`; correction = `Reduce the document to at most ${error.limit} ${error.dimension} and retry.`; retryable = true;
+    details = { dimension: error.dimension, limit: error.limit, actual: error.actual };
   } else if (error instanceof NativeIpeError) {
     code = error.code; message = sanitizePublicText(error.message); correction = error.code === "NATIVE_TIMEOUT" ? "Reduce page/view complexity and retry; the bounded native deadline was reached." : "Call ipe_get_capabilities and ipe_validate before retrying the native operation."; retryable = error.code === "NATIVE_TIMEOUT";
     details = { diagnosticCount: error.diagnostics.length };

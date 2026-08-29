@@ -760,3 +760,5 @@ The following are not part of the MVP: live editing of the Ipe GUI, continuous a
 ## 15. Sources and Traceability
 
 The detailed dossier, including contradictions, limitations, and experimental gaps, is in [`report-source.md`](./report-source.md). The primary normative sources are the [Ipe 7.2.30 release](https://github.com/otfried/ipe/releases/tag/v7.2.30), the [official manual](https://ipe.otfried.org/ipe-manual.pdf), the [tag sources](https://github.com/otfried/ipe/tree/v7.2.30), the [stable MCP specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25), and the [Codex MCP documentation](https://developers.openai.com/codex/mcp).
+
+The M9 release-limit contract is documented in [`docs/core-m9-limits.md`](./docs/core-m9-limits.md); it is the single stated table behind the `src/limits.ts` module and the `limits` object returned by `ipe_orientation`.

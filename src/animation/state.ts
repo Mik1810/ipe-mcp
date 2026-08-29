@@ -15,6 +15,7 @@ import {
   multiplyMatrices,
   translationMatrix,
 } from "../layout/matrix.js";
+import { ANIMATION_DEFAULT_LIMITS } from "../limits.js";
 import type {
   AnimationBox,
   BboxPolicy,
@@ -25,11 +26,7 @@ import type {
   SemanticEasing,
 } from "./spec.js";
 
-const DEFAULT_LIMITS = {
-  maxGeneratedViews: 64,
-  maxGeneratedCopies: 512,
-  maxPdfPages: 1000,
-} as const;
+const DEFAULT_LIMITS = ANIMATION_DEFAULT_LIMITS;
 export const clone = <T>(value: T): T => structuredClone(value);
 const digest = (kind: "layer" | "view", seed: string, salt: number) =>
   `${kind}-${createHash("sha256").update(`ipe-mcp/m7/${kind}/${seed}/${salt}`).digest("hex").slice(0, 24)}`;
@@ -113,10 +110,10 @@ export function preflight(
     generatedCopies,
     resultingPdfPages: countPdfPages(document) + generatedViews,
   };
-  const effective = { ...DEFAULT_LIMITS, ...limits };
-  for (const [name, value] of Object.entries(effective))
+  const effective = { ...DEFAULT_LIMITS, ...limits } as Required<ExpansionLimits>;
+  for (const value of Object.values(effective))
     if (!Number.isSafeInteger(value) || value < 1)
-      throw new Error(`${name} must be a positive safe integer`);
+      throw new Error("animation limits must be positive safe integers");
   if (estimate.generatedViews > effective.maxGeneratedViews)
     throw new Error(
       `animation would generate ${estimate.generatedViews} views (limit ${effective.maxGeneratedViews})`,

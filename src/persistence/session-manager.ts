@@ -17,8 +17,10 @@ import {
   type SessionDiagnostic,
 } from "./errors.js";
 import { FileSizeLimitError, readFileBounded, readHandleBounded } from "./bounded-read.js";
+import { PERSISTENCE_LIMITS } from "../limits.js";
 
-const DEFAULT_MAX_SOURCE_BYTES = 16 * 1024 * 1024;
+const DEFAULT_MAX_SOURCE_BYTES = PERSISTENCE_LIMITS.maxSourceBytes;
+const METADATA_BYTES = PERSISTENCE_LIMITS.maxMetadataBytes;
 
 export interface DocumentCodec<Document> {
   parse(source: string | Uint8Array): Document;
@@ -26,11 +28,15 @@ export interface DocumentCodec<Document> {
   validate(document: Document): readonly SessionDiagnostic[];
 }
 
-export interface SessionManagerOptions {
+/** Optional pre-serialize guard; throwing rolls back the whole mutation. */
+export type MutationGuard<Document> = (document: Document) => void;
+
+export interface SessionManagerOptions<Document = unknown> {
   readonly workspaceRoots: readonly string[];
   readonly stateRoot: string;
   readonly atomicWriteHooks?: AtomicWriteHooks;
   readonly maxSourceBytes?: number;
+  readonly mutationGuard?: MutationGuard<Document>;
 }
 
 export interface OpenSessionResult<Document> {
@@ -210,6 +216,7 @@ export class DocumentSessionManager<Document> {
   readonly #codec: DocumentCodec<Document>;
   readonly #hooks: AtomicWriteHooks | undefined;
   readonly #maxSourceBytes: number;
+  readonly #mutationGuard: MutationGuard<Document> | undefined;
   readonly #sessions = new Map<string, StoredSession<Document>>();
 
   private constructor(
@@ -218,16 +225,18 @@ export class DocumentSessionManager<Document> {
     codec: DocumentCodec<Document>,
     hooks: AtomicWriteHooks | undefined,
     maxSourceBytes: number,
+    mutationGuard: MutationGuard<Document> | undefined,
   ) {
     this.#roots = roots;
     this.#stateRoot = stateRoot;
     this.#codec = codec;
     this.#hooks = hooks;
     this.#maxSourceBytes = maxSourceBytes;
+    this.#mutationGuard = mutationGuard;
   }
 
   static async create<Document>(
-    options: SessionManagerOptions,
+    options: SessionManagerOptions<Document>,
     codec: DocumentCodec<Document>,
   ): Promise<DocumentSessionManager<Document>> {
     if (options.workspaceRoots.length === 0) {
@@ -241,7 +250,7 @@ export class DocumentSessionManager<Document> {
     }
     const maxSourceBytes = options.maxSourceBytes ?? DEFAULT_MAX_SOURCE_BYTES;
     if (!Number.isSafeInteger(maxSourceBytes) || maxSourceBytes < 1) throw new Error("maxSourceBytes must be a positive safe integer");
-    return new DocumentSessionManager(roots, stateRoot, codec, options.atomicWriteHooks, maxSourceBytes);
+    return new DocumentSessionManager(roots, stateRoot, codec, options.atomicWriteHooks, maxSourceBytes, options.mutationGuard);
   }
 
   async open(sourcePath: string): Promise<OpenSessionResult<Document>> {
@@ -319,6 +328,7 @@ export class DocumentSessionManager<Document> {
       this.#assertRevision(session, expectedRevision);
       const draft = clone(session.document);
       await operation(draft);
+      this.#mutationGuard?.(draft);
       const diagnostics = this.#codec.validate(draft);
       if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
         throw new StructuralValidationError(diagnostics);
@@ -436,7 +446,7 @@ export class DocumentSessionManager<Document> {
       try {
         const manifestPath = await realpath(join(workDirectory, "session.json"));
         if (!isInside(workDirectory, manifestPath)) throw new PathOutsideWorkspaceError(manifestPath);
-        manifestState = await targetState(manifestPath, 64 * 1024);
+        manifestState = await targetState(manifestPath, METADATA_BYTES);
         if (!manifestState.exists) continue;
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
@@ -657,7 +667,7 @@ export class DocumentSessionManager<Document> {
         {
           ...this.#atomicOptions(),
           precondition: async () => {
-            if (!sameTargetState(expected, await targetState(path, 64 * 1024))) throw new SourceChangedError(path);
+            if (!sameTargetState(expected, await targetState(path, METADATA_BYTES))) throw new SourceChangedError(path);
           },
         },
       );
@@ -705,7 +715,7 @@ export class DocumentSessionManager<Document> {
     for (const name of names) {
       const path = await realpath(join(session.workDirectory, name));
       if (!isInside(session.workDirectory, path)) throw new PathOutsideWorkspaceError(path);
-      const source = new TextDecoder("utf-8", { fatal: true }).decode(await readFileBounded(path, 64 * 1024));
+      const source = new TextDecoder("utf-8", { fatal: true }).decode(await readFileBounded(path, METADATA_BYTES));
       const journal = parseSaveJournal(JSON.parse(source) as unknown);
       if (journal.documentId !== session.documentId) throw new Error("save journal session mismatch");
       const target = await this.#resolveTargetAllowed(journal.targetPath);

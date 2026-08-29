@@ -1,5 +1,6 @@
 import { SaxesParser } from "saxes";
 import { isValidXml10String } from "../../domain/xml-chars.js";
+import { XML_PARSE_DEFAULT_LIMITS } from "../../limits.js";
 
 /** A lossless, namespace-free XML node used at the Ipe format boundary. */
 export interface XmlElement {
@@ -32,12 +33,7 @@ export class XmlParseError extends Error {
   }
 }
 
-const DEFAULT_LIMITS: Required<XmlParseLimits> = {
-  maxBytes: 16 * 1024 * 1024,
-  maxDepth: 128,
-  maxNodes: 500_000,
-  maxAttributes: 10000,
-};
+const DEFAULT_LIMITS: Required<XmlParseLimits> = XML_PARSE_DEFAULT_LIMITS;
 
 const BUILTIN_ENTITY = /&(?:amp|lt|gt|quot|apos);/g;
 const DOCTYPE = /^ipe\s+SYSTEM\s+"ipe\.dtd"$/;

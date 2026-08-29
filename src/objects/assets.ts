@@ -8,6 +8,7 @@ import type { Asset, DocumentIR } from "../domain/ir.js";
 import { assertPersistentEntityId } from "../domain/identity.js";
 import { assertBox, type Box } from "../layout/geometry.js";
 import { fitBox, type FitMode } from "../layout/layout.js";
+import { BITMAP_DEFAULT_LIMITS } from "../limits.js";
 import { element } from "./common.js";
 
 export interface BitmapLimits {
@@ -30,9 +31,9 @@ export interface BitmapAssetResult {
   readonly info: BitmapInfo;
 }
 
-const DEFAULT_MAX_INPUT = 64 * 1024 * 1024;
-const DEFAULT_MAX_PIXELS = 100_000_000;
-const DEFAULT_MAX_DECODER_MEMORY_MB = 512;
+const DEFAULT_MAX_INPUT = BITMAP_DEFAULT_LIMITS.maxInputBytes;
+const DEFAULT_MAX_PIXELS = BITMAP_DEFAULT_LIMITS.maxPixels;
+const DEFAULT_MAX_DECODER_MEMORY_MB = BITMAP_DEFAULT_LIMITS.maxDecoderMemoryMB;
 
 function bounded(data: Uint8Array, limits: BitmapLimits): void {
   if (data.byteLength === 0) throw new Error("bitmap input is empty");

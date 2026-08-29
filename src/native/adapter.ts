@@ -18,20 +18,18 @@ import { runControlledProcess, type ProcessLimits, type ProcessResult } from "./
 import { NATIVE_SUBPROCESS_COUNTS } from "./process-accounting.js";
 import { openStableArtifact, type StableArtifact } from "./stable-artifact.js";
 import { DEFAULT_RASTER_LIMITS, type RasterLimits } from "./artifact-validation.js";
+import {
+  LATEX_SAFE_PACKAGES,
+  NATIVE_MAX_ARTIFACT_BYTES,
+  NATIVE_MIN_MEMORY_BYTES,
+  NATIVE_OPERATION_LIMITS,
+  NATIVE_PROCESS_LIMITS,
+} from "../limits.js";
 
-const DEFAULT_LIMITS: ProcessLimits = { timeoutMs: 30_000, maxOutputBytes: 256 * 1024, maxMemoryBytes: 2 * 1024 * 1024 * 1024, maxProcesses: 256, maxFileBytes: 64 * 1024 * 1024 };
-const DEFAULT_MAX_ARTIFACT_BYTES = 64 * 1024 * 1024;
-const DEFAULT_OPERATION_LIMITS: NativeOperationLimits = {
-  maxPageViewStates: 512,
-  maxCumulativeArtifactBytes: 128 * 1024 * 1024,
-  maxSubprocesses: 1024,
-  deadlineMs: 120_000,
-  maxDocumentObjects: 100_000,
-  maxDocumentXmlNodes: 200_000,
-  maxDocumentNestingDepth: 256,
-  maxDocumentSourceBytes: 16 * 1024 * 1024,
-};
-const SAFE_PACKAGES = new Set(["amsmath", "amssymb", "mathtools", "xcolor"]);
+const DEFAULT_LIMITS: ProcessLimits = NATIVE_PROCESS_LIMITS;
+const DEFAULT_MAX_ARTIFACT_BYTES = NATIVE_MAX_ARTIFACT_BYTES;
+const DEFAULT_OPERATION_LIMITS: NativeOperationLimits = NATIVE_OPERATION_LIMITS;
+const SAFE_PACKAGES = new Set<string>(LATEX_SAFE_PACKAGES);
 
 export interface NativeAdapterOptions {
   readonly executables?: Partial<NativeExecutables>;
@@ -253,7 +251,7 @@ export class NativeIpeAdapter {
   static async create(options: NativeAdapterOptions = {}): Promise<NativeIpeAdapter> {
     const limits = { ...DEFAULT_LIMITS, ...options.limits };
     if (!Number.isSafeInteger(limits.timeoutMs) || limits.timeoutMs < 1 || !Number.isSafeInteger(limits.maxOutputBytes) || limits.maxOutputBytes < 1
-      || !Number.isSafeInteger(limits.maxMemoryBytes) || limits.maxMemoryBytes < 64 * 1024 * 1024 || !Number.isSafeInteger(limits.maxProcesses) || limits.maxProcesses < 1
+      || !Number.isSafeInteger(limits.maxMemoryBytes) || limits.maxMemoryBytes < NATIVE_MIN_MEMORY_BYTES || !Number.isSafeInteger(limits.maxProcesses) || limits.maxProcesses < 1
       || !Number.isSafeInteger(limits.maxFileBytes) || limits.maxFileBytes < 1) {
       throw new Error("native process limits must be positive safe integers");
     }

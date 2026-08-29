@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 
+import { RESOURCE_STORE_LIMITS } from "../limits.js";
+
 export interface StoredArtifact {
   readonly id: string;
   readonly family: "artifact" | "preview";
@@ -13,7 +15,7 @@ export interface StoredArtifact {
 export class ArtifactStore {
   readonly #items = new Map<string, StoredArtifact>();
   #bytes = 0;
-  constructor(readonly maxItemBytes = 16 * 1024 * 1024, readonly maxTotalBytes = 64 * 1024 * 1024) {}
+  constructor(readonly maxItemBytes = RESOURCE_STORE_LIMITS.maxItemBytes, readonly maxTotalBytes = RESOURCE_STORE_LIMITS.maxTotalBytes) {}
 
   put(item: Omit<StoredArtifact, "id">): StoredArtifact {
     if (item.data.length > this.maxItemBytes) throw new Error(`artifact exceeds ${this.maxItemBytes} byte resource limit`);

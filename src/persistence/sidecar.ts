@@ -4,6 +4,7 @@ import type { DocumentIR } from "../domain/ir.js";
 
 import { atomicWriteFile, type AtomicWriteOptions } from "./atomic.js";
 import { readFileBounded } from "./bounded-read.js";
+import { PERSISTENCE_LIMITS } from "../limits.js";
 
 const jsonValueSchema: z.ZodType<unknown> = z.lazy(() =>
   z.union([
@@ -125,7 +126,7 @@ export function migrateSidecar(input: unknown): SidecarV1 {
   });
 }
 
-export async function readSidecar(path: string, maxBytes = 4 * 1024 * 1024): Promise<SidecarV1> {
+export async function readSidecar(path: string, maxBytes = PERSISTENCE_LIMITS.maxSidecarBytes): Promise<SidecarV1> {
   const source = new TextDecoder("utf-8", { fatal: true }).decode(await readFileBounded(path, maxBytes));
   return migrateSidecar(JSON.parse(source) as unknown);
 }

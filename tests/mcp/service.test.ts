@@ -124,4 +124,22 @@ describe("M8 service transactions and recovery", () => {
     const panned = await service.buildViews(second.documentId, 1, { kind: "camera_pan", pageId: secondPage.id, objectIds: [secondAdded.createdIds.find((id) => id.startsWith("object-"))!], from: { x: 0, y: 0 }, to: { x: 5, y: 5 }, steps: 2 });
     expect(panned.viewIds).toHaveLength(2);
   });
+
+  it("rejects an over-limit document shape and rolls back without a revision bump", async () => {
+    const { service } = await serviceFixture();
+    const created = await service.createDocument("standard");
+    const page = (created.outline.pages as Array<{ id: string; layers: Array<{ id: string }> }>)[0]!;
+    expect(page.layers.length).toBe(1);
+    const addLayer = (index: number) => ({ op: "add_layer", pageId: page.id, name: `layer-${index}` }) as const;
+    const capped = await service.apply(created.documentId, 0, Array.from({ length: 254 }, (_, index) => addLayer(index)));
+    expect(capped.revision).toBe(1);
+    const boundary = await service.apply(created.documentId, 1, [addLayer(254)]);
+    expect(boundary.revision).toBe(2);
+    let caught: unknown;
+    try {
+      await service.apply(created.documentId, 2, [addLayer(255)]);
+    } catch (error) { caught = error; }
+    expect(caught).toMatchObject({ code: "LIMIT_EXCEEDED", dimension: "layers" });
+    expect(service.inspect(created.documentId).revision).toBe(2);
+  });
 });

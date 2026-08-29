@@ -1,6 +1,7 @@
 import { PNG } from "pngjs";
 import { SaxesParser } from "saxes";
 
+import { NATIVE_RASTER_LIMITS, NATIVE_SVG_PARSE_LIMITS } from "../limits.js";
 import { NativeIpeError, type NativeErrorCode } from "./errors.js";
 
 export interface RasterLimits {
@@ -10,12 +11,7 @@ export interface RasterLimits {
   readonly maxDecodedBytes: number;
 }
 
-export const DEFAULT_RASTER_LIMITS: RasterLimits = {
-  maxWidth: 16_384,
-  maxHeight: 16_384,
-  maxPixels: 64 * 1024 * 1024,
-  maxDecodedBytes: 256 * 1024 * 1024,
-};
+export const DEFAULT_RASTER_LIMITS: RasterLimits = NATIVE_RASTER_LIMITS;
 
 export function validatePdfEnvelope(data: Buffer, failure: NativeErrorCode): void {
   if (!data.subarray(0, 5).equals(Buffer.from("%PDF-"))) throw new NativeIpeError(failure, "export did not produce a PDF header");
@@ -155,7 +151,7 @@ function nonzeroGeometry(node: SvgNode, paint: Paint): boolean {
 }
 
 export function validateSvg(data: Buffer, limits: RasterLimits, failure: NativeErrorCode): { readonly width: number; readonly height: number } {
-  if (data.length > 4 * 1024 * 1024) throw new NativeIpeError("NATIVE_RESOURCE_LIMIT", "rendered SVG source exceeds the 4 MiB parser limit");
+  if (data.length > NATIVE_SVG_PARSE_LIMITS.maxBytes) throw new NativeIpeError("NATIVE_RESOURCE_LIMIT", "rendered SVG source exceeds the 4 MiB parser limit");
   const source = data.toString("utf8");
   if (/<!DOCTYPE|<!ENTITY/iu.test(source)) throw new NativeIpeError(failure, "rendered SVG contains prohibited declarations");
   const withoutDeclaration = source.replace(/^\uFEFF?\s*<\?xml\s+[^?]*\?>/iu, "");
@@ -168,7 +164,7 @@ export function validateSvg(data: Buffer, limits: RasterLimits, failure: NativeE
     parser.on("processinginstruction", () => { throw new Error("SVG processing instructions are prohibited"); });
     parser.on("opentag", (tag) => {
       nodes += 1;
-      if (nodes > 100_000 || stack.length > 256) throw new Error("SVG structure limit exceeded");
+      if (nodes > NATIVE_SVG_PARSE_LIMITS.maxNodes || stack.length > NATIVE_SVG_PARSE_LIMITS.maxDepth) throw new Error("SVG structure limit exceeded");
       const node: SvgNode = { name: tag.name.toLowerCase(), attributes: Object.fromEntries(Object.entries(tag.attributes).map(([key, value]) => [key.toLowerCase(), String(value)])), children: [], text: "" };
       stack.at(-1)!.children.push(node); stack.push(node);
     });

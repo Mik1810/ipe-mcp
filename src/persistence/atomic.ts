@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { lstat, open, rename, unlink, type FileHandle } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
+import { PERSISTENCE_LIMITS } from "../limits.js";
+
 export interface AtomicWriteHooks {
   readonly beforeRename?: (temporaryPath: string, targetPath: string) => Promise<void>;
   readonly afterRename?: (targetPath: string) => Promise<void>;
@@ -32,8 +34,8 @@ export class AtomicWriteError extends Error {
   }
 }
 
-const LOCK_WAIT_MS = 10;
-const LOCK_TIMEOUT_MS = 10_000;
+const LOCK_WAIT_MS = PERSISTENCE_LIMITS.lockWaitMs;
+const LOCK_TIMEOUT_MS = PERSISTENCE_LIMITS.lockTimeoutMs;
 
 async function delay(milliseconds: number): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, milliseconds));

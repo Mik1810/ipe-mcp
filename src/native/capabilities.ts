@@ -3,6 +3,7 @@ import { access, open, realpath, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 
 import { ipeDocumentCodec } from "../core/ipe-document-codec.js";
+import { NATIVE_WORKER_ARTIFACT_BYTES } from "../limits.js";
 import { DEFAULT_RASTER_LIMITS } from "./artifact-validation.js";
 import type { ProcessLimits } from "./process.js";
 import { runControlledProcess } from "./process.js";
@@ -31,7 +32,7 @@ async function exists(path: string): Promise<boolean> { try { await access(path,
 async function artifactWorker(operation: string, stable: readonly StableArtifact[], helperDirectory: string, workspace: string, limits: ProcessLimitsProvider): Promise<Record<string, unknown>> {
   {
     const result = await runControlledProcess(process.execPath, [join(helperDirectory, "m6-artifact-worker.mjs"), operation, ...stable.map((item) => item.path)], workspace, limits(), "NATIVE_RENDER_ERROR", {
-      IPE_M6_ARTIFACT_LIMITS: JSON.stringify({ ...DEFAULT_RASTER_LIMITS, maxArtifactBytes: 4 * 1024 * 1024 }),
+      IPE_M6_ARTIFACT_LIMITS: JSON.stringify({ ...DEFAULT_RASTER_LIMITS, maxArtifactBytes: NATIVE_WORKER_ARTIFACT_BYTES }),
     });
     if (!/^IPE_M6_PROTOCOL=ipe-mcp-artifact\/1$/mu.test(result.stdout) || !/^IPE_M6_RESULT=PASS$/mu.test(result.stdout)) throw new Error("artifact worker attestation failed");
     return JSON.parse(/^IPE_M6_DATA=(.+)$/mu.exec(result.stdout)?.[1] ?? "null") as Record<string, unknown>;

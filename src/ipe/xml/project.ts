@@ -5,6 +5,7 @@ import type { XmlElement as DomainXmlElement, XmlNode } from "../../domain/xml-n
 import type { XmlDocument, XmlElement } from "./parser.js";
 import { objectIdFromCustom, parsePersistentObjectCustom } from "../../domain/identity.js";
 import { validateJpegPayload } from "../../objects/assets.js";
+import { BITMAP_DEFAULT_LIMITS } from "../../limits.js";
 
 /** The lossless source is attached out-of-band for the serializer adapter. */
 export type ProjectedDocument = DocumentIR & { readonly xml: XmlDocument };
@@ -75,7 +76,7 @@ function canonicalElementFingerprint(source: XmlElement, omittedAttributes: Read
   };
 }
 
-const MAX_BITMAP_PIXELS = 100_000_000;
+const MAX_BITMAP_PIXELS = BITMAP_DEFAULT_LIMITS.maxPixels;
 
 function bitmapPayload(source: XmlElement): Buffer | undefined {
   const text = textOf(source).replace(/\s+/gu, "");

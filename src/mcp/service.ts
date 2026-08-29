@@ -14,8 +14,9 @@ import { DocumentSessionManager } from "../persistence/session-manager.js";
 import { ArtifactStore, type StoredArtifact } from "./artifacts.js";
 import type { PublicOperation, PublicViewBuild } from "./contracts.js";
 import { sanitizePublicText } from "./errors.js";
+import { MCP_LIMITS, checkDocumentShapeLimits } from "../limits.js";
 
-const SOURCE_RESOURCE_LIMIT = 128 * 1024;
+const SOURCE_RESOURCE_LIMIT = MCP_LIMITS.sourceResourceBytes;
 
 function minimalSource(preset: "standard" | "16:9", title?: string): string {
   const layout = preset === "16:9" ? '<ipestyle name="ipe-mcp-layout"><layout paper="1280 720" origin="32 0" frame="1216 648"/></ipestyle>' : "";
@@ -84,7 +85,7 @@ function previousValues(document: IpeDocument, operations: readonly PublicOperat
   return values;
 }
 
-function outline(document: IpeDocument, maxObjects = 100): Record<string, unknown> {
+function outline(document: IpeDocument, maxObjects: number = MCP_LIMITS.inspectObjectsDefault): Record<string, unknown> {
   let remaining = maxObjects;
   const pages = document.pages.map((page) => {
     const shown = page.objects.slice(0, Math.max(0, remaining)); remaining -= shown.length;
@@ -106,7 +107,7 @@ export class IpeMcpService {
   private constructor(readonly sessions: DocumentSessionManager<IpeDocument>, readonly native: NativeIpeAdapter) {}
 
   static async create(workspaceRoots: readonly string[], stateRoot: string, nativeOptions: NativeAdapterOptions = {}): Promise<IpeMcpService> {
-    const sessions = await DocumentSessionManager.create<IpeDocument>({ workspaceRoots, stateRoot }, ipeDocumentCodec);
+    const sessions = await DocumentSessionManager.create<IpeDocument>({ workspaceRoots, stateRoot, mutationGuard: (document: unknown) => checkDocumentShapeLimits(document as IpeDocument) }, ipeDocumentCodec);
     const native = await NativeIpeAdapter.create(nativeOptions);
     return new IpeMcpService(sessions, native);
   }
@@ -121,7 +122,7 @@ export class IpeMcpService {
     return { documentId: opened.documentId, revision: opened.revision, outline: outline(opened.document) };
   }
 
-  inspect(documentId: string, maxObjects = 100) {
+  inspect(documentId: string, maxObjects: number = MCP_LIMITS.inspectObjectsDefault) {
     const current = this.sessions.inspect(documentId);
     return { documentId, revision: current.revision, outline: outline(current.document, maxObjects) };
   }
@@ -153,7 +154,7 @@ export class IpeMcpService {
           case "add_path": applyObjectOperations(draft, operation.pageId, [{ op: "insert", object: buildPathObject({ layerId: operation.layerId, path: operation.path as PathSpec }), ...(operation.position === undefined ? {} : { position: operation.position }) }]); break;
           case "add_text": applyObjectOperations(draft, operation.pageId, [{ op: "insert", object: buildTextObject({ layerId: operation.layerId, text: operation.text, position: operation.position, ...(operation.width === undefined ? {} : { type: "minipage", width: operation.width }), ...(operation.stroke === undefined ? {} : { stroke: operation.stroke }), ...(operation.size === undefined ? {} : { size: operation.size }) }), ...(operation.positionInZOrder === undefined ? {} : { position: operation.positionInZOrder }) }]); break;
           case "add_image": {
-            const asset = addBitmapAsset(draft, decodeBase64(operation.dataBase64), operation.mediaType, { maxInputBytes: 9_000_000 }).asset;
+            const asset = addBitmapAsset(draft, decodeBase64(operation.dataBase64), operation.mediaType, { maxInputBytes: MCP_LIMITS.imageDecodedBytes }).asset;
             const object = buildFittedImageObject({ layerId: operation.layerId, asset, target: operation.target, ...(operation.fit === undefined ? {} : { fit: operation.fit }), ...(operation.opacity === undefined ? {} : { opacity: operation.opacity }) });
             applyObjectOperations(draft, operation.pageId, [{ op: "insert", object, ...(operation.position === undefined ? {} : { position: operation.position }) }]);
             break;
@@ -223,11 +224,11 @@ export class IpeMcpService {
     const current = this.sessions.inspect(documentId);
     if (level === "structural") {
       const report = validateDocument(current.document);
-      this.#diagnostics.set(documentId, report.diagnostics.map((item) => ({ severity: item.severity, code: item.code, path: item.path, message: sanitizePublicText(item.message).slice(0, 300) })));
+      this.#diagnostics.set(documentId, report.diagnostics.map((item) => ({ severity: item.severity, code: item.code, path: item.path, message: sanitizePublicText(item.message).slice(0, MCP_LIMITS.diagnosticChars) })));
       return { documentId, revision: current.revision, level, ok: report.ok, diagnosticCount: report.diagnostics.length };
     }
     const report = await this.native.validateFull(current.document);
-    this.#diagnostics.set(documentId, report.diagnostics.map((item) => ({ level: item.level, code: item.code, message: sanitizePublicText(item.message).slice(0, 300) })));
+    this.#diagnostics.set(documentId, report.diagnostics.map((item) => ({ level: item.level, code: item.code, message: sanitizePublicText(item.message).slice(0, MCP_LIMITS.diagnosticChars) })));
     return { documentId, revision: current.revision, level, ok: report.ok, capabilityMode: report.capabilities.mode, diagnosticCount: report.diagnostics.length };
   }
 

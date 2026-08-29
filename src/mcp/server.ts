@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MCP_CONTRACT_VERSION, documentIdSchema, entityIdSchema, operationSchema, resultSchema, revisionSchema, viewBuildSchema, type PublicResult } from "./contracts.js";
 import { failure, inputValidationFailure, safeLog, success } from "./errors.js";
 import { IpeMcpService } from "./service.js";
+import { DOCUMENT_SHAPE_LIMITS, MCP_LIMITS } from "../limits.js";
 
 export const SERVER_INSTRUCTIONS = `Ipe MCP ${MCP_CONTRACT_VERSION}. Start with ipe_orientation, then create/open and retain exact document/page/layer/view/object IDs. Every mutation requires the latest expectedRevision; on REVISION_CONFLICT inspect and retry. Validate before save/export. DELETE, SAVE, UNDO, and RESTORE require explicit confirmation tokens. Binary outputs are resource links: read only the artifact needed.`;
 
@@ -36,7 +37,7 @@ export function createMcpServer(service: IpeMcpService): McpServer {
   }, async () => response(success("orientation", "Use create/open → inspect → revision-guarded mutation → validate → save/export; binary results stay behind resource links.", {
     contractVersion: MCP_CONTRACT_VERSION, instructionsVersion: 1, workflow: ["ipe_create_document|ipe_open_document", "ipe_inspect", "ipe_apply_operations|ipe_compose_slide|ipe_build_views", "ipe_validate", "ipe_save_document|ipe_export_document"],
     invariants: ["Use exact IDs from results/resources", "Every mutation needs current expectedRevision", "Delete/save/undo/restore need confirmation", "Read binary resources only on demand", "Duplicate create calls deliberately create distinct local sessions"],
-    resources: ["ipe://documents/{documentId}/summary", "ipe://documents/{documentId}/source", "ipe://documents/{documentId}/diagnostics", "ipe://previews/{artifactId}", "ipe://artifacts/{artifactId}"], limits: { operationsPerBatch: 64, inspectObjectsDefault: 100, sourceResourceBytes: 131072, hints: 3 },
+    resources: ["ipe://documents/{documentId}/summary", "ipe://documents/{documentId}/source", "ipe://documents/{documentId}/diagnostics", "ipe://previews/{artifactId}", "ipe://artifacts/{artifactId}"], limits: { operationsPerBatch: MCP_LIMITS.operationsPerBatch, inspectObjectsDefault: MCP_LIMITS.inspectObjectsDefault, maxInspectObjects: MCP_LIMITS.maxInspectObjects, sourceResourceBytes: MCP_LIMITS.sourceResourceBytes, hints: MCP_LIMITS.maxHints, documentShape: DOCUMENT_SHAPE_LIMITS },
   })));
 
   server.registerTool("ipe_get_capabilities", {
@@ -50,33 +51,33 @@ export function createMcpServer(service: IpeMcpService): McpServer {
 
   server.registerTool("ipe_create_document", {
     title: "Create Ipe document", description: "Creates a private recoverable working session; it does not write the eventual destination until ipe_save_document.",
-    inputSchema: z.object({ preset: z.enum(["standard", "16:9"]).describe("Global Ipe page layout; choose 16:9 for presentations."), title: z.string().max(500).optional().describe("Optional document title; duplicate creates are intentionally allowed because this is a local working session.") }).strict(), outputSchema: resultSchema, annotations: mutation,
+    inputSchema: z.object({ preset: z.enum(["standard", "16:9"]).describe("Global Ipe page layout; choose 16:9 for presentations."), title: z.string().max(MCP_LIMITS.operationsPerBatch*0+500).optional().describe("Optional document title; duplicate creates are intentionally allowed because this is a local working session.") }).strict(), outputSchema: resultSchema, annotations: mutation,
   }, async ({ preset, title }) => await run("create_document", async () => { const data = await service.createDocument(preset, title); return success("create_document", `Created recoverable ${preset} working session at revision 0.`, data, [{ priority: "nudge", code: "INSPECT_IDS", message: "Use returned exact IDs or call ipe_inspect before composing." }]); }));
 
   server.registerTool("ipe_open_document", {
     title: "Open Ipe document", description: "Opens an allowed local .ipe path into a private working copy; the source stays byte-identical until explicit save.",
-    inputSchema: z.object({ path: z.string().min(1).max(4096).describe("Local .ipe path inside a configured workspace root; remote URLs and symlink escapes are rejected.") }).strict(), outputSchema: resultSchema, annotations: mutation,
+    inputSchema: z.object({ path: z.string().min(1).max(MCP_LIMITS.pathChars).describe("Local .ipe path inside a configured workspace root; remote URLs and symlink escapes are rejected.") }).strict(), outputSchema: resultSchema, annotations: mutation,
   }, async ({ path }) => await run("open_document", async () => { const data = await service.openDocument(path); return success("open_document", "Opened a private working copy; the source was not modified.", data); }));
 
   server.registerTool("ipe_inspect", {
     title: "Inspect Ipe document", description: "Returns bounded outline, exact actionable IDs, counts and an explicit truncation flag. Read the summary resource for the same stable orientation shape.",
-    inputSchema: z.object({ documentId: documentIdSchema, maxObjects: z.number().int().min(1).max(500).default(100).describe("Maximum object identities returned across all pages; counts remain exact when truncated.") }).strict(), outputSchema: resultSchema, annotations: readOnly,
+    inputSchema: z.object({ documentId: documentIdSchema, maxObjects: z.number().int().min(1).max(MCP_LIMITS.maxInspectObjects).default(Number(MCP_LIMITS.inspectObjectsDefault)).describe("Maximum object identities returned across all pages; counts remain exact when truncated.") }).strict(), outputSchema: resultSchema, annotations: readOnly,
   }, async ({ documentId, maxObjects }) => await run("inspect", async () => { const data = service.inspect(documentId, maxObjects); const truncated = (data.outline as { truncated: boolean }).truncated; return success("inspect", `Document revision ${data.revision}${truncated ? "; object index is truncated" : ""}.`, data, truncated ? [{ priority: "warning", code: "INDEX_TRUNCATED", message: "Increase maxObjects up to 500 or inspect the returned page IDs; never infer omitted IDs." }] : []); }));
 
   server.registerTool("ipe_apply_operations", {
     title: "Apply atomic Ipe operations", description: "Applies up to 64 typed M0-M6 operations atomically: metadata; page/layer/view CRUD and reorder; paths/text/images/symbols/groups/object transforms; styles; and row/column/grid/stack layout. Any invalid ID or invariant rolls back the whole batch. Raw XML is not accepted.",
-    inputSchema: z.object({ documentId: documentIdSchema, expectedRevision: revisionSchema, operations: z.array(operationSchema).min(1).max(64).describe("Ordered typed operations committed as one revision or not at all."), confirmation: z.literal("DELETE").optional().describe("Required only when the batch contains a delete operation.") }).strict(), outputSchema: resultSchema, annotations: destructive,
+    inputSchema: z.object({ documentId: documentIdSchema, expectedRevision: revisionSchema, operations: z.array(operationSchema).min(1).max(MCP_LIMITS.operationsPerBatch).describe("Ordered typed operations committed as one revision or not at all."), confirmation: z.literal("DELETE").optional().describe("Required only when the batch contains a delete operation.") }).strict(), outputSchema: resultSchema, annotations: destructive,
   }, async ({ documentId, expectedRevision, operations, confirmation }) => await run("apply_operations", async () => { const data = await service.apply(documentId, expectedRevision, operations, confirmation); return success("apply_operations", `Applied ${operations.length} operations atomically; revision is ${data.revision}.`, data); }));
 
   server.registerTool("ipe_compose_slide", {
     title: "Compose semantic slide", description: "Adds one layout-compatible semantic slide with page/layer/view IDs; then use apply_operations to populate its exact layer IDs.",
-    inputSchema: z.object({ documentId: documentIdSchema, expectedRevision: revisionSchema, preset: z.enum(["standard", "16:9"]).describe("Must match the document global layout."), name: z.string().min(1).max(120).optional().describe("Unique destination name; safe suffixes resolve duplicates."), title: z.string().max(500).optional().describe("Visible semantic page title metadata."), notes: z.string().max(4000).optional().describe("Ipe page notes, replicated across its views."), layers: z.array(z.string().regex(/^\S+$/u).max(120)).min(1).max(32).optional().describe("Whitespace-free layer names; defaults to content.") }).strict(), outputSchema: resultSchema, annotations: mutation,
+    inputSchema: z.object({ documentId: documentIdSchema, expectedRevision: revisionSchema, preset: z.enum(["standard", "16:9"]).describe("Must match the document global layout."), name: z.string().min(1).max(MCP_LIMITS.nameChars).optional().describe("Unique destination name; safe suffixes resolve duplicates."), title: z.string().max(MCP_LIMITS.titleChars).optional().describe("Visible semantic page title metadata."), notes: z.string().max(MCP_LIMITS.notesChars).optional().describe("Ipe page notes, replicated across its views."), layers: z.array(z.string().regex(/^\S+$/u).max(MCP_LIMITS.nameChars)).min(1).max(MCP_LIMITS.composeLayersMax).optional().describe("Whitespace-free layer names; defaults to content.") }).strict(), outputSchema: resultSchema, annotations: mutation,
   }, async ({ documentId, expectedRevision, ...input }) => await run("compose_slide", async () => { const data = await service.compose(documentId, expectedRevision, input); return success("compose_slide", `Composed slide ${data.pageId}; revision is ${data.revision}.`, data); }));
 
   server.registerTool("ipe_build_views", {
     title: "Build reveal, motion, scroll, pan, or transition views", description: "Exposes the stabilized M7 facade for bounded reveal, discrete motion, clipped panel scroll, camera pan, and viewer-aware transition assignment; never claims continuous animation.",
     inputSchema: z.object({ documentId: documentIdSchema, expectedRevision: revisionSchema, build: viewBuildSchema.describe("Reveal groups or discrete motion using exact page/object/layer IDs.") }).strict(), outputSchema: resultSchema, annotations: mutation,
-  }, async ({ documentId, expectedRevision, build }) => await run("build_views", async () => { const data = await service.buildViews(documentId, expectedRevision, build); return success("build_views", `Built independently renderable static views; revision is ${data.revision}.`, data, data.diagnostics.slice(0, 3).map((item) => ({ priority: item.severity === "warning" ? "warning" as const : "nudge" as const, code: item.code, message: item.message }))); }));
+  }, async ({ documentId, expectedRevision, build }) => await run("build_views", async () => { const data = await service.buildViews(documentId, expectedRevision, build); return success("build_views", `Built independently renderable static views; revision is ${data.revision}.`, data, data.diagnostics.slice(0, MCP_LIMITS.maxHints).map((item) => ({ priority: item.severity === "warning" ? "warning" as const : "nudge" as const, code: item.code, message: item.message }))); }));
 
   server.registerTool("ipe_validate", {
     title: "Validate Ipe document", description: "Runs structural validation or the bounded full native/style/LaTeX/PDF/render pipeline. Full validation can be slow and reports recoverable native failures.",
@@ -90,7 +91,7 @@ export function createMcpServer(service: IpeMcpService): McpServer {
 
   server.registerTool("ipe_save_document", {
     title: "Save Ipe document", description: "Atomically writes the current working copy to an allowed local target after explicit confirmation, with source-change detection and recoverable snapshot when replacing.",
-    inputSchema: z.object({ documentId: documentIdSchema, expectedRevision: revisionSchema, targetPath: z.string().min(1).max(4096).describe("Destination inside an allowed workspace root; traversal and symlink escape are rejected."), confirmation: z.literal("SAVE").describe("Explicit user-authorized destructive confirmation token.") }).strict(), outputSchema: resultSchema, annotations: destructive,
+    inputSchema: z.object({ documentId: documentIdSchema, expectedRevision: revisionSchema, targetPath: z.string().min(1).max(MCP_LIMITS.pathChars).describe("Destination inside an allowed workspace root; traversal and symlink escape are rejected."), confirmation: z.literal("SAVE").describe("Explicit user-authorized destructive confirmation token.") }).strict(), outputSchema: resultSchema, annotations: destructive,
   }, async ({ documentId, expectedRevision, targetPath }) => await run("save_document", async () => { const data = await service.save(documentId, expectedRevision, targetPath); return success("save_document", `Saved revision ${data.revision} atomically; target path is intentionally omitted from the result.`, data); }));
 
   server.registerTool("ipe_export_document", {
