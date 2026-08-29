@@ -162,6 +162,11 @@ describe("native Ipe adapter", () => {
     expect(await readdir(root)).toEqual([]);
   }, 15_000);
 
+  it.skipIf(!nativeAvailable)("accepts Ipe's explicit numeric default stroke on newly authored objects", async () => {
+    const document = ipeDocumentCodec.parse('<ipe version="70218"><page><layer name="content"/><view layers="content" active="content"/><path layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000001">0 0 m 10 0 l</path><text layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000002" pos="2 3" type="label" valign="baseline">M8</text></page></ipe>');
+    await expect((await NativeIpeAdapter.create()).reload(document)).resolves.toMatchObject({ diagnostics: expect.arrayContaining([expect.objectContaining({ code: "NATIVE_RELOAD_OK" })]) });
+  });
+
   it.skipIf(!nativeAvailable)("rejects loss of root extension semantics", async () => {
     const document = await fixture("full.xml");
     document.extensions = { "x-ipe-mcp-conformance": { type: "element", name: "x-ipe-mcp-conformance", attributes: { probe: "required" }, children: [] } };

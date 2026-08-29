@@ -1,0 +1,56 @@
+{
+  "capturedAt": "2026-08-28",
+  "scenario": "portable-m8-v1",
+  "hosts": [
+    {
+      "host": "mcp-inspector",
+      "version": "2.4.0",
+      "protocol": "stdio",
+      "result": "PASS",
+      "candidateDigest": "b35d7c398613542d8aa3fc4160c5b799dd6936c7",
+      "preflight": "PASS",
+      "deterministicInterface": "inspector-launcher/web-remote-session-protocol-api-over-stdio",
+      "completeWorkflow": true,
+      "singleSession": true,
+      "operationCount": 14,
+      "resourceReads": 3,
+      "distinctResourcesRead": 3,
+      "staleRollback": "PASS",
+      "undoRestore": "PASS",
+      "fullValidation": "PASS",
+      "protocolOnlyStdout": true,
+      "safeStderr": true,
+      "shutdown": "PASS",
+      "cleanup": "PASS",
+      "webSmoke": "PASS",
+      "webBrowserRounds": 13,
+      "webResourceReads": 1,
+      "artifactChecks": {
+        "ipeFormat": 70218,
+        "ipeBytes": 645,
+        "pdfHeader": "PASS",
+        "pdfBytes": 1498,
+        "pngHeader": "PASS",
+        "pngBytes": 4441,
+        "pngWidth": 1280,
+        "pngHeight": 720
+      },
+      "evidence": ["preflight: explicit child environment, isolated roots, initialize, 13 tools, three resource templates, orientation, and clean stdout/stderr", "deterministic protocol automation: orientation/create/exact-ID rectangle/snapshot/mutate/stale/undo/restore/inspect", "full native validation, confirmed save, preview/PDF/PNG generation, and three distinct generated-resource reads", "minimal web smoke: discovery, one create call, one document-summary resource read, and disconnect"]
+    },
+    {
+      "host": "codex-cli",
+      "version": "0.149.0-alpha.4.3",
+      "protocol": "stdio",
+      "result": "PASS",
+      "evidence": ["orientation/create/inspect and exact-ID authoring", "REVISION_CONFLICT rollback at revision 2", "snapshot/undo revision 3/restore revision 4", "full native validation", "confirmed save", "preview/PDF/PNG resource links", "text/structured parity"],
+      "safety": "A no-approval run stopped at the conservatively destructive apply tool; the completed local fixture run used explicit approval bypass."
+    },
+    {
+      "host": "official-typescript-sdk",
+      "version": "2.0.0",
+      "protocol": "stdio",
+      "result": "PASS",
+      "evidence": ["complete portable scenario", "full native validation", "stale rollback", "snapshot/undo/restore", "saved Ipe", "PDF and PNG", "three explicit resource reads", "clean shutdown"]
+    }
+  ]
+}

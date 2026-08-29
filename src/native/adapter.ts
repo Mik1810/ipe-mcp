@@ -77,7 +77,7 @@ function semanticXml(value: unknown, unorderedChildren = false, ignoreLatexMetri
   const node = value as { type?: string; name?: string; attributes?: Record<string, string>; children?: unknown[]; text?: string };
   if (node.type === "text") return { type: "text", text: (node.text ?? "").replace(/\s+/gu, " ").trim() };
   const attributes = Object.fromEntries(Object.entries(node.attributes ?? {})
-    .filter(([name, item]) => name !== "x-ipe-mcp-id" && !(managedObjectRoot && name === "custom") && name !== "layer" && !(name === "valign" && item === "bottom") && !(name === "BitsPerComponent" && item === "8") && !(name === "transition" && item === "1") && !(ignoreLatexMetrics && ["width", "height", "depth"].includes(name)))
+    .filter(([name, item]) => name !== "x-ipe-mcp-id" && !(managedObjectRoot && name === "custom") && name !== "layer" && !(name === "stroke" && item === "0") && !(name === "valign" && item === "bottom") && !(name === "BitsPerComponent" && item === "8") && !(name === "transition" && item === "1") && !(ignoreLatexMetrics && ["width", "height", "depth"].includes(name)))
     .sort(([a], [b]) => a.localeCompare(b)));
   const children = (node.children ?? []).map((child) => semanticXml(child, unorderedChildren, ignoreLatexMetrics, false)).filter((child) => JSON.stringify(child) !== '{"type":"text","text":""}');
   if (unorderedChildren) children.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
