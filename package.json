@@ -11,14 +11,14 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --exclude 'dist/**'",
     "test:watch": "vitest",
-    "check:m2": "bash scripts/check-m2.sh",
-    "check:m3": "bash scripts/check-m3.sh",
-    "check:m4": "bash scripts/check-m4.sh",
-    "check:m5": "bash scripts/check-m5.sh",
-    "check:m6": "bash scripts/check-m6.sh",
-    "check:m7": "bash scripts/check-m7.sh",
+    "check:m2": "bash scripts/gates/check-m2.sh",
+    "check:m3": "bash scripts/gates/check-m3.sh",
+    "check:m4": "bash scripts/gates/check-m4.sh",
+    "check:m5": "bash scripts/gates/check-m5.sh",
+    "check:m6": "bash scripts/gates/check-m6.sh",
+    "check:m7": "bash scripts/gates/check-m7.sh",
     "mcp": "node dist/src/cli/mcp-stdio.js",
-    "check:m8": "bash scripts/check-m8.sh"
+    "check:m8": "bash scripts/gates/check-m8.sh"
   },
   "bin": {
     "ipe-mcp": "dist/src/cli/mcp-stdio.js"

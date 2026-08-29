@@ -71,7 +71,7 @@ Tool output becomes model context.
 - Prefer summaries, quiet reporters, `--stat`, changed-file lists, and focused failure excerpts.
 - Never dump generated artifacts, lockfiles, minified files, large snapshots, or full successful logs unless required.
 - Do not request a full diff until you know which paths/hunks matter.
-- Use `scripts/agent-context.sh` for a compact Git snapshot.
+- Use `scripts/agent/agent-context.sh` for a compact Git snapshot.
 
 ## 6. Implementation
 

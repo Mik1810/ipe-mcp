@@ -80,7 +80,7 @@ Run from a clean checkout to prove the setup procedure end to end without
 inheriting `node_modules`:
 
 ```bash
-bash scripts/check-m9-setup.sh
+bash scripts/gates/check-m9-setup.sh
 ```
 
 The gate:
@@ -125,7 +125,7 @@ There is no need to compile Ipe from source: Ubuntu 26.04 already provides exact
 With the stable package installed, run the complete laboratory from the repository root:
 
 ```bash
-bash scripts/check-m1.sh
+bash scripts/gates/check-m1.sh
 ```
 
 The command verifies Lua/Ipelib capabilities, round-trip and copy behavior, semantic goldens, SVG rendering, and PDF export of effects. It writes no artifacts to the repository.
@@ -133,7 +133,7 @@ The command verifies Lua/Ipelib capabilities, round-trip and copy behavior, sema
 The source-build lane remains an optional CI lane. If an existing 7.2.30 build is available, specify the directory containing `ipetoipe`, `iperender`, and `ipescript`:
 
 ```bash
-IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/check-m1.sh
+IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/gates/check-m1.sh
 ```
 
 The gate does not automatically download, compile, or install a source build. Without the variable, the lane is explicitly reported as `SKIP`, and the stable gate uses the verified Ubuntu package.

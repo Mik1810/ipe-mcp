@@ -3,7 +3,7 @@
  *
  * Every module imports the value it enforces from here; nothing duplicates a
  * limit number in another module.  The complete table of values is documented
- * in docs/core-m9-limits.md and exposed to clients through the ipe_orientation
+ * in docs/milestones/core-m9-limits.md and exposed to clients through the ipe_orientation
  * `limits` field and `ipe_get_capabilities`.
  *
  * Only type-only imports are allowed in this module so that it never

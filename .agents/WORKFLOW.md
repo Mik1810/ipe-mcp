@@ -7,7 +7,7 @@ This is the default repository workflow. One agent owns every phase.
 Establish the minimum context needed to act:
 
 ```bash
-scripts/agent-context.sh
+scripts/agent/agent-context.sh
 ```
 
 Then read only the issue, docs, code, and tests relevant to the requested change.
@@ -42,13 +42,13 @@ On failure, gather one useful diagnostic bundle, fix the cause, and retest. Avoi
 Exactly one general self-review by default:
 
 ```bash
-scripts/agent-context.sh --diff
+scripts/agent/agent-context.sh --diff
 ```
 
 If the change is large, scope the diff to relevant paths:
 
 ```bash
-scripts/agent-context.sh --diff -- src tests
+scripts/agent/agent-context.sh --diff -- src tests
 ```
 
 Check the diff against the acceptance criteria and directly affected behavior.

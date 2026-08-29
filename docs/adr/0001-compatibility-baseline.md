@@ -5,7 +5,7 @@
 
 ## Decision
 
-The normative MVP baseline is Ipe **7.2.30**, on Ubuntu 26.04/WSL, with XML `FILE_FORMAT` **70218**. The serializer must emit `version="70218"` explicitly; the library version (70230) is not used as the file version. Stable compatibility requires the `full` lane described in `docs/compatibility-modes.md`.
+The normative MVP baseline is Ipe **7.2.30**, on Ubuntu 26.04/WSL, with XML `FILE_FORMAT` **70218**. The serializer must emit `version="70218"` explicitly; the library version (70230) is not used as the file version. Stable compatibility requires the `full` lane described in `docs/reference/compatibility-modes.md`.
 
 Three independent lanes are maintained: `full-7.2.30` (release), `structural-only` (local checks without Ipe), and `nightly-7.3.x` (experimental/allowed-failure). The MVP contract does not use 7.3.x APIs; nightly does not rewrite a stable file without consent. The 7.2.29 smoke test is only an external check.
 

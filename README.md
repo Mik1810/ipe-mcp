@@ -40,9 +40,9 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 | M3 | Coordinates and layout | Complete |
 | [M4](https://github.com/Mik1810/ipe-mcp/issues/1) | Objects, geometry, text, assets, and styles | Complete |
 | [M5](https://github.com/Mik1810/ipe-mcp/issues/2) | Pages, layers, views, and slide composition | Complete |
-| [M6](https://github.com/Mik1810/ipe-mcp/issues/3) | Native validation, rendering, and export | Complete ([details](./docs/core-m6.md)) |
-| [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Complete ([details](./docs/core-m7.md), [matrix](./docs/viewer-effects-m7.md)) |
-| [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Complete ([details](./docs/core-m8.md)) |
+| [M6](https://github.com/Mik1810/ipe-mcp/issues/3) | Native validation, rendering, and export | Complete ([details](./docs/milestones/core-m6.md)) |
+| [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Complete ([details](./docs/milestones/core-m7.md), [matrix](./docs/reference/viewer-effects-m7.md)) |
+| [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Complete ([details](./docs/milestones/core-m8.md)) |
 | [M9](https://github.com/Mik1810/ipe-mcp/issues/6) | Hardening and MVP release candidate | Planned |
 | [M10](https://github.com/Mik1810/ipe-mcp/issues/7) | Post-MVP extensions and distribution | Future |
 
@@ -107,18 +107,18 @@ npm test
 ```
 
 The package remains private/unpublished, but M8 provides the local `ipe-mcp`
-stdio executable after `npm run build`. See [host integration](./docs/m8-host-integration.md).
+stdio executable after `npm run build`. See [host integration](./docs/guides/m8-host-integration.md).
 
 ## Verification
 
 Run the milestone gates from the repository root:
 
 ```bash
-bash scripts/check-m0.sh
-bash scripts/check-m1.sh
-bash scripts/check-m2.sh
-bash scripts/check-m3.sh
-bash scripts/check-m8.sh
+bash scripts/gates/check-m0.sh
+bash scripts/gates/check-m1.sh
+bash scripts/gates/check-m2.sh
+bash scripts/gates/check-m3.sh
+bash scripts/gates/check-m8.sh
 ```
 
 The gates build on one another and cover structural checks, native Ipe
@@ -126,7 +126,7 @@ round-trips, semantic fixed points, persistence, numerical behavior, and layout
 fixtures. M1 also supports an optional source-build lane:
 
 ```bash
-IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/check-m1.sh
+IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/gates/check-m1.sh
 ```
 
 Without that variable, the verified Ubuntu package is used and the optional
@@ -142,25 +142,25 @@ The design distinguishes three explicit modes:
 - **nightly 7.3.x**: experimental compatibility, never used to rewrite a stable
   document without consent.
 
-See [docs/compatibility-modes.md](./docs/compatibility-modes.md) for the precise
+See [docs/compatibility-modes.md](./docs/reference/compatibility-modes.md) for the precise
 capability and failure matrix.
 
 ## Documentation
 
 - [ROADMAP.md](./ROADMAP.md): architecture, milestones, gates, and future work;
 - [docs/adr](./docs/adr): accepted architecture decisions;
-- [docs/conformance-m1.md](./docs/conformance-m1.md): native conformance lab;
-- [docs/core-m2.md](./docs/core-m2.md): IR, XML, identity, and persistence;
-- [docs/core-m3.md](./docs/core-m3.md): coordinates and layout;
-- [docs/core-m7.md](./docs/core-m7.md): bounded discrete animation and handout policies;
-- [docs/core-m8.md](./docs/core-m8.md): MCP stdio contracts, resources, and verification;
-- [docs/m8-host-integration.md](./docs/m8-host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
-- [docs/m8-agentic-harness-audit.md](./docs/m8-agentic-harness-audit.md): itemized Issue #8 dispositions;
-- [docs/m9-agent-manual.md](./docs/m9-agent-manual.md): the complete agent operational
+- [docs/conformance-m1.md](./docs/reference/conformance-m1.md): native conformance lab;
+- [docs/milestones/core-m2.md](./docs/milestones/core-m2.md): IR, XML, identity, and persistence;
+- [docs/milestones/core-m3.md](./docs/milestones/core-m3.md): coordinates and layout;
+- [docs/milestones/core-m7.md](./docs/milestones/core-m7.md): bounded discrete animation and handout policies;
+- [docs/milestones/core-m8.md](./docs/milestones/core-m8.md): MCP stdio contracts, resources, and verification;
+- [docs/m8-host-integration.md](./docs/guides/m8-host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
+- [docs/m8-agentic-harness-audit.md](./docs/guides/m8-agentic-harness-audit.md): itemized Issue #8 dispositions;
+- [docs/guides/m9-agent-manual.md](./docs/guides/m9-agent-manual.md): the complete agent operational
   manual, examples, and troubleshooting;
-- [docs/core-m9-sbom.md](./docs/core-m9-sbom.md): SBOM, license inventory, and the
+- [docs/milestones/core-m9-sbom.md](./docs/milestones/core-m9-sbom.md): SBOM, license inventory, and the
   GPL subprocess boundary for the local release candidate;
-- [docs/viewer-effects-m7.md](./docs/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
+- [docs/viewer-effects-m7.md](./docs/reference/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
 - [report-source.md](./report-source.md): source dossier and traceability;
 - [ORCHESTRATOR_PROMPT.md](./ORCHESTRATOR_PROMPT.md): milestone execution and
   review protocol.

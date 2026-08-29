@@ -475,7 +475,7 @@ Each milestone ends with a review gate; work does not proceed on an unaccepted s
 
 ### M0 — Contracts and ADRs
 
-**Status: completed on 2026-08-24.** Gate demonstrated by `bash scripts/check-m0.sh` on Ipe `7.2.30-1build2`, with adversarial review and independent tests completed.
+**Status: completed on 2026-08-24.** Gate demonstrated by `bash scripts/gates/check-m0.sh` on Ipe `7.2.30-1build2`, with adversarial review and independent tests completed.
 
 Deliverables:
 
@@ -483,9 +483,9 @@ Deliverables:
 - `docs/adr/0002-domain-model-and-layout.md`: IR, coordinates, matrices, z-order, and page/layer/view;
 - `docs/adr/0003-backend-persistence-and-identifiers.md`: hybrid backend, transactions, `custom`, and sidecar;
 - `docs/adr/0004-security-and-trust-boundaries.md`: canonical sections `TM-XML`, `TM-TEX`, `TM-FS`, `TM-ASSET`, `TM-PROC`, `TM-CONCURRENCY`, `TM-METADATA`, and `TM-HTTP`;
-- `docs/compatibility-modes.md`: structural-only/full/nightly matrix with capability, failure mode, and diagnostic labels;
+- `docs/reference/compatibility-modes.md`: structural-only/full/nightly matrix with capability, failure mode, and diagnostic labels;
 - `fixtures/conformance/manifest.json` and at least six manual `.ipe` seeds: minimal, positions/matrices, layers/views, geometry/z-order, custom metadata, text/minipage;
-- `scripts/check-m0.sh`: reproducible ADR/manifest smoke test, installed version, and round-trip of every seed with `ipetoipe -xml`, using temporary output.
+- `scripts/gates/check-m0.sh`: reproducible ADR/manifest smoke test, installed version, and round-trip of every seed with `ipetoipe -xml`, using temporary output.
 
 Gate:
 
@@ -493,14 +493,14 @@ Gate:
 - the threat model contains all eight canonical IDs: XML/parser, LaTeX, filesystem/path, asset/network, native subprocess/CLI, concurrency/atomicity, metadata/sidecar, and future HTTP; every risk is linked to a future mitigation/gate;
 - the matrix defines exactly what may be declared “verified” in the three modes;
 - the manifest inventories the purpose, features, and invariants of every seed, without generated assets or unnecessary binaries;
-- `bash scripts/check-m0.sh` verifies the eight IDs, requires `dpkg-query -W -f='${Version}' ipe` to begin with `7.2.30`, shows the detected version, and confirms root `version="70218"` before and after the round-trip;
+- `bash scripts/gates/check-m0.sh` verifies the eight IDs, requires `dpkg-query -W -f='${Version}' ipe` to begin with `7.2.30`, shows the detected version, and confirms root `version="70218"` before and after the round-trip;
 - no ADR or seed depends on 7.3.x APIs; any 7.3.x notes are marked future/nightly.
 
 M0/M1 boundary: M0 seeds fix the minimum cases and invariants, but do not claim to resolve native divergences. M1 implements probes, golden fixtures, and empirical decisions and may extend the corpus without retroactively changing approved contracts.
 
 ### M1 — Ipe Conformance Lab
 
-**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/check-m1.sh` on Ipe `7.2.30-1build2`, with golden fixtures, Sol adversarial review, and Luna independent tests; the source-build lane remains optional and reproducible through explicitly supplied 7.2.30 binaries.
+**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/gates/check-m1.sh` on Ipe `7.2.30-1build2`, with golden fixtures, Sol adversarial review, and Luna independent tests; the source-build lane remains optional and reproducible through explicitly supplied 7.2.30 binaries.
 
 Deliverables:
 
@@ -518,7 +518,7 @@ Gate:
 
 ### M2 — IR, XML, and Transactional Persistence
 
-**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/check-m2.sh` on Ipe `7.2.30-1build2`: 62 tests, semantic/fixed-point/native-reload comparison of the 12 fixtures, Sol adversarial review with no P0–P2 findings, and Luna independent tests. The M1 source-build lane remains optional and was not run because `IPE_M1_SOURCE_BIN_DIR` is not configured.
+**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/gates/check-m2.sh` on Ipe `7.2.30-1build2`: 62 tests, semantic/fixed-point/native-reload comparison of the 12 fixtures, Sol adversarial review with no P0–P2 findings, and Luna independent tests. The M1 source-build lane remains optional and was not run because `IPE_M1_SOURCE_BIN_DIR` is not configured.
 
 Deliverables:
 
@@ -536,7 +536,7 @@ Gate:
 
 ### M3 — Coordinates and Layout
 
-**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/check-m3.sh` on Ipe `7.2.30-1build2`: 85 total tests, 46 focused M3 tests, standard and 16:9 presentation fixtures, Sol adversarial review with no P0–P2 findings, and Luna independent tests. The M1 source-build lane remains optional and was not run because `IPE_M1_SOURCE_BIN_DIR` is not configured.
+**Status: completed on 2026-08-25.** Stable gate demonstrated by `bash scripts/gates/check-m3.sh` on Ipe `7.2.30-1build2`: 85 total tests, 46 focused M3 tests, standard and 16:9 presentation fixtures, Sol adversarial review with no P0–P2 findings, and Luna independent tests. The M1 source-build lane remains optional and was not run because `IPE_M1_SOURCE_BIN_DIR` is not configured.
 
 Deliverables:
 
@@ -555,7 +555,7 @@ Gate:
 ### M4 — Objects, Geometry, Text, Assets, and Styles
 
 **Status: completed on 2026-08-25.** Stable gate demonstrated by
-`bash scripts/check-m4.sh` on Ipe `7.2.30-1build2`: 137 total tests, exact
+`bash scripts/gates/check-m4.sh` on Ipe `7.2.30-1build2`: 137 total tests, exact
 typed-primitive and object coverage, canonical and native round-trips, clean
 `Document:checkStyle()`, semantic asset/reference preservation, complex LaTeX,
 and two-page PDF/SVG/PNG rendering. The candidate also passed Luna independent
@@ -579,7 +579,7 @@ Gate:
 ### M5 — Pages, Layers, Views, and Slide Composition
 
 **Status: completed on 2026-08-25.** The issue #2 gate is executable through
-`bash scripts/check-m5.sh`: page/layer/view CRUD, duplication and reference
+`bash scripts/gates/check-m5.sh`: page/layer/view CRUD, duplication and reference
 remapping, non-destructive layout-compatible templates, special-layer fixtures,
 native composition-sidecar recovery, and exact multi-view PDF mapping all pass
 on Ipe `7.2.30-1build2` while retaining every M0–M4 gate.
@@ -600,7 +600,7 @@ Gate:
 
 ### M6 — Native Adapter, Rendering, and Export
 
-Status: implemented locally; `scripts/check-m6.sh` is the cumulative acceptance gate.
+Status: implemented locally; `scripts/gates/check-m6.sh` is the cumulative acceptance gate.
 
 Deliverables:
 
@@ -761,14 +761,14 @@ The following are not part of the MVP: live editing of the Ipe GUI, continuous a
 
 The detailed dossier, including contradictions, limitations, and experimental gaps, is in [`report-source.md`](./report-source.md). The primary normative sources are the [Ipe 7.2.30 release](https://github.com/otfried/ipe/releases/tag/v7.2.30), the [official manual](https://ipe.otfried.org/ipe-manual.pdf), the [tag sources](https://github.com/otfried/ipe/tree/v7.2.30), the [stable MCP specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25), and the [Codex MCP documentation](https://developers.openai.com/codex/mcp).
 
-The M9 release-limit contract is documented in [`docs/core-m9-limits.md`](./docs/core-m9-limits.md); it is the single stated table behind the `src/limits.ts` module and the `limits` object returned by `ipe_orientation`.
+The M9 release-limit contract is documented in [`docs/milestones/core-m9-limits.md`](./docs/milestones/core-m9-limits.md); it is the single stated table behind the `src/limits.ts` module and the `limits` object returned by `ipe_orientation`.
 
-The M9 property/fuzz battery and its reproducibility contract are documented in [`docs/core-m9-testing.md`](./docs/core-m9-testing.md); it runs as `bash scripts/check-m9-fuzz.sh`.
+The M9 property/fuzz battery and its reproducibility contract are documented in [`docs/milestones/core-m9-testing.md`](./docs/milestones/core-m9-testing.md); it runs as `bash scripts/gates/check-m9-fuzz.sh`.
 
-The M9 hostile-input corpus, its case inventory, and the stability contract are documented in [`docs/core-m9-hostile.md`](./docs/core-m9-hostile.md); it runs as `bash scripts/check-m9-hostile.sh`.
+The M9 hostile-input corpus, its case inventory, and the stability contract are documented in [`docs/milestones/core-m9-hostile.md`](./docs/milestones/core-m9-hostile.md); it runs as `bash scripts/gates/check-m9-hostile.sh`.
 
-The M9 clean-setup procedure is documented in [`SETUP-WSL.md`](./SETUP-WSL.md) ("M9 clean-setup verification gate") and runs as `bash scripts/check-m9-setup.sh`.
+The M9 clean-setup procedure is documented in [`SETUP-WSL.md`](./SETUP-WSL.md) ("M9 clean-setup verification gate") and runs as `bash scripts/gates/check-m9-setup.sh`.
 
-The M9 agent manual, examples, and troubleshooting are documented in [`docs/m9-agent-manual.md`](./docs/m9-agent-manual.md); they are exercised end to end by `node scripts/m9-agent-workflow.mjs` under `bash scripts/check-m9-manual.sh`.
+The M9 agent manual, examples, and troubleshooting are documented in [`docs/guides/m9-agent-manual.md`](./docs/guides/m9-agent-manual.md); they are exercised end to end by `node scripts/host/m9-agent-workflow.mjs` under `bash scripts/gates/check-m9-manual.sh`.
 
-The M9 SBOM, license inventory, and GPL subprocess boundary are documented in [`docs/core-m9-sbom.md`](./docs/core-m9-sbom.md); the deterministic CycloneDX artifact is [`docs/m9-sbom.json`](./docs/m9-sbom.json) and the gate is `bash scripts/check-m9-sbom.sh`.
+The M9 SBOM, license inventory, and GPL subprocess boundary are documented in [`docs/milestones/core-m9-sbom.md`](./docs/milestones/core-m9-sbom.md); the deterministic CycloneDX artifact is [`docs/reference/m9-sbom.json`](./docs/reference/m9-sbom.json) and the gate is `bash scripts/gates/check-m9-sbom.sh`.
