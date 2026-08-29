@@ -65,22 +65,63 @@ function opaqueSnapshotId(documentId: string, path: string): string {
   return `${hex.slice(0, 8).join("")}-${hex.slice(8, 12).join("")}-${hex.slice(12, 16).join("")}-${hex.slice(16, 20).join("")}-${hex.slice(20).join("")}`;
 }
 
-function previousValues(document: IpeDocument, operations: readonly PublicOperation[]): readonly Record<string, unknown>[] {
-  const values: Record<string, unknown>[] = [];
+type PreviousTarget = {
+  readonly key: string;
+  readonly op: "set_metadata" | "update_page" | "update_layer" | "update_view";
+  readonly pageId?: string;
+  readonly id?: string;
+  readonly fields: Set<string>;
+};
+
+function changedPrevious(before: Record<string, unknown>, after: Record<string, unknown>, fields: ReadonlySet<string>): Record<string, unknown> {
+  const previous: Record<string, unknown> = {};
+  for (const field of fields) {
+    if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) previous[field] = before[field] ?? null;
+  }
+  return previous;
+}
+
+function evidenceTarget(document: IpeDocument, target: PreviousTarget): Record<string, unknown> | undefined {
+  if (target.op === "set_metadata") return (document.metadata ?? {}) as Record<string, unknown>;
+  const page = document.pages.find((item) => item.id === target.pageId);
+  if (target.op === "update_page") return page as unknown as Record<string, unknown> | undefined;
+  if (target.op === "update_layer") return page?.layers.find((item) => item.id === target.id) as unknown as Record<string, unknown> | undefined;
+  return page?.views.find((item) => item.id === target.id) as unknown as Record<string, unknown> | undefined;
+}
+
+function previousValues(before: IpeDocument, after: IpeDocument, operations: readonly PublicOperation[]): readonly Record<string, unknown>[] {
+  const targets = new Map<string, PreviousTarget>();
+  const addTarget = (target: Omit<PreviousTarget, "fields">, fields: readonly string[]): void => {
+    if (fields.length === 0) return;
+    const existing = targets.get(target.key);
+    if (existing !== undefined) { for (const field of fields) existing.fields.add(field); return; }
+    targets.set(target.key, { ...target, fields: new Set(fields) });
+  };
   for (const operation of operations) {
-    if (operation.op === "set_metadata") values.push({ op: operation.op, value: document.metadata ?? {} });
-    if (operation.op === "update_page") {
-      const page = document.pages.find((item) => item.id === operation.pageId);
-      if (page !== undefined) values.push({ op: operation.op, id: page.id, value: { name: page.name ?? null, title: page.title ?? null, notes: page.notes ?? null, marked: page.marked ?? null } });
-    }
-    if (operation.op === "update_layer") {
-      const layer = document.pages.find((item) => item.id === operation.pageId)?.layers.find((item) => item.id === operation.layerId);
-      if (layer !== undefined) values.push({ op: operation.op, id: layer.id, value: { name: layer.name, edit: layer.edit ?? null, snap: layer.snap ?? null } });
-    }
-    if (operation.op === "update_view") {
-      const view = document.pages.find((item) => item.id === operation.pageId)?.views.find((item) => item.id === operation.viewId);
-      if (view !== undefined) values.push({ op: operation.op, id: view.id, value: { visibleLayerIds: view.visibleLayerIds, activeLayerId: view.activeLayerId, marked: view.marked } });
-    }
+    if (operation.op === "set_metadata") addTarget(
+      { key: "document-metadata", op: operation.op },
+      ["title", "author"].filter((field) => operation[field as "title" | "author"] !== undefined),
+    );
+    if (operation.op === "update_page") addTarget(
+      { key: `page:${operation.pageId}`, op: operation.op, pageId: operation.pageId, id: operation.pageId },
+      Object.entries(operation.patch).filter(([, value]) => value !== undefined).map(([field]) => field),
+    );
+    if (operation.op === "update_layer") addTarget(
+      { key: `layer:${operation.pageId}:${operation.layerId}`, op: operation.op, pageId: operation.pageId, id: operation.layerId },
+      ["name", "edit", "snap"].filter((field) => operation[field as "name" | "edit" | "snap"] !== undefined),
+    );
+    if (operation.op === "update_view") addTarget(
+      { key: `view:${operation.pageId}:${operation.viewId}`, op: operation.op, pageId: operation.pageId, id: operation.viewId },
+      ["visibleLayerIds", "activeLayerId", "marked"].filter((field) => operation[field as "visibleLayerIds" | "activeLayerId" | "marked"] !== undefined),
+    );
+  }
+  const values: Record<string, unknown>[] = [];
+  for (const target of targets.values()) {
+    const beforeTarget = evidenceTarget(before, target);
+    const afterTarget = evidenceTarget(after, target);
+    if (beforeTarget === undefined || afterTarget === undefined) continue;
+    const value = changedPrevious(beforeTarget, afterTarget, target.fields);
+    if (Object.keys(value).length > 0) values.push({ op: target.op, ...(target.id === undefined ? {} : { id: target.id }), value });
   }
   return values;
 }
@@ -132,7 +173,6 @@ export class IpeMcpService {
     if (destructive && confirmation !== "DELETE") throw new Error("delete operations require confirmation='DELETE'");
     const beforeDocument = this.sessions.inspect(documentId).document;
     const before = ids(beforeDocument);
-    const previous = previousValues(beforeDocument, operations);
     const result = await this.sessions.mutate(documentId, expectedRevision, (draft) => {
       for (const operation of operations) {
         switch (operation.op) {
@@ -195,7 +235,7 @@ export class IpeMcpService {
       }
     });
     const after = ids(result.document);
-    return { documentId, revision: result.revision, createdIds: [...after].filter((id) => !before.has(id)), deletedIds: [...before].filter((id) => !after.has(id)), previousValues: previous, outline: outline(result.document) };
+    return { documentId, revision: result.revision, createdIds: [...after].filter((id) => !before.has(id)), deletedIds: [...before].filter((id) => !after.has(id)), previousValues: previousValues(beforeDocument, result.document, operations), outline: outline(result.document) };
   }
 
   async compose(documentId: string, expectedRevision: number, input: { preset: "standard" | "16:9"; name?: string | undefined; title?: string | undefined; notes?: string | undefined; layers?: readonly string[] | undefined }) {

@@ -63,6 +63,20 @@ describe("M8 real stdio protocol", () => {
     } finally { await client.close(); }
   });
 
+  it("returns changed-only previous values with text/structured parity", async () => {
+    const { client } = await connect();
+    try {
+      const created = structured(await client.callTool({ name: "ipe_create_document", arguments: { preset: "standard", title: "same" } }));
+      const result = await client.callTool({ name: "ipe_apply_operations", arguments: {
+        documentId: created.data.documentId, expectedRevision: 0,
+        operations: [{ op: "set_metadata", title: "same", author: "Ada" }],
+      } });
+      expect(structured(result).data.previousValues).toEqual([{ op: "set_metadata", value: { author: null } }]);
+      const text = result.content.find((item) => item.type === "text");
+      expect(text?.type === "text" ? JSON.parse(text.text) : undefined).toEqual(result.structuredContent);
+    } finally { await client.close(); }
+  });
+
   it("redacts filesystem failures containing spaces on the real protocol", async () => {
     const { client } = await connect();
     try {

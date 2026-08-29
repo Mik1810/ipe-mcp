@@ -49,7 +49,7 @@ describe("M8 service transactions and recovery", () => {
     expect(service.documentResource(created.documentId, "source").text).toContain('fill="0.2"');
   });
 
-  it("requires confirmation and returns deleted-state and previous-value evidence", async () => {
+  it("requires confirmation and returns deleted-state evidence", async () => {
     const { service } = await serviceFixture();
     const created = await service.createDocument("standard");
     const page = (created.outline.pages as Array<{ id: string; layers: Array<{ id: string }> }>)[0]!;
@@ -58,8 +58,46 @@ describe("M8 service transactions and recovery", () => {
     await expect(service.apply(created.documentId, 1, [{ op: "delete_object", pageId: page.id, objectId }])).rejects.toThrow(/confirmation/iu);
     const removed = await service.apply(created.documentId, 1, [{ op: "delete_object", pageId: page.id, objectId }], "DELETE");
     expect(removed.deletedIds).toContain(objectId);
-    const updated = await service.apply(created.documentId, 2, [{ op: "set_metadata", title: "new" }]);
-    expect(updated.previousValues).toEqual([{ op: "set_metadata", value: {} }]);
+  });
+
+  it("returns complete changed-only previous values coalesced against final batch state", async () => {
+    const { service } = await serviceFixture();
+    const created = await service.createDocument("standard", "original");
+    const initialPage = (created.outline.pages as Array<{ id: string; layers: Array<{ id: string }>; views: Array<{ id: string }> }>)[0]!;
+    const withLayer = await service.apply(created.documentId, 0, [{ op: "add_layer", pageId: initialPage.id, name: "extra" }]);
+    const page = (withLayer.outline.pages as Array<{ id: string; layers: Array<{ id: string; name: string }>; views: Array<{ id: string }> }>)[0]!;
+    const contentLayer = page.layers.find((item) => item.name === "content")!;
+    const extraLayer = page.layers.find((item) => item.name === "extra")!;
+    const updated = await service.apply(created.documentId, 1, [
+      { op: "set_metadata", title: "changed", author: "Ada" },
+      { op: "update_page", pageId: page.id, patch: { name: "page-name", title: "page-title", section: "section", subsection: "subsection", notes: "notes", marked: true } },
+      { op: "update_layer", pageId: page.id, layerId: contentLayer.id, name: "primary", edit: true, snap: "always" },
+      { op: "update_view", pageId: page.id, viewId: page.views[0]!.id, visibleLayerIds: [contentLayer.id, extraLayer.id], activeLayerId: extraLayer.id, marked: true },
+    ]);
+    expect(updated.previousValues).toEqual([
+      { op: "set_metadata", value: { title: "original", author: null } },
+      { op: "update_page", id: page.id, value: { name: null, title: null, section: null, subsection: null, notes: null, marked: null } },
+      { op: "update_layer", id: contentLayer.id, value: { name: "content", edit: null, snap: null } },
+      { op: "update_view", id: page.views[0]!.id, value: { visibleLayerIds: [contentLayer.id], activeLayerId: contentLayer.id, marked: false } },
+    ]);
+
+    const unchanged = await service.apply(created.documentId, 2, [
+      { op: "set_metadata", title: "changed", author: "Ada" },
+      { op: "update_page", pageId: page.id, patch: { section: "temporary" } },
+      { op: "update_page", pageId: page.id, patch: { section: "section", subsection: "subsection" } },
+      { op: "update_layer", pageId: page.id, layerId: contentLayer.id, name: "primary", edit: true, snap: "always" },
+      { op: "update_view", pageId: page.id, viewId: page.views[0]!.id, visibleLayerIds: [contentLayer.id, extraLayer.id], activeLayerId: extraLayer.id, marked: true },
+    ]);
+    expect(unchanged.previousValues).toEqual([]);
+
+    const withTemporaryPage = await service.apply(created.documentId, 3, [{ op: "add_page", name: "temporary" }]);
+    const temporaryPageId = (withTemporaryPage.outline.pages as Array<{ id: string; name?: string }>).find((item) => item.name === "temporary")!.id;
+    const removedTarget = await service.apply(created.documentId, 4, [
+      { op: "update_page", pageId: temporaryPageId, patch: { title: "not retained" } },
+      { op: "delete_page", pageId: temporaryPageId },
+    ], "DELETE");
+    expect(removedTarget.deletedIds).toContain(temporaryPageId);
+    expect(removedTarget.previousValues).toEqual([]);
   });
 
   it("keeps snapshot IDs usable after restart and supports undo/restore", async () => {
