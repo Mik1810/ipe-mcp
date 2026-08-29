@@ -9,10 +9,10 @@ fail() { echo "M9 MANUAL FAIL: $*" >&2; exit 1; }
 m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
 
-# Every example in docs/guides/m9-agent-manual.md is exercised against the candidate.
+# The documented workflow and payload shapes are exercised against the candidate.
 (cd "$ROOT" && node scripts/host/m9-agent-workflow.mjs "$M9_MANUAL_TMP/manual") > "$M9_MANUAL_TMP/evidence.json" || fail "agent workflow exercise"
 
-python3 - "$M9_MANUAL_TMP/evidence.json" "$ROOT/docs/guides/m9-agent-manual.md" <<'PY' || fail "manual evidence audit"
+python3 - "$M9_MANUAL_TMP/evidence.json" "$ROOT/docs/guides/agent-manual.md" <<'PY' || fail "manual evidence audit"
 import json, pathlib, sys
 evidence = json.loads([line for line in open(sys.argv[1]) if line.strip().startswith('{')][-1])
 manual = pathlib.Path(sys.argv[2]).read_text()
@@ -23,6 +23,15 @@ for token in ["ipe_orientation", "ipe_get_capabilities", "ipe_create_document", 
     assert token in manual, f"manual missing {token}"
 for topic in ["16:9", "z-order", "revision", "confirmation", "REVISION_CONFLICT", "NATIVE_TIMEOUT", "structural-only", "recover"]:
     assert topic in manual, f"manual missing topic {topic}"
+for heading in [
+    "Prerequisites, startup, and payload destination",
+    "Copyable quick start",
+    "Glossary",
+    "Pre-save and finalization checklist",
+]:
+    assert heading in manual, f"manual missing section {heading}"
+for topic in ["stdin/stdout", "exact value returned", "Working copy", "Exact ID", "Resource link", "Snapshot", "Recovery", "absolute target path"]:
+    assert topic in manual, f"manual missing human-usage topic {topic}"
 PY
 
 echo "M9 MANUAL PASS: complete agent manual + end-to-end workflow exercise (create/open/inspect/edit/layout/validate/render/save/export/history/recover)"

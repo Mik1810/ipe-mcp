@@ -1,4 +1,6 @@
-# M8 Issue #8 agentic-harness audit
+# Agentic-Harness Audit (M8 / Issue #8)
+
+This is a milestone-frozen evidence record, retained at a stable audit path.
 
 Audit target: M8 / Issue #5. Owner for every deferred item is **M9 / Issue #6** unless noted. Evidence abbreviations: `C` contracts tests, `P` real stdio protocol tests, `S` service tests, `H` retained real-host evidence, `E` independent portable scenario, `D` M8 docs.
 

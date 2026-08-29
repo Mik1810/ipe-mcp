@@ -1,4 +1,7 @@
-# M9 Support Policy and Mode Matrix
+# Support Policy and Mode Matrix
+
+This living policy describes the supported local MVP baseline established by
+M9; future releases must update it when the support surface changes.
 
 This is the support contract for the local MVP release candidate. It states
 what the candidate **supports**, what it **degrades** (still works with

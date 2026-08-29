@@ -59,5 +59,5 @@ before completion.
    names its applicable areas in its retained or reported evidence.
 
 The section-by-section baseline remains
-`docs/guides/m8-agentic-harness-audit.md`. The policy gate is
+`docs/audits/agentic-harness-audit.md`. The policy gate is
 `bash scripts/gates/check-mcp-harness-policy.sh`.

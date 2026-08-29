@@ -39,7 +39,7 @@ assert isinstance(inspector['webResourceReads'], int) and inspector['webResource
 checks=inspector['artifactChecks']
 assert checks['ipeFormat']==70218 and checks['ipeBytes'] > 0 and checks['pdfHeader']==checks['pngHeader']=='PASS'
 assert checks['pdfBytes'] > 0 and checks['pngBytes'] > 0 and (checks['pngWidth'], checks['pngHeight'])==(1280,720)
-audit=(root/'docs/guides/m8-agentic-harness-audit.md').read_text(); assert audit.count('| PASS |')==24 and audit.count('| NOT APPLICABLE |')==7 and 'DEFERRED M9: 0' in audit
+audit=(root/'docs/audits/agentic-harness-audit.md').read_text(); assert audit.count('| PASS |')==24 and audit.count('| NOT APPLICABLE |')==7 and 'DEFERRED M9: 0' in audit
 assert '[mcp_servers.ipe-mcp]' in (root/'.codex/config.toml').read_text()
 assert '"ipe-mcp"' in (root/'.vscode/mcp.json').read_text()
 PY

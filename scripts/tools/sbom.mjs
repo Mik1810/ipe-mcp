@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const args = process.argv.slice(2);
 const stdout = args.includes("--stdout");
-const outputPath = args.find((arg) => arg !== "--stdout") ?? join(root, "docs/reference/m9-sbom.json");
+const outputPath = args.find((arg) => arg !== "--stdout") ?? join(root, "docs/reference/sbom.json");
 
 const lock = JSON.parse(readFileSync(join(root, "package-lock.json"), "utf8"));
 

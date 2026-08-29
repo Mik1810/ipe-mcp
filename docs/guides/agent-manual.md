@@ -4,13 +4,89 @@ This is the single operational manual for driving `ipe-mcp` through the
 supported MVP workflow: create, open, inspect, edit, layout, validate, render,
 save, export, and recover. It is written for an agent (or a human acting as
 one) and it is the authoritative "how do I do this" reference; the
-architecture-level contracts live in `docs/milestones/core-*.md`, and the field guide for
-*authoring* an MCP server lives in `guide.md`.
+architecture-level contracts live in `docs/milestones/core-*.md`. Host setup is
+covered in [`host-integration.md`](./host-integration.md), while the repository's
+agentic-harness policy and completed audit live in
+[`../../.agents/MCP_HARNESS_COMPLIANCE.md`](../../.agents/MCP_HARNESS_COMPLIANCE.md)
+and [`../audits/agentic-harness-audit.md`](../audits/agentic-harness-audit.md).
 
-Every example is exercised against the M9 candidate by
-`node scripts/host/m9-agent-workflow.mjs` (see [Verification](#verification)).
+The workflow and payload shapes are exercised against the M9 candidate by
+`node scripts/host/m9-agent-workflow.mjs` (see [Verification](#9-verification)).
 
-## 1. Mental model
+## 1. Prerequisites, startup, and payload destination
+
+Install Node.js 20 or newer, npm, and—when native validation, rendering, or
+export is required—the Ubuntu 26.04 WSL Ipe 7.2.30 toolchain described in
+[`SETUP-WSL.md`](../../SETUP-WSL.md). From the repository root:
+
+```bash
+npm ci
+npm run build
+IPE_MCP_WORKSPACE_ROOT="$PWD" IPE_MCP_STATE_ROOT="$PWD/.ipe-mcp-state" npm run mcp
+```
+
+Normally an MCP host starts that command for you. Send the JSON payloads below
+through the host's tool-call UI/API, MCP Inspector, Codex, VS Code, or an MCP
+SDK client. Do **not** paste JSON into the server terminal: its stdin/stdout are
+reserved for MCP protocol frames, and logs go to stderr. See
+[`host-integration.md`](./host-integration.md) for concrete host configuration.
+
+## 2. Copyable quick start
+
+The comments name the MCP tool; the following object is its arguments payload.
+Replace every `<...>` value with the exact value returned by the immediately
+preceding call—never invent or derive IDs.
+
+```jsonc
+// 1. ipe_orientation
+{}
+
+// 2. ipe_get_capabilities
+{}
+
+// 3. ipe_create_document
+{ "preset": "16:9", "title": "Quick start" }
+// retain data.documentId, data.revision, and the first page/layer IDs
+
+// 4. ipe_inspect
+{ "documentId": "<documentId>" }
+// copy data.revision, data.outline.pages[0].id, and its first layer id
+
+// 5. ipe_apply_operations
+{
+  "documentId": "<documentId>",
+  "expectedRevision": 0,
+  "operations": [{
+    "op": "add_text",
+    "pageId": "<pageId>",
+    "layerId": "<layerId>",
+    "text": "Hello from ipe-mcp",
+    "position": { "x": 80, "y": 600 }
+  }]
+}
+// retain the returned data.revision
+
+// 6. ipe_validate
+{ "documentId": "<documentId>", "level": "structural" }
+
+// 7. ipe_validate (only when capabilities say full-7.2.30 and verified=true)
+{ "documentId": "<documentId>", "level": "full" }
+
+// 8. ipe_save_document
+{
+  "documentId": "<documentId>",
+  "expectedRevision": 1,
+  "targetPath": "/absolute/path/inside/IPE_MCP_WORKSPACE_ROOT/quick-start.ipe",
+  "confirmation": "SAVE"
+}
+```
+
+The quick start creates a private working copy, adds one text object, validates
+it, and performs the only disk write at the confirmed save step. Optionally run
+`ipe_render_preview` after validation and read its returned resource URI before
+saving.
+
+## 3. Mental model
 
 - A **working copy** is a private, recoverable session. Opening or creating a
   document does **not** modify the source file on disk until
@@ -30,7 +106,7 @@ Every example is exercised against the M9 candidate by
   `nightly-7.3.x` (experimental). Always call `ipe_get_capabilities` before
   claiming native verification.
 
-## 2. The supported workflow
+## 4. The supported workflow
 
 Always follow this order:
 
@@ -45,7 +121,7 @@ Always follow this order:
 8. `ipe_save_document` (with confirmation) to persist to disk.
 9. `ipe_history` for snapshot/undo/restore/recover.
 
-### 2.1 Orient and inspect capabilities
+### 4.1 Orient and inspect capabilities
 
 ```jsonc
 // ipe_orientation {}
@@ -58,7 +134,7 @@ Only proceed to `full` validation/export when `mode === "full-7.2.30"` and
 `verified === true`. In `structural-only` mode you may still author and
 inspect structurally, but native style/TeX/PDF/render checks are unavailable.
 
-### 2.2 Create or open a presentation
+### 4.2 Create or open a presentation
 
 ```jsonc
 // ipe_create_document { preset: "16:9", title: "Quarterly review" }
@@ -80,7 +156,7 @@ Opening creates a private working copy and leaves the source byte-identical.
 Treat the returned IDs as a new session: do not reuse IDs from another open or
 create call, even when both sessions refer to the same source file.
 
-### 2.3 Compose a semantic slide
+### 4.3 Compose a semantic slide
 
 ```jsonc
 // ipe_compose_slide {
@@ -94,7 +170,7 @@ create call, even when both sessions refer to the same source file.
 The returned `layerIds` map in order to `layers`. Populate objects onto those
 exact layer IDs with `ipe_apply_operations`.
 
-### 2.4 Insert and edit objects (exact IDs, batch atomic)
+### 4.4 Insert and edit objects (exact IDs, batch atomic)
 
 Coordinates are Ipe page coordinates (bp, y-up); 16:9 preset uses paper
 `1280 720`, frame `1216 648`.
@@ -136,7 +212,7 @@ page. Use `move_object` (with `position`) and the `position`/`positionInZOrder`
 argument to control stacking; use `set_object_layer` to change membership
 without changing z-order.
 
-### 2.5 Layout objects
+### 4.5 Layout objects
 
 `layout_objects` applies row, column, grid, or stack placement as one atomic
 operation. Supply exact object IDs and the current measured bounds of each
@@ -162,7 +238,7 @@ For `grid`, also provide `columns` and optional `rowGap`/`columnGap`; for
 `stack`, use `horizontalAlign` and `verticalAlign`. A bad ID, invalid source
 box, or impossible layout rejects the whole batch without advancing revision.
 
-### 2.6 Views, reveals, and scrolling
+### 4.6 Views, reveals, and scrolling
 
 ```jsonc
 // ipe_build_views { documentId, expectedRevision, build: { kind: "reveal", pageId, groups: [
@@ -181,7 +257,7 @@ box, or impossible layout rejects the whole batch without advancing revision.
 - `transition` assigns a PDF transition effect to existing views; effects are
   best-effort per viewer ([`viewer-effects-m7.md`](../reference/viewer-effects-m7.md)).
 
-### 2.7 Validate
+### 4.7 Validate
 
 ```jsonc
 // ipe_validate { documentId, level: "structural" }   // process-free
@@ -191,7 +267,7 @@ box, or impossible layout rejects the whole batch without advancing revision.
 `structural` is always available. `full` requires `full-7.2.30` and runs the
 bounded native pipeline; it reports `ok`, `diagnosticCount`, and `capabilityMode`.
 
-### 2.8 Render and export (resource links only)
+### 4.8 Render and export (resource links only)
 
 ```jsonc
 // ipe_render_preview { documentId }        // PNG per view (omit page/view for all)
@@ -202,7 +278,7 @@ bounded native pipeline; it reports `ok`, `diagnosticCount`, and `capabilityMode
 Both return `resources: [{ uri, mediaType, bytes, sha256, metadata }]`. Read
 the `uri` (`ipe://previews/{id}` or `ipe://artifacts/{id}`) only when needed.
 
-### 2.9 Save, snapshot, undo, restore, recover
+### 4.9 Save, snapshot, undo, restore, recover
 
 ```jsonc
 // ipe_history { documentId, action: "snapshot", expectedRevision }
@@ -228,7 +304,19 @@ revision before continuing, call `ipe_inspect` to refresh exact IDs, and
 regenerate any preview/export resources because their URIs belonged to the old
 connection.
 
-## 3. Limits and budgets
+## 5. Glossary
+
+| Term | Meaning |
+|---|---|
+| Working copy | Private, recoverable session; it does not alter the source until a confirmed save. |
+| Exact ID | Typed identifier returned by the current session; names and indexes are never substitutes. |
+| Revision | Monotonic working-copy version used by `expectedRevision` to reject stale mutations. |
+| Confirmation | Explicit token (`SAVE`, `DELETE`, `UNDO`, or `RESTORE`) required for the corresponding destructive action. |
+| Resource link | URI for a connection-local preview or export; read the resource on demand instead of expecting inline binary data. |
+| Snapshot | Durable private checkpoint selected by its opaque `snapshotId`. |
+| Recovery | Reloading durable sessions after restart with `ipe_history { action: "recover" }`, then refreshing IDs via inspect. |
+
+## 6. Limits and budgets
 
 The enforced contract is [`core-m9-limits.md`](../milestones/core-m9-limits.md). Highlights
 an agent must respect:
@@ -244,7 +332,7 @@ an agent must respect:
 - Native operations carry a total deadline and subprocess/output/file caps;
   a run-away is classified, never unbounded.
 
-## 4. Troubleshooting
+## 7. Troubleshooting
 
 | Error / symptom | Meaning | Action |
 |---|---|---|
@@ -271,9 +359,25 @@ an agent must respect:
 - Configure `IPE_MCP_WORKSPACE_ROOT` and `IPE_MCP_STATE_ROOT`; on a restart,
   `ipe_history { action: "recover" }` reloads durable sessions.
 - Codex/Inspector/VS Code setup and the independent SDK host are covered in
-  [`m8-host-integration.md`](./m8-host-integration.md).
+  [`host-integration.md`](./host-integration.md).
 
-## 5. Verification
+## 8. Pre-save and finalization checklist
+
+- Call `ipe_get_capabilities`; distinguish structural-only evidence from a
+  verified `full-7.2.30` result.
+- Run `ipe_inspect` and use only the current exact IDs and revision.
+- Run structural validation, then full validation when native capability is
+  verified; resolve every blocking diagnostic.
+- Inspect every page/view and read the preview resource links needed for visual
+  review; do not infer success from resource metadata alone.
+- Create a snapshot before a risky final mutation or overwrite.
+- Confirm that the absolute target path is approved and remains inside
+  `IPE_MCP_WORKSPACE_ROOT`; send `confirmation: "SAVE"` with the current
+  revision.
+- Verify the saved `.ipe` and any requested PDF/PNG export or resource read.
+  After restart, recover the session and regenerate connection-local artifacts.
+
+## 9. Verification
 
 The complete workflow above is exercised end to end against the current
 candidate by:

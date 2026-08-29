@@ -76,7 +76,7 @@ for token in ["fresh worktree", "non-writable", "does not start M10", "no pre-ga
     assert token in completion, f"completion policy missing {token}"
 assert re.search(r"never\s+patched in place", completion), "completion policy permits in-place gate patches"
 
-audit = (root / "docs/guides/m8-agentic-harness-audit.md").read_text(encoding="utf-8")
+audit = (root / "docs/audits/agentic-harness-audit.md").read_text(encoding="utf-8")
 sections = [
     "Model-facing contract",
     "Orientation and dynamic behavior",

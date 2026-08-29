@@ -1,17 +1,17 @@
-# Proposed Roadmap — MCP Server for Ipe
+# Roadmap — MCP Server for Ipe
 
-Status: **implementation in progress; M0–M5 completed as of 2026-08-25**.
+Status: **local MVP complete; M0–M9 completed as of 2026-08-29; M10 is future work**.
 Baseline: **stable Ipe 7.2.30**, file format `70218`.
 Goal: enable Codex and other MCP agents to create, modify, verify, and render Ipe presentations without exposing them to the complexity of the XML format.
 
 ## 1. Expected Outcome
 
-The product will be a local, host-agnostic MCP server offering two usage levels:
+The local MVP is a host-agnostic MCP server offering two usage levels:
 
 1. **Semantic composition**: “create a slide, arrange a title and three panels, add a diagram, build four reveals”. This is the normal path for agents.
 2. **Precise control**: coordinates in Ipe points, matrices, structured paths, layers, views, and styles. This is for scientific diagrams, corrections, and round-trips.
 
-The server will produce editable `.ipe` files, PDFs, and raster previews. Every mutation will be atomic, revisioned, validated, and recoverable. Static correctness of every view is a requirement; viewer-dependent animated effects will be explicitly declared as such.
+The server produces editable `.ipe` files, PDFs, and raster previews. Every mutation is atomic, revisioned, validated, and recoverable. Static correctness of every view is a requirement; viewer-dependent animated effects are explicitly declared as such.
 
 ## 2. Proposed Architectural Decisions
 
@@ -600,7 +600,9 @@ Gate:
 
 ### M6 — Native Adapter, Rendering, and Export
 
-Status: implemented locally; `scripts/gates/check-m6.sh` is the cumulative acceptance gate.
+**Status: completed on 2026-08-27.** `scripts/gates/check-m6.sh` is the
+cumulative acceptance gate; native validation, render/export, sandboxing, and
+artifact verification are recorded in [`docs/milestones/core-m6.md`](./docs/milestones/core-m6.md).
 
 Deliverables:
 
@@ -616,6 +618,10 @@ Gate:
 - reproducible CI output.
 
 ### M7 — Reveal, Motion, and Scrolling
+
+**Status: completed on 2026-08-28.** The cumulative acceptance gate is
+`bash scripts/gates/check-m7.sh`; the outcome and viewer matrix are recorded in
+[`docs/milestones/core-m7.md`](./docs/milestones/core-m7.md).
 
 Deliverables:
 
@@ -634,6 +640,10 @@ Gate:
 
 ### M8 — MCP stdio Server
 
+**Status: completed on 2026-08-29.** The cumulative acceptance gate is
+`bash scripts/gates/check-m8.sh`; protocol and real-host evidence are recorded
+in [`docs/milestones/core-m8.md`](./docs/milestones/core-m8.md).
+
 Deliverables:
 
 - tool surface, resources, structured output, and error taxonomy;
@@ -648,6 +658,10 @@ Gate:
 - protocol-only stdout and safe logs.
 
 ### M9 — Hardening and Release
+
+**Status: completed on 2026-08-29.** `bash scripts/check-m9.sh` is the single
+cumulative MVP acceptance gate; its requirement-by-requirement record is
+[`docs/milestones/core-m9-completion.md`](./docs/milestones/core-m9-completion.md).
 
 Deliverables:
 
@@ -769,13 +783,13 @@ The M9 hostile-input corpus, its case inventory, and the stability contract are 
 
 The M9 clean-setup procedure is documented in [`SETUP-WSL.md`](./SETUP-WSL.md) ("M9 clean-setup verification gate") and runs as `bash scripts/gates/check-m9-setup.sh`.
 
-The M9 agent manual, examples, and troubleshooting are documented in [`docs/guides/m9-agent-manual.md`](./docs/guides/m9-agent-manual.md); they are exercised end to end by `node scripts/host/m9-agent-workflow.mjs` under `bash scripts/gates/check-m9-manual.sh`.
+The M9 agent manual, examples, and troubleshooting are documented in [`docs/guides/agent-manual.md`](./docs/guides/agent-manual.md); they are exercised end to end by `node scripts/host/m9-agent-workflow.mjs` under `bash scripts/gates/check-m9-manual.sh`.
 
-The M9 SBOM, license inventory, and GPL subprocess boundary are documented in [`docs/milestones/core-m9-sbom.md`](./docs/milestones/core-m9-sbom.md); the deterministic CycloneDX artifact is [`docs/reference/m9-sbom.json`](./docs/reference/m9-sbom.json) and the gate is `bash scripts/gates/check-m9-sbom.sh`.
+The M9 SBOM, license inventory, and GPL subprocess boundary are documented in [`docs/milestones/core-m9-sbom.md`](./docs/milestones/core-m9-sbom.md); the deterministic CycloneDX artifact is [`docs/reference/sbom.json`](./docs/reference/sbom.json) and the gate is `bash scripts/gates/check-m9-sbom.sh`.
 
 The M9 support policy and supported/degraded/warn/reject mode matrix are documented in [`docs/guides/support-policy.md`](./docs/guides/support-policy.md); the gate is `bash scripts/gates/check-m9-support.sh`.
 
-The M9 release notes, migration guidance (config, state, sidecar, contract, clean rebuild), and rollback procedure (source preservation, snapshots, state directory, previous Git revision) are documented in [`docs/guides/m9-release-notes.md`](./docs/guides/m9-release-notes.md); the gate is `bash scripts/gates/check-m9-notes.sh`.
+The M9 release notes, migration guidance (config, state, sidecar, contract, clean rebuild), and rollback procedure (source preservation, snapshots, state directory, previous Git revision) are documented in [`docs/releases/release-notes.md`](./docs/releases/release-notes.md); the gate is `bash scripts/gates/check-m9-notes.sh`.
 
 The M9 licensed real-document review (provenance ledger, per-phase evidence matrix, findings, and retention policy) is documented in [`docs/milestones/core-m9-real.md`](./docs/milestones/core-m9-real.md); its runner is `scripts/conformance/m9-real-runner.mjs` and the gate is `bash scripts/gates/check-m9-real.sh`.
 

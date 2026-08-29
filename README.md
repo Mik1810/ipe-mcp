@@ -1,6 +1,6 @@
 # ipe-mcp
 
-`ipe-mcp` is a local-first, host-agnostic MCP server in development for creating,
+`ipe-mcp` is a local-first, host-agnostic MCP server for creating,
 editing, validating, and rendering editable [Ipe](https://ipe.otfried.org/)
 documents and presentations through AI agents.
 
@@ -12,11 +12,11 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 `70218`. The initial target environment is Ubuntu 26.04 on WSL.
 
 > [!IMPORTANT]
-> This repository is pre-MVP. Milestones M0–M8 are complete, covering the
-> compatibility contracts, conformance lab, semantic IR, transactional
-> persistence, layout, object authoring, slide composition, and the controlled
-> native validation/render/export adapter, plus the stdio MCP server and host
-> integration. Packaging and the release candidate remain M9 work.
+> The local MVP and milestones M0–M9 are complete. They cover contracts,
+> conformance, semantic authoring, transactional persistence, layout, native
+> validation/render/export, the stdio MCP server, host integration, hardening,
+> and the audited release candidate. Distribution and post-MVP extensions are
+> intentionally deferred to M10.
 
 ## Goals
 
@@ -43,7 +43,7 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 | [M6](https://github.com/Mik1810/ipe-mcp/issues/3) | Native validation, rendering, and export | Complete ([details](./docs/milestones/core-m6.md)) |
 | [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Complete ([details](./docs/milestones/core-m7.md), [matrix](./docs/reference/viewer-effects-m7.md)) |
 | [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Complete ([details](./docs/milestones/core-m8.md)) |
-| [M9](https://github.com/Mik1810/ipe-mcp/issues/6) | Hardening and MVP release candidate | Planned |
+| [M9](https://github.com/Mik1810/ipe-mcp/issues/6) | Hardening and MVP release candidate | Complete ([audit](./docs/milestones/core-m9-completion.md)) |
 | [M10](https://github.com/Mik1810/ipe-mcp/issues/7) | Post-MVP extensions and distribution | Future |
 
 See the [roadmap](./ROADMAP.md) for the complete scope, gates, risks, and design
@@ -71,7 +71,7 @@ Deterministic Ipe XML codec
 Ipe 7.2.30 native validation, rendering, and export
 ```
 
-The normal API will expose typed document operations rather than arbitrary XML.
+The normal API exposes typed document operations rather than arbitrary XML.
 Native Ipe tools remain the authority for behaviors that cannot be validated
 structurally, including style resolution, LaTeX, rendering, and export.
 
@@ -107,23 +107,21 @@ npm test
 ```
 
 The package remains private/unpublished, but M8 provides the local `ipe-mcp`
-stdio executable after `npm run build`. See [host integration](./docs/guides/m8-host-integration.md).
+stdio executable after `npm run build`. See [host integration](./docs/guides/host-integration.md).
 
 ## Verification
 
-Run the milestone gates from the repository root:
+Run the cumulative MVP acceptance gate from the repository root:
 
 ```bash
-bash scripts/gates/check-m0.sh
-bash scripts/gates/check-m1.sh
-bash scripts/gates/check-m2.sh
-bash scripts/gates/check-m3.sh
-bash scripts/gates/check-m8.sh
+bash scripts/check-m9.sh
 ```
 
-The gates build on one another and cover structural checks, native Ipe
-round-trips, semantic fixed points, persistence, numerical behavior, and layout
-fixtures. M1 also supports an optional source-build lane:
+It includes the M0–M8 chain and the M9 limits, fuzz/property, hostile-input,
+clean-setup, manual, SBOM/license, support, release, real-document, DoD, threat,
+and completion audits. Individual component gates under `scripts/gates/` remain
+available for targeted development. M1 also supports an optional source-build
+lane:
 
 ```bash
 IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/gates/check-m1.sh
@@ -147,6 +145,7 @@ capability and failure matrix.
 
 ## Documentation
 
+- [docs/README.md](./docs/README.md): documentation map and lifecycle;
 - [ROADMAP.md](./ROADMAP.md): architecture, milestones, gates, and future work;
 - [docs/adr](./docs/adr): accepted architecture decisions;
 - [docs/conformance-m1.md](./docs/reference/conformance-m1.md): native conformance lab;
@@ -154,22 +153,20 @@ capability and failure matrix.
 - [docs/milestones/core-m3.md](./docs/milestones/core-m3.md): coordinates and layout;
 - [docs/milestones/core-m7.md](./docs/milestones/core-m7.md): bounded discrete animation and handout policies;
 - [docs/milestones/core-m8.md](./docs/milestones/core-m8.md): MCP stdio contracts, resources, and verification;
-- [docs/m8-host-integration.md](./docs/guides/m8-host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
-- [docs/m8-agentic-harness-audit.md](./docs/guides/m8-agentic-harness-audit.md): itemized Issue #8 dispositions;
-- [docs/guides/m9-agent-manual.md](./docs/guides/m9-agent-manual.md): the complete agent operational
+- [docs/guides/host-integration.md](./docs/guides/host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
+- [docs/audits/agentic-harness-audit.md](./docs/audits/agentic-harness-audit.md): itemized Issue #8 dispositions;
+- [docs/guides/agent-manual.md](./docs/guides/agent-manual.md): the complete agent operational
   manual, examples, and troubleshooting;
 - [docs/guides/support-policy.md](./docs/guides/support-policy.md): support policy and
   supported/degraded/warn/reject mode matrix;
-- [docs/guides/m9-release-notes.md](./docs/guides/m9-release-notes.md): M9 release notes,
+- [docs/releases/release-notes.md](./docs/releases/release-notes.md): M9 release notes,
   migration guidance, and rollback procedure;
 - [docs/milestones/core-m9-sbom.md](./docs/milestones/core-m9-sbom.md): SBOM, license inventory, and the
   GPL subprocess boundary for the local release candidate;
 - [docs/milestones/core-m9-real.md](./docs/milestones/core-m9-real.md): licensed real-document
   review with provenance ledger and findings;
 - [docs/viewer-effects-m7.md](./docs/reference/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
-- [report-source.md](./report-source.md): source dossier and traceability;
-- [ORCHESTRATOR_PROMPT.md](./ORCHESTRATOR_PROMPT.md): milestone execution and
-  review protocol.
+- [report-source.md](./report-source.md): source dossier and traceability.
 
 ## Project Principles
 

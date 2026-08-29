@@ -7,12 +7,12 @@ future distribution decision is out of scope here (M10).
 
 The machine-readable inventory is generated deterministically from
 `package-lock.json` and the installed `dpkg` metadata by `scripts/tools/sbom.mjs`
-and committed as [`m9-sbom.json`](../reference/m9-sbom.json) (CycloneDX 1.5).
+and committed as [`sbom.json`](../reference/sbom.json) (CycloneDX 1.5).
 
 ## Project license
 
 `ipe-mcp` is licensed under the **MIT License** — `Copyright (c) 2026 Michael
-Piccirilli` (see [`../LICENSE`](../LICENSE)). This is stated explicitly in
+Piccirilli` (see [`LICENSE`](../../LICENSE)). This is stated explicitly in
 `package.json` (`"license": "MIT"`); no license is inferred or invented for any
 third-party component.
 
@@ -88,10 +88,10 @@ the subprocess boundary would normally keep the server's MIT code independent.
 ## Regeneration and verification
 
 ```bash
-node scripts/tools/sbom.mjs docs/reference/m9-sbom.json      # regenerate (byte-deterministic)
+node scripts/tools/sbom.mjs docs/reference/sbom.json      # regenerate (byte-deterministic)
 bash scripts/gates/check-m9-sbom.sh                # gate: determinism + coverage
 ```
 
 The SBOM is deterministic: identical inputs produce byte-identical output
 (no timestamps, UUIDs, or map-iteration ordering). The gate regenerates into a
-temporary directory and asserts it matches `docs/reference/m9-sbom.json` exactly.
+temporary directory and asserts it matches `docs/reference/sbom.json` exactly.

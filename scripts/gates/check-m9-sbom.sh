@@ -11,7 +11,7 @@ m9_require_m8 "$ROOT" || fail "M8 gate"
 
 # Deterministic regeneration: must be byte-identical to the committed artifact.
 (cd "$ROOT" && node scripts/tools/sbom.mjs "$M9_SBOM_TMP/regenerated.json") || fail "sbom generation"
-cmp "$M9_SBOM_TMP/regenerated.json" "$ROOT/docs/reference/m9-sbom.json" || fail "SBOM is not byte-deterministic"
+cmp "$M9_SBOM_TMP/regenerated.json" "$ROOT/docs/reference/sbom.json" || fail "SBOM is not byte-deterministic"
 
 # Project license must be explicit and present.
 [[ "$(node -e 'console.log(require("./package.json").license)')" == "MIT" ]] || fail "package.json license is not MIT"
@@ -19,7 +19,7 @@ cmp "$M9_SBOM_TMP/regenerated.json" "$ROOT/docs/reference/m9-sbom.json" || fail 
 grep -q "Copyright (c) 2026 Michael Piccirilli" "$ROOT/LICENSE" || fail "LICENSE copyright holder missing"
 grep -q '"license": "MIT"' "$ROOT/package-lock.json" || fail "package-lock.json root license missing"
 
-python3 - "$ROOT/docs/reference/m9-sbom.json" "$ROOT/docs/milestones/core-m9-sbom.md" <<'PY' || fail "SBOM coverage audit"
+python3 - "$ROOT/docs/reference/sbom.json" "$ROOT/docs/milestones/core-m9-sbom.md" <<'PY' || fail "SBOM coverage audit"
 import json, pathlib, sys
 sbom = json.loads(pathlib.Path(sys.argv[1]).read_text())
 doc = pathlib.Path(sys.argv[2]).read_text()

@@ -7,7 +7,7 @@ fail() { echo "M9 NOTES FAIL: $*" >&2; exit 1; }
 m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
 
-python3 - "$ROOT/docs/guides/m9-release-notes.md" <<'PY' || fail "release notes audit"
+python3 - "$ROOT/docs/releases/release-notes.md" <<'PY' || fail "release notes audit"
 import pathlib, sys
 notes = pathlib.Path(sys.argv[1]).read_text()
 

@@ -85,7 +85,8 @@ bash scripts/gates/check-m9-setup.sh
 
 The gate:
 
-1. extracts a `git archive HEAD` snapshot into a temporary directory and
+1. extracts the candidate's staged-tree identity (`git write-tree`) into a
+   temporary directory and
    asserts it has no `node_modules`;
 2. requires Node 20 or newer, runs `npm ci`, `npm run build`, and the bounded
    `tests/limits` + `tests/mcp` suites inside the snapshot;

@@ -21,7 +21,7 @@ current command result.
 | M9-10 | Exercise the agent manual workflow | `bash scripts/gates/check-m9-manual.sh` | PASS |
 | M9-11 | Demonstrate all ten MVP DoD items | `bash scripts/gates/check-m9-dod.sh` | ten CURRENT PASS rows |
 | M9-12 | Disposition all eight threat IDs | `bash scripts/gates/check-m9-threat-audit.sh` | seven PASS and one proved NOT APPLICABLE |
-| M9-13 | Validate Issue #8 agentic-harness evidence schema | final audit in `bash scripts/check-m9.sh` over `docs/guides/m8-agentic-harness-audit.md` | 31 complete rows: 24 PASS, 7 NOT APPLICABLE, zero deferred |
+| M9-13 | Validate Issue #8 agentic-harness evidence schema | final audit in `bash scripts/check-m9.sh` over `docs/audits/agentic-harness-audit.md` | 31 complete rows: 24 PASS, 7 NOT APPLICABLE, zero deferred |
 | M9-14 | Reproduce the local release candidate | `bash scripts/gates/check-m9-candidate.sh` | clean install, stable suite, workflow, artifacts, cleanup PASS |
 | M9-15 | Use one fresh read-only final gate environment | outer launcher in `bash scripts/check-m9.sh` | exact tree, fresh worktree, all tracked files non-writable, one inner complete run |
 | M9-16 | Update completion only from evidence | final PASS tree is reported by the command and then recorded on GitHub | no pre-gate completion claim |

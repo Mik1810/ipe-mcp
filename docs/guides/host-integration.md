@@ -1,4 +1,8 @@
-# M8 host integration
+# Host Integration
+
+This living guide describes the supported local stdio host setup. The M8
+qualification details below are retained as provenance for the verified MVP
+baseline.
 
 ## Build and run
 

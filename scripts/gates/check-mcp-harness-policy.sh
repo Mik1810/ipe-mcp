@@ -15,7 +15,7 @@ agents = (root / "AGENTS.md").read_text(encoding="utf-8")
 workflow = (root / ".agents/WORKFLOW.md").read_text(encoding="utf-8")
 task = (root / "scripts/agent/new-task-payload.sh").read_text(encoding="utf-8")
 handoff = (root / "scripts/agent/new-handoff.sh").read_text(encoding="utf-8")
-audit = (root / "docs/guides/m8-agentic-harness-audit.md").read_text(encoding="utf-8")
+audit = (root / "docs/audits/agentic-harness-audit.md").read_text(encoding="utf-8")
 check_m9 = (root / "scripts/check-m9.sh").read_text(encoding="utf-8")
 
 areas = [

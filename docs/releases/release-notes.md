@@ -1,10 +1,12 @@
-# M9 MVP Release Notes, Migration, and Rollback
+# MVP Release Notes, Migration, and Rollback
+
+This is the milestone-frozen M9 release-candidate record for version `0.1.0`.
 
 This document covers the M9 release candidate (`ipe-mcp` v0.1.0, contract
 `ipe-mcp/1`): what is delivered, its security limits, compatibility and known
 limits, what is deferred to M10, how to migrate an existing installation, and
 how to roll back. It is the release companion of
-[`support-policy.md`](./support-policy.md) (the support contract) and
+[`support-policy.md`](../guides/support-policy.md) (the support contract) and
 [`core-m9-limits.md`](../milestones/core-m9-limits.md) (the single stated
 limits table). There is **no automatic migration of user data**: nothing in
 this candidate rewrites a source document, moves files, or migrates state
