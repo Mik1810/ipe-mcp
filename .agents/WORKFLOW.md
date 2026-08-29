@@ -25,6 +25,12 @@ Before editing, state internally:
 
 Prefer one coherent implementation plan over iterative probe/edit cycles.
 
+For MCP/harness-related work, classify the touch-triggered areas from
+`.agents/MCP_HARNESS_COMPLIANCE.md` in the task plan using
+`mcp_harness_compliance.applicable_areas`, `evidence_required`, and
+`not_applicable_reason`. This is a planning record, not a reason to create a
+new state file.
+
 ## 3. Implement
 
 Apply related edits in one batch where practical.
@@ -53,6 +59,10 @@ scripts/agent/agent-context.sh --diff -- src tests
 
 Check the diff against the acceptance criteria and directly affected behavior.
 
+For MCP/harness-related work, the review evidence must name every applicable
+compliance area, its proportional checks, and any finding with owner/target.
+Reclassify from the actual diff; do not rerun unrelated areas.
+
 Fix all blocking findings together where possible. Record unrelated findings as follow-up work.
 
 ## 6. Final verification
@@ -60,6 +70,11 @@ Fix all blocking findings together where possible. Record unrelated findings as 
 Run the repository-required final checks once on the finished working tree.
 
 For MCP/client integration, use the CLI/protocol path first. Use browser/UI automation only for client-specific evidence.
+
+Run `bash scripts/gates/check-mcp-harness-policy.sh` when the workflow,
+templates, audit schema, or MCP compliance gates change. Any gate directly
+exercising affected MCP behavior must explicitly name its applicable areas in
+the reported evidence.
 
 If final verification fails, make a bounded correction and rerun only what is necessary; do not restart the whole workflow.
 
@@ -69,6 +84,8 @@ Report:
 
 - files/behavior changed;
 - tests/checks run and their result;
+- `mcp_harness_compliance`: applicable areas plus evidence, or a concrete
+  not-applicable reason;
 - any unresolved blocker or clearly separated follow-up.
 
 Do not continue reviewing after the task is accepted and verified.

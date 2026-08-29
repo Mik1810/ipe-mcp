@@ -43,6 +43,7 @@ bash "$ROOT/scripts/gates/check-m8.sh" || fail "M0-M8 cumulative gate"
 export IPE_M9_INHERITED_M8_TREE="$IPE_M9_FROZEN_TREE"
 
 components=(
+  check-mcp-harness-policy.sh
   check-m9-limits.sh
   check-m9-fuzz.sh
   check-m9-hostile.sh

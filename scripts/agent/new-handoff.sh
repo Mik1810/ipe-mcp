@@ -35,6 +35,12 @@ acceptance_status: []
 
 review_findings: []
 
+mcp_harness_compliance:
+  applicable_areas: []
+  evidence: []
+  findings: []
+  not_applicable_reason: null
+
 verification:
   passed: []
   failed: []

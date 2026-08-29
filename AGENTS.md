@@ -43,6 +43,24 @@ INSPECT
 
 Do not add extra phases merely to increase confidence after the acceptance criteria are satisfied.
 
+## 3.1 MCP agentic-harness compliance
+
+Apply [`.agents/MCP_HARNESS_COMPLIANCE.md`](.agents/MCP_HARNESS_COMPLIANCE.md)
+whenever changed paths or behavior touch the MCP server, model-facing contract,
+host integration, permissions/write safety, transport/privacy, or their gates.
+
+- During planning, record `mcp_harness_compliance.applicable_areas`,
+  `evidence_required`, and either proportional evidence needs or a concrete
+  `not_applicable_reason`.
+- During the one self-review, reclassify against the actual diff and record
+  evidence/findings for every applicable area.
+- During final verification and reporting, name the applicable areas and the
+  concrete checks that passed. Run the complete six-area audit only for a
+  cross-cutting MCP milestone or an explicit audit request.
+- Do not create task, review, handoff, or gate state files solely to satisfy
+  this rule. If the user explicitly requests such an artifact, it must carry
+  the policy's structured schema.
+
 ## 4. Inspection and tool efficiency
 
 Start with one compact inspection bundle when possible:

@@ -50,6 +50,11 @@ scope:
   expected_paths: []
   out_of_scope: []
 
+mcp_harness_compliance:
+  applicable_areas: []
+  evidence_required: []
+  not_applicable_reason: null
+
 findings_to_address: []
 findings_to_verify: []
 
