@@ -26,31 +26,9 @@ import {
   type PageCoordinateSystem,
   type Point,
 } from "../../src/layout/index.js";
+import { PINNED_SEEDS, XorShift32, randomMatrix } from "../property/rng.js";
 
-class XorShift32 {
-  constructor(private state: number) {}
-  next(): number {
-    let value = this.state | 0;
-    value ^= value << 13;
-    value ^= value >>> 17;
-    value ^= value << 5;
-    this.state = value | 0;
-    return (value >>> 0) / 0x1_0000_0000;
-  }
-  between(minimum: number, maximum: number): number {
-    return minimum + this.next() * (maximum - minimum);
-  }
-}
-
-const SEED = 0x1a2b3c4d;
-
-function randomMatrix(random: XorShift32): Matrix {
-  const angle = random.between(-180, 180);
-  const scaleX = random.between(0.2, 5);
-  const scaleY = random.between(0.2, 5);
-  const translation = translationMatrix(random.between(-1_000, 1_000), random.between(-1_000, 1_000));
-  return multiplyMatrices(translation, multiplyMatrices(rotationMatrix(angle), scaleMatrix(scaleX, scaleY)));
-}
+const SEED = PINNED_SEEDS.matrices;
 
 describe("M3 geometry and affine algebra", () => {
   it("implements every y-up anchor and requires an explicit baseline", () => {
