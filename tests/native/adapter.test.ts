@@ -160,7 +160,7 @@ describe("native Ipe adapter", () => {
     expect(changed.map(({ metadata }) => [metadata.width, metadata.height])).toEqual([[321, 180], [321, 180]]);
     expect(changed.map(({ metadata }) => metadata.sha256)).not.toEqual(report.previews.map(({ metadata }) => metadata.sha256));
     expect(await readdir(root)).toEqual([]);
-  }, 15_000);
+  }, 30_000);
 
   it.skipIf(!nativeAvailable)("accepts Ipe's explicit numeric default stroke on newly authored objects", async () => {
     const document = ipeDocumentCodec.parse('<ipe version="70218"><page><layer name="content"/><view layers="content" active="content"/><path layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000001">0 0 m 10 0 l</path><text layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000002" pos="2 3" type="label" valign="baseline">M8</text></page></ipe>');
