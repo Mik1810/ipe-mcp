@@ -764,3 +764,5 @@ The detailed dossier, including contradictions, limitations, and experimental ga
 The M9 release-limit contract is documented in [`docs/core-m9-limits.md`](./docs/core-m9-limits.md); it is the single stated table behind the `src/limits.ts` module and the `limits` object returned by `ipe_orientation`.
 
 The M9 property/fuzz battery and its reproducibility contract are documented in [`docs/core-m9-testing.md`](./docs/core-m9-testing.md); it runs as `bash scripts/check-m9-fuzz.sh`.
+
+The M9 hostile-input corpus, its case inventory, and the stability contract are documented in [`docs/core-m9-hostile.md`](./docs/core-m9-hostile.md); it runs as `bash scripts/check-m9-hostile.sh`.

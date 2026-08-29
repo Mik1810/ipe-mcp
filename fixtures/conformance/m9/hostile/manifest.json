@@ -1,0 +1,232 @@
+{
+  "milestone": "M9",
+  "corpus": "hostile-input-v1",
+  "threatModel": {
+    "TM-XML": "parser/XML surface",
+    "TM-TEX": "LaTeX policy and sandbox",
+    "TM-FS": "filesystem, paths, symlinks",
+    "TM-ASSET": "bitmap/decode and network-bearing asset surfaces",
+    "TM-PROC": "native subprocess/CLI limits",
+    "TM-CONCURRENCY": "races and atomicity",
+    "TM-METADATA": "metadata/sidecar integrity",
+    "TM-HTTP": "remote/network surface (N/A for stdio MVP)"
+  },
+  "cases": [
+    {
+      "id": "HOST-001",
+      "threatId": "TM-XML",
+      "label": "internal entity declaration must be rejected",
+      "provenance": { "kind": "file", "path": "inputs/xml-entity-decl.ipe" },
+      "oracle": "xml-rejects",
+      "expected": { "reject": true, "classification": "XmlParseError" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-002",
+      "threatId": "TM-XML",
+      "label": "XML namespaces must be rejected",
+      "provenance": { "kind": "file", "path": "inputs/xml-namespace.ipe" },
+      "oracle": "xml-rejects",
+      "expected": { "reject": true, "classification": "XmlParseError" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-003",
+      "threatId": "TM-XML",
+      "label": "remote doctype SYSTEM URL must be rejected",
+      "provenance": { "kind": "file", "path": "inputs/xml-remote-doctype.ipe" },
+      "oracle": "xml-rejects",
+      "expected": { "reject": true, "classification": "XmlParseError" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-004",
+      "threatId": "TM-XML",
+      "label": "non-70218 document versions must be rejected",
+      "provenance": { "kind": "file", "path": "inputs/xml-wrong-version.ipe" },
+      "oracle": "xml-rejects",
+      "expected": { "reject": true, "classification": "XmlParseError" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-005",
+      "threatId": "TM-XML",
+      "label": "CDATA must not smuggle control characters into text",
+      "provenance": { "kind": "file", "path": "inputs/xml-cdata-null.ipe" },
+      "oracle": "xml-rejects",
+      "expected": { "reject": true, "classification": "XmlParseError" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-006",
+      "threatId": "TM-XML",
+      "label": "nesting beyond the parser depth cap must be rejected",
+      "provenance": { "kind": "file", "path": "inputs/xml-deep-nesting.ipe" },
+      "oracle": "xml-rejects",
+      "expected": { "reject": true, "classification": "XmlParseError" },
+      "budget": { "maxInputBytes": 16384, "maxMs": 250 }
+    },
+    {
+      "id": "HOST-007",
+      "threatId": "TM-XML",
+      "label": "the accepted XML corpus must reach a canonical fixed point",
+      "provenance": { "kind": "inline", "source": "<ipe version=\"70218\"><page><layer name=\"alpha\"/></page></ipe>" },
+      "oracle": "xml-canonical-fixed-point",
+      "expected": { "reject": false, "classification": "canonical" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-008",
+      "threatId": "TM-XML",
+      "label": "hostile structured fuzz must never escape the parser",
+      "provenance": { "kind": "generated", "source": "seeded structural XML fuzz (64 KiB cap)" },
+      "oracle": "xml-fuzz-safe",
+      "expected": { "reject": false, "classification": "no-crash" },
+      "budget": { "maxInputBytes": 65536, "maxMs": 1000 }
+    },
+    {
+      "id": "HOST-009",
+      "threatId": "TM-TEX",
+      "label": "non-allowlisted LaTeX packages must be rejected",
+      "provenance": { "kind": "inline", "source": "\\usepackage{shellesc}" },
+      "oracle": "latex-policy",
+      "expected": { "reject": true, "classification": "NATIVE_TEX_ERROR" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-010",
+      "threatId": "TM-TEX",
+      "label": "arbitrary preamble text must be rejected",
+      "provenance": { "kind": "inline", "source": "\\input{/etc/passwd}" },
+      "oracle": "latex-policy",
+      "expected": { "reject": true, "classification": "NATIVE_TEX_ERROR" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-011",
+      "threatId": "TM-TEX",
+      "label": "allowlisted single-package preamble must pass",
+      "provenance": { "kind": "inline", "source": "\\usepackage{amssymb}" },
+      "oracle": "latex-policy",
+      "expected": { "reject": false, "classification": "pass" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-012",
+      "threatId": "TM-FS",
+      "label": "path traversal outside the workspace root must be rejected",
+      "provenance": { "kind": "file", "path": "inputs/traversal.ipe" },
+      "oracle": "fs-path-traversal",
+      "expected": { "reject": true, "classification": "PathOutsideWorkspaceError" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 250 }
+    },
+    {
+      "id": "HOST-013",
+      "threatId": "TM-FS",
+      "label": "symlink escape from the workspace must be rejected",
+      "provenance": { "kind": "generated", "source": "temporary symlink pointing outside root" },
+      "oracle": "fs-symlink-escape",
+      "expected": { "reject": true, "classification": "PathOutsideWorkspaceError" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 250 }
+    },
+    {
+      "id": "HOST-014",
+      "threatId": "TM-FS",
+      "label": "oversized source reads must fail bounded",
+      "provenance": { "kind": "generated", "source": "17 MiB trivial source file" },
+      "oracle": "fs-oversized-source",
+      "expected": { "reject": true, "classification": "FileSizeLimitError" },
+      "budget": { "maxInputBytes": 17825792, "maxMs": 1000 }
+    },
+    {
+      "id": "HOST-015",
+      "threatId": "TM-ASSET",
+      "label": "oversized PNG IHDR must be rejected before decode",
+      "provenance": { "kind": "file", "path": "inputs/asset-oversized-ihdr.ipe" },
+      "oracle": "asset-ihdr-bomb",
+      "expected": { "reject": true, "classification": "safe-decline" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-016",
+      "threatId": "TM-ASSET",
+      "label": "truncated PNG payload must be rejected as unsafe",
+      "provenance": { "kind": "inline", "source": "iVBORw0KGgo=" },
+      "oracle": "asset-png-payload",
+      "expected": { "reject": true, "classification": "safe-decline" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-017",
+      "threatId": "TM-ASSET",
+      "label": "base64 image payload over the contract cap must be rejected by the schema",
+      "provenance": { "kind": "generated", "source": "12,000,001 base64 characters" },
+      "oracle": "contract-base64-cap",
+      "expected": { "reject": true, "classification": "input_validation" },
+      "budget": { "maxInputBytes": 12582912, "maxMs": 1500 }
+    },
+    {
+      "id": "HOST-018",
+      "threatId": "TM-PROC",
+      "label": "native subprocess output cap must terminate a runaway producer",
+      "provenance": { "kind": "inline", "source": "node -e writing 64 KiB" },
+      "oracle": "proc-output-cap",
+      "expected": { "reject": true, "classification": "NATIVE_OUTPUT_LIMIT" },
+      "budget": { "maxInputBytes": 1024, "maxMs": 3000 }
+    },
+    {
+      "id": "HOST-019",
+      "threatId": "TM-CONCURRENCY",
+      "label": "concurrent save-as must allocate distinct snapshots",
+      "provenance": { "kind": "generated", "source": "two managers saving the same document" },
+      "oracle": "concurrency-snapshot-uniqueness",
+      "expected": { "reject": false, "classification": "pass" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 5000 }
+    },
+    {
+      "id": "HOST-020",
+      "threatId": "TM-METADATA",
+      "label": "sidecar with unknown fields must be rejected",
+      "provenance": { "kind": "inline", "source": "{\"schemaVersion\":1,\"documentId\":\"d\",\"sourceHash\":\"a\",\"revision\":0,\"unknown\":\"x\"}" },
+      "oracle": "sidecar-unknown-field",
+      "expected": { "reject": true, "classification": "safe-decline" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-021",
+      "threatId": "TM-METADATA",
+      "label": "non-finite sidecar numbers must be rejected",
+      "provenance": { "kind": "inline", "source": "{\"schemaVersion\":1,\"documentId\":\"d\",\"sourceHash\":\"aaaa\",\"revision\":1e999}" },
+      "oracle": "sidecar-unknown-field",
+      "expected": { "reject": true, "classification": "safe-decline" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-022",
+      "threatId": "TM-HTTP",
+      "label": "remote URL resources must not be accepted as document sources",
+      "provenance": { "kind": "inline", "source": "https://example.invalid/evil.ipe" },
+      "oracle": "http-no-remote-source",
+      "expected": { "reject": true, "classification": "no-network-surface" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-023",
+      "threatId": "TM-HTTP",
+      "label": "group hyperlink URLs are bounded and validated against the URL schema",
+      "provenance": { "kind": "inline", "source": "javascript:alert(1)" },
+      "oracle": "http-link-schema",
+      "expected": { "reject": true, "classification": "input_validation" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 100 }
+    },
+    {
+      "id": "HOST-024",
+      "threatId": "TM-PROC",
+      "label": "unbounded fork loops must be contained by the process cap",
+      "provenance": { "kind": "inline", "source": "fork bomb" },
+      "oracle": "proc-fork-cap",
+      "expected": { "reject": true, "classification": "PROCESS_LIMIT_OR_ERROR" },
+      "budget": { "maxInputBytes": 4096, "maxMs": 4000 }
+    }
+  ]
+}

@@ -158,7 +158,7 @@ function digest(data: string | Uint8Array): string {
   return createHash("sha256").update(data).digest("hex");
 }
 
-function assertMinimalPreamble(preamble: string | undefined): void {
+export function assertMinimalPreamble(preamble: string | undefined): void {
   if (preamble === undefined || preamble.trim() === "") return;
   const remainder = preamble.replace(/%[^\n]*(?:\n|$)/gu, "").replace(/\\usepackage(?:\[[A-Za-z0-9,= ._-]*\])?\{([^{}]+)\}/gu, (_all, list: string) => {
     for (const name of list.split(",").map((value) => value.trim())) {

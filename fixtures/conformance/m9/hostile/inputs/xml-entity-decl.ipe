@@ -1,0 +1,2 @@
+<!DOCTYPE ipe [<!ENTITY evil "boom">]>
+<ipe version="70218"><page><text>&evil;</text></page></ipe>
