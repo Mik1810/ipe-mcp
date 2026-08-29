@@ -772,3 +772,5 @@ The M9 clean-setup procedure is documented in [`SETUP-WSL.md`](./SETUP-WSL.md) (
 The M9 agent manual, examples, and troubleshooting are documented in [`docs/guides/m9-agent-manual.md`](./docs/guides/m9-agent-manual.md); they are exercised end to end by `node scripts/host/m9-agent-workflow.mjs` under `bash scripts/gates/check-m9-manual.sh`.
 
 The M9 SBOM, license inventory, and GPL subprocess boundary are documented in [`docs/milestones/core-m9-sbom.md`](./docs/milestones/core-m9-sbom.md); the deterministic CycloneDX artifact is [`docs/reference/m9-sbom.json`](./docs/reference/m9-sbom.json) and the gate is `bash scripts/gates/check-m9-sbom.sh`.
+
+The M9 support policy and supported/degraded/warn/reject mode matrix are documented in [`docs/guides/support-policy.md`](./docs/guides/support-policy.md); the gate is `bash scripts/gates/check-m9-support.sh`.

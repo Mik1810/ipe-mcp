@@ -158,6 +158,8 @@ capability and failure matrix.
 - [docs/m8-agentic-harness-audit.md](./docs/guides/m8-agentic-harness-audit.md): itemized Issue #8 dispositions;
 - [docs/guides/m9-agent-manual.md](./docs/guides/m9-agent-manual.md): the complete agent operational
   manual, examples, and troubleshooting;
+- [docs/guides/support-policy.md](./docs/guides/support-policy.md): support policy and
+  supported/degraded/warn/reject mode matrix;
 - [docs/milestones/core-m9-sbom.md](./docs/milestones/core-m9-sbom.md): SBOM, license inventory, and the
   GPL subprocess boundary for the local release candidate;
 - [docs/viewer-effects-m7.md](./docs/reference/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
