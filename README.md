@@ -164,6 +164,8 @@ capability and failure matrix.
   migration guidance, and rollback procedure;
 - [docs/milestones/core-m9-sbom.md](./docs/milestones/core-m9-sbom.md): SBOM, license inventory, and the
   GPL subprocess boundary for the local release candidate;
+- [docs/milestones/core-m9-real.md](./docs/milestones/core-m9-real.md): licensed real-document
+  review with provenance ledger and findings;
 - [docs/viewer-effects-m7.md](./docs/reference/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
 - [report-source.md](./report-source.md): source dossier and traceability;
 - [ORCHESTRATOR_PROMPT.md](./ORCHESTRATOR_PROMPT.md): milestone execution and

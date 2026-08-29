@@ -1,0 +1,666 @@
+{
+  "capturedAt": "2026-08-29",
+  "scenario": "m9-real-v1",
+  "milestone": "M9",
+  "subissue": 20,
+  "contract": "ipe-mcp/1",
+  "cases": [
+    {
+      "id": "REAL-001",
+      "name": "Ipe icon library (multipage/multiview)",
+      "phases": {
+        "open": {
+          "ok": true,
+          "revision": 0
+        },
+        "inspect": {
+          "ok": true,
+          "pageCount": 54,
+          "objectCount": 189,
+          "views": 54,
+          "layers": 56,
+          "firstPageObjects": 6
+        },
+        "edit": {
+          "ok": true,
+          "op": "transform_object",
+          "revision": 1,
+          "targetObjectId": "object-e8f764648cf19273c829ab2d"
+        },
+        "validate": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_EXPORT_ERROR",
+          "summary": "NATIVE_EXPORT_ERROR: native process exited with status 1",
+          "message": "ipe_validate: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"validate\",\"summary\":\"NATIVE_EXPORT_ERROR: native process exited with status 1\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"native process exited with status 1\",\"retr"
+        },
+        "renderPerPage": {
+          "pass": 0,
+          "classified": 54,
+          "pages": [
+            {
+              "pageId": "page-5feceb66ffc86f38d952786c",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-6b86b273ff34fce19d6b804e",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-d4735e3a265e16eee03f5971",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-4e07408562bedb8b60ce05c1",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-4b227777d4dd1fc61c6f884f",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-ef2d127de37b942baad06145",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-e7f6c011776e8db7cd330b54",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-7902699be42c8a8e46fbbb45",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-2c624232cdd221771294dfbb",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-19581e27de7ced00ff1ce50b",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-4a44dc15364204a80fe80e90",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-4fc82b26aecb47d2868c4efb",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-6b51d431df5d7f141cbececc",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-3fdba35f04dc8c462986c992",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-8527a891e224136950ff32ca",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-e629fa6598d732768f7c726b",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-b17ef6d19c7a5b1ee83b907c",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-4523540f1504cd17100c4835",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-4ec9599fc203d176a301536c",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-9400f1b21cb527d7fa3d3eab",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-f5ca38f748a1d6eaf726b8a4",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-6f4b6612125fb3a0daecd279",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-785f3ec7eb32f30b90cd0fcf",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-535fa30d7e25dd8a49f15367",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-c2356069e9d1e79ca9243781",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-b7a56873cd771f2c446d369b",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-5f9c4ab08cac7457e9111a30",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-670671cd97404156226e5079",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-59e19706d51d39f66711c265",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-35135aaa6cc23891b40cb3f3",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-624b60c58c9d8bfb6ff1886c",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-eb1e33e8a81b697b75855af6",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-e29c9c180c6279b0b02abd6a",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-c6f3ac57944a531490cd3990",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-86e50149658661312a9e0b35",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-9f14025af0065b30e47e23eb",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-76a50887d8f1c2e930175542",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-7a61b53701befdae0eeeffae",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-aea92132c4cbeb263e6ac2bf",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-0b918943df0962bc7a1824c0",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-d59eced1ded07f84c145592f",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-3d914f9348c9cc0ff8a79716",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-73475cb40a568e8da8a045ce",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-44cb730c420480a0477b505a",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-71ee45a3c0db9a9865f7313d",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-811786ad1ae74adfdd20dd03",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-25fc0e7096fc653718202dc3",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-31489056e0916d59fe3add79",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-98010bd9270f9b100b6214a2",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-0e17daca5f3e175f448bacac",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-1a6562590ef19d1045d06c40",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-031b4af5197ec30a926f48cf",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-41cfc0d1f2d127b04555b724",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            },
+            {
+              "pageId": "page-2858dcd1057d3eae7f7d5f78",
+              "pass": false,
+              "code": "NATIVE_RENDER_ERROR",
+              "summary": "NATIVE_RENDER_ERROR: native process exited with status 1"
+            }
+          ]
+        },
+        "saveCopy": {
+          "ok": true,
+          "revision": 1,
+          "bytes": 68597,
+          "sha256": "85fb15db95769adfbce24aef35452fcde03f22d6ed2898d3ec2695b0aaa7056b"
+        },
+        "reopen": {
+          "ok": true,
+          "pageCount": 54,
+          "objectCount": 189,
+          "revision": 0
+        },
+        "pdf": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_EXPORT_ERROR",
+          "summary": "NATIVE_EXPORT_ERROR: native process exited with status 1",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_EXPORT_ERROR: native process exited with status 1\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"native process exited with s"
+        },
+        "png": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_RENDER_ERROR",
+          "summary": "NATIVE_RENDER_ERROR: native process exited with status 1",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_RENDER_ERROR: native process exited with status 1\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_RENDER_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_RENDER_ERROR\",\"message\":\"native process exited with s"
+        }
+      },
+      "findings": [
+        {
+          "kind": "validate",
+          "code": "NATIVE_EXPORT_ERROR",
+          "summary": "NATIVE_EXPORT_ERROR: native process exited with status 1",
+          "message": "ipe_validate: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"validate\",\"summary\":\"NATIVE_EXPORT_ERROR: native process exited with status 1\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"native process exited with status 1\",\"retr"
+        },
+        {
+          "kind": "pdf",
+          "code": "NATIVE_EXPORT_ERROR",
+          "summary": "NATIVE_EXPORT_ERROR: native process exited with status 1",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_EXPORT_ERROR: native process exited with status 1\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_EXPORT_ERROR\",\"message\":\"native process exited with s"
+        },
+        {
+          "kind": "png",
+          "code": "NATIVE_RENDER_ERROR",
+          "summary": "NATIVE_RENDER_ERROR: native process exited with status 1",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_RENDER_ERROR: native process exited with status 1\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_RENDER_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_RENDER_ERROR\",\"message\":\"native process exited with s"
+        }
+      ],
+      "originalSha256": "bc1d00d2005b51019238987374dcdddbfde2e1081a799f7e5df01bd437d8261d",
+      "derived": {
+        "bytes": 39797,
+        "sha256": "9882311082d7fb39678e1eadc7e1929ba1c6579b8b26642ed4c9dab6526a927d",
+        "rootVersion": "70218"
+      }
+    },
+    {
+      "id": "REAL-002",
+      "name": "Ipe logo (complex geometry)",
+      "phases": {
+        "open": {
+          "ok": true,
+          "revision": 0
+        },
+        "inspect": {
+          "ok": true,
+          "pageCount": 1,
+          "objectCount": 5,
+          "views": 1,
+          "layers": 3,
+          "firstPageObjects": 5
+        },
+        "edit": {
+          "ok": true,
+          "op": "transform_object",
+          "revision": 1,
+          "targetObjectId": "object-ae278727976cc9d05b446770"
+        },
+        "validate": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo",
+          "message": "ipe_validate: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"validate\",\"summary\":\"NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"LaTeX package is not allowed: mathpazo\",\"retryab"
+        },
+        "renderPerPage": {
+          "pass": 0,
+          "classified": 1,
+          "pages": [
+            {
+              "pageId": "page-5feceb66ffc86f38d952786c",
+              "pass": false,
+              "code": "NATIVE_TEX_ERROR",
+              "summary": "NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo"
+            }
+          ]
+        },
+        "saveCopy": {
+          "ok": true,
+          "revision": 1,
+          "bytes": 8630,
+          "sha256": "0366135f012eb7fc96296b3d5981f34c93fb3e3ca9bbaca279f67f299ce5a137"
+        },
+        "reopen": {
+          "ok": true,
+          "pageCount": 1,
+          "objectCount": 5,
+          "revision": 0
+        },
+        "pdf": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"LaTeX package is not allowed: math"
+        },
+        "png": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"LaTeX package is not allowed: math"
+        }
+      },
+      "findings": [
+        {
+          "kind": "validate",
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo",
+          "message": "ipe_validate: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"validate\",\"summary\":\"NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"LaTeX package is not allowed: mathpazo\",\"retryab"
+        },
+        {
+          "kind": "pdf",
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"LaTeX package is not allowed: math"
+        },
+        {
+          "kind": "png",
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: LaTeX package is not allowed: mathpazo\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"LaTeX package is not allowed: math"
+        }
+      ],
+      "originalSha256": "0f51c6ea414e11bc236bc6d43138be87ddaf3188e813d0b98bad3c517a1ef4c5",
+      "derived": {
+        "bytes": 7812,
+        "sha256": "22e5ddee10d61377476f7d37b0d725e130134870d594956122ee02b64b38397d",
+        "rootVersion": "70218"
+      }
+    },
+    {
+      "id": "REAL-003",
+      "name": "TU Delft Ipe presentation template (independent permissive source)",
+      "phases": {
+        "open": {
+          "ok": true,
+          "revision": 0
+        },
+        "inspect": {
+          "ok": true,
+          "pageCount": 3,
+          "objectCount": 18,
+          "views": 4,
+          "layers": 5,
+          "firstPageObjects": 2
+        },
+        "edit": {
+          "ok": true,
+          "op": "transform_object",
+          "revision": 1,
+          "targetObjectId": "object-6b1c6d37c7b2ae1a0514e7f4"
+        },
+        "validate": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble",
+          "message": "ipe_validate: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"validate\",\"summary\":\"NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"only allowl"
+        },
+        "renderPerPage": {
+          "pass": 0,
+          "classified": 3,
+          "pages": [
+            {
+              "pageId": "page-5feceb66ffc86f38d952786c",
+              "pass": false,
+              "code": "NATIVE_TEX_ERROR",
+              "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble"
+            },
+            {
+              "pageId": "page-6b86b273ff34fce19d6b804e",
+              "pass": false,
+              "code": "NATIVE_TEX_ERROR",
+              "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble"
+            },
+            {
+              "pageId": "page-d4735e3a265e16eee03f5971",
+              "pass": false,
+              "code": "NATIVE_TEX_ERROR",
+              "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble"
+            }
+          ]
+        },
+        "saveCopy": {
+          "ok": true,
+          "revision": 1,
+          "bytes": 64806,
+          "sha256": "e0edf1c62e21cc689fa1b7fc1558571e927730b13fe7c5752973c8e2d83a6602"
+        },
+        "reopen": {
+          "ok": true,
+          "pageCount": 3,
+          "objectCount": 18,
+          "revision": 0
+        },
+        "pdf": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message"
+        },
+        "png": {
+          "ok": false,
+          "classified": true,
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message"
+        }
+      },
+      "findings": [
+        {
+          "kind": "validate",
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble",
+          "message": "ipe_validate: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"validate\",\"summary\":\"NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"only allowl"
+        },
+        {
+          "kind": "pdf",
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message"
+        },
+        {
+          "kind": "png",
+          "code": "NATIVE_TEX_ERROR",
+          "summary": "NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble",
+          "message": "ipe_export_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"export_document\",\"summary\":\"NATIVE_TEX_ERROR: only allowlisted \\\\usepackage declarations are permitted in the M6 preamble\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"NATIVE_TEX_ERROR\",\"message\":\"Call ipe_get_capabilities and ipe_validate before retrying the native operation.\"}],\"error\":{\"code\":\"NATIVE_TEX_ERROR\",\"message"
+        }
+      ],
+      "originalSha256": "c597690e3c9388dde52acfa4f4dcb9fe38bbcaee7b6a809c58e4bb1ee0bb27c3",
+      "derived": {
+        "bytes": 62134,
+        "sha256": "c597690e3c9388dde52acfa4f4dcb9fe38bbcaee7b6a809c58e4bb1ee0bb27c3",
+        "rootVersion": "70218"
+      }
+    },
+    {
+      "id": "REAL-004",
+      "name": "raw 70216 reject (Ipe icon library (multipage/multiview))",
+      "phases": {
+        "reject": {
+          "ok": true,
+          "code": "INVALID_ARGUMENT",
+          "summary": "INVALID_ARGUMENT: Only Ipe XML format 70218 is supported",
+          "message": "ipe_open_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"open_document\",\"summary\":\"INVALID_ARGUMENT: Only Ipe XML format 70218 is supported\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"INVALID_ARGUMENT\",\"message\":\"Correct the indicated argument and retry.\"}],\"error\":{\"code\":\"INVALID_ARGUMENT\",\"message\":\"Only Ipe XML format 70218 is supported\",\"retryable\":true,\"correction\":\"Correc"
+        }
+      }
+    },
+    {
+      "id": "REAL-004",
+      "name": "raw 70216 reject (Ipe logo (complex geometry))",
+      "phases": {
+        "reject": {
+          "ok": true,
+          "code": "INVALID_ARGUMENT",
+          "summary": "INVALID_ARGUMENT: Only Ipe XML format 70218 is supported",
+          "message": "ipe_open_document: {\"contractVersion\":\"ipe-mcp/1\",\"ok\":false,\"kind\":\"open_document\",\"summary\":\"INVALID_ARGUMENT: Only Ipe XML format 70218 is supported\",\"data\":{},\"hints\":[{\"priority\":\"recovery\",\"code\":\"INVALID_ARGUMENT\",\"message\":\"Correct the indicated argument and retry.\"}],\"error\":{\"code\":\"INVALID_ARGUMENT\",\"message\":\"Only Ipe XML format 70218 is supported\",\"retryable\":true,\"correction\":\"Correc"
+        }
+      }
+    }
+  ],
+  "originalsUnchanged": [
+    {
+      "path": "/usr/share/ipe/7.2.30/icons/icons.ipe",
+      "sha256": "bc1d00d2005b51019238987374dcdddbfde2e1081a799f7e5df01bd437d8261d",
+      "unchanged": true
+    },
+    {
+      "path": "/usr/share/ipe/7.2.30/icons/ipe_logo.ipe",
+      "sha256": "0f51c6ea414e11bc236bc6d43138be87ddaf3188e813d0b98bad3c517a1ef4c5",
+      "unchanged": true
+    }
+  ],
+  "reviewSums": {
+    "caseCount": 5,
+    "pages": 58,
+    "renderedPages": 58
+  },
+  "stderrProtocolSafe": true
+}

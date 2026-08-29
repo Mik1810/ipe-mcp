@@ -776,3 +776,5 @@ The M9 SBOM, license inventory, and GPL subprocess boundary are documented in [`
 The M9 support policy and supported/degraded/warn/reject mode matrix are documented in [`docs/guides/support-policy.md`](./docs/guides/support-policy.md); the gate is `bash scripts/gates/check-m9-support.sh`.
 
 The M9 release notes, migration guidance (config, state, sidecar, contract, clean rebuild), and rollback procedure (source preservation, snapshots, state directory, previous Git revision) are documented in [`docs/guides/m9-release-notes.md`](./docs/guides/m9-release-notes.md); the gate is `bash scripts/gates/check-m9-notes.sh`.
+
+The M9 licensed real-document review (provenance ledger, per-phase evidence matrix, findings, and retention policy) is documented in [`docs/milestones/core-m9-real.md`](./docs/milestones/core-m9-real.md); its runner is `scripts/conformance/m9-real-runner.mjs` and the gate is `bash scripts/gates/check-m9-real.sh`.
