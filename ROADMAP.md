@@ -770,3 +770,5 @@ The M9 hostile-input corpus, its case inventory, and the stability contract are 
 The M9 clean-setup procedure is documented in [`SETUP-WSL.md`](./SETUP-WSL.md) ("M9 clean-setup verification gate") and runs as `bash scripts/check-m9-setup.sh`.
 
 The M9 agent manual, examples, and troubleshooting are documented in [`docs/m9-agent-manual.md`](./docs/m9-agent-manual.md); they are exercised end to end by `node scripts/m9-agent-workflow.mjs` under `bash scripts/check-m9-manual.sh`.
+
+The M9 SBOM, license inventory, and GPL subprocess boundary are documented in [`docs/core-m9-sbom.md`](./docs/core-m9-sbom.md); the deterministic CycloneDX artifact is [`docs/m9-sbom.json`](./docs/m9-sbom.json) and the gate is `bash scripts/check-m9-sbom.sh`.

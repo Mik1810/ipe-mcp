@@ -4,6 +4,9 @@
 editing, validating, and rendering editable [Ipe](https://ipe.otfried.org/)
 documents and presentations through AI agents.
 
+Licensed under the MIT License (Copyright (c) 2026 Michael Piccirilli); see
+[`LICENSE`](./LICENSE).
+
 The project combines a versioned semantic document model with deterministic Ipe
 XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 `70218`. The initial target environment is Ubuntu 26.04 on WSL.
@@ -155,6 +158,8 @@ capability and failure matrix.
 - [docs/m8-agentic-harness-audit.md](./docs/m8-agentic-harness-audit.md): itemized Issue #8 dispositions;
 - [docs/m9-agent-manual.md](./docs/m9-agent-manual.md): the complete agent operational
   manual, examples, and troubleshooting;
+- [docs/core-m9-sbom.md](./docs/core-m9-sbom.md): SBOM, license inventory, and the
+  GPL subprocess boundary for the local release candidate;
 - [docs/viewer-effects-m7.md](./docs/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
 - [report-source.md](./report-source.md): source dossier and traceability;
 - [ORCHESTRATOR_PROMPT.md](./ORCHESTRATOR_PROMPT.md): milestone execution and
