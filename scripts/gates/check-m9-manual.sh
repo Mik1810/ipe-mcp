@@ -16,9 +16,9 @@ import json, pathlib, sys
 evidence = json.loads([line for line in open(sys.argv[1]) if line.strip().startswith('{')][-1])
 manual = pathlib.Path(sys.argv[2]).read_text()
 assert evidence["manual"] == "m9-agent-manual-v1"
-assert evidence["staleRollback"] == evidence["undoRestore"] == evidence["fullValidation"] == evidence["save"] == evidence["recover"] == "PASS"
-assert evidence["sections"] >= 10 and evidence["resourcesRead"] == 3 and evidence["stderrProtocolSafe"] is True
-for token in ["ipe_orientation", "ipe_get_capabilities", "ipe_create_document", "ipe_inspect", "ipe_apply_operations", "ipe_compose_slide", "ipe_build_views", "ipe_validate", "ipe_render_preview", "ipe_save_document", "ipe_export_document", "ipe_history"]:
+assert evidence["open"] == evidence["layout"] == evidence["staleRollback"] == evidence["undoRestore"] == evidence["fullValidation"] == evidence["save"] == evidence["recover"] == "PASS"
+assert evidence["sections"] >= 18 and evidence["resourcesRead"] == 3 and evidence["stderrProtocolSafe"] is True
+for token in ["ipe_orientation", "ipe_get_capabilities", "ipe_create_document", "ipe_open_document", "ipe_inspect", "ipe_apply_operations", "layout_objects", "ipe_compose_slide", "ipe_build_views", "ipe_validate", "ipe_render_preview", "ipe_save_document", "ipe_export_document", "ipe_history"]:
     assert token in manual, f"manual missing {token}"
 for topic in ["16:9", "z-order", "revision", "confirmation", "REVISION_CONFLICT", "NATIVE_TIMEOUT", "structural-only", "recover"]:
     assert topic in manual, f"manual missing topic {topic}"

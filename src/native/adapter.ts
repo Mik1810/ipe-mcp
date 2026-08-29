@@ -75,11 +75,17 @@ function semanticXml(value: unknown, unorderedChildren = false, ignoreLatexMetri
   const node = value as { type?: string; name?: string; attributes?: Record<string, string>; children?: unknown[]; text?: string };
   if (node.type === "text") return { type: "text", text: (node.text ?? "").replace(/\s+/gu, " ").trim() };
   const attributes = Object.fromEntries(Object.entries(node.attributes ?? {})
-    .filter(([name, item]) => name !== "x-ipe-mcp-id" && !(managedObjectRoot && name === "custom") && name !== "layer" && !(name === "stroke" && item === "0") && !(name === "valign" && item === "bottom") && !(name === "BitsPerComponent" && item === "8") && !(name === "transition" && item === "1") && !(ignoreLatexMetrics && ["width", "height", "depth"].includes(name)))
+    .filter(([name, item]) => name !== "x-ipe-mcp-id" && !(managedObjectRoot && ["custom", "matrix"].includes(name)) && name !== "layer" && !(name === "stroke" && item === "0") && !(name === "valign" && item === "bottom") && !(name === "BitsPerComponent" && item === "8") && !(name === "transition" && item === "1") && !(ignoreLatexMetrics && ["width", "height", "depth"].includes(name)))
     .sort(([a], [b]) => a.localeCompare(b)));
   const children = (node.children ?? []).map((child) => semanticXml(child, unorderedChildren, ignoreLatexMetrics, false)).filter((child) => JSON.stringify(child) !== '{"type":"text","text":""}');
   if (unorderedChildren) children.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return { name: node.name, attributes, children };
+}
+
+function isIdentityMatrix(value: string | readonly number[] | undefined): boolean {
+  if (value === undefined) return false;
+  const components = typeof value === "string" ? value.trim().split(/\s+/u).map(Number) : value;
+  return components.length === 6 && components.every((item, index) => Number.isFinite(item) && item === [1, 0, 0, 1, 0, 0][index]);
 }
 
 function assertEqualRecord(before: Record<string, string | undefined> | undefined, after: Record<string, string | undefined> | undefined, label: string): void {
@@ -208,7 +214,7 @@ function assertMappingPreserved(before: DocumentIR, after: DocumentIR): readonly
     const objectSemantics = (documentPage: typeof page) => documentPage.objects.map((object) => ({
       id: object.id, custom: object.custom, zOrder: object.zOrder,
       layer: documentPage.layers.find((layer) => layer.id === object.layerId)?.name,
-      matrix: object.matrix, pin: object.pin, transformationMode: object.transformationMode,
+      matrix: isIdentityMatrix(object.matrix) ? undefined : object.matrix, pin: object.pin, transformationMode: object.transformationMode,
       references: (object.references ?? []).map(({ kind, id, path }) => ({ kind, id, path })),
       styleId: object.styleId, symbolId: object.symbolId, assetId: object.assetId,
       xml: semanticXml(object.xml, false, true, true),

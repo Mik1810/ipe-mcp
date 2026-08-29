@@ -58,7 +58,7 @@ Only proceed to `full` validation/export when `mode === "full-7.2.30"` and
 `verified === true`. In `structural-only` mode you may still author and
 inspect structurally, but native style/TeX/PDF/render checks are unavailable.
 
-### 2.2 Create a 16:9 presentation
+### 2.2 Create or open a presentation
 
 ```jsonc
 // ipe_create_document { preset: "16:9", title: "Quarterly review" }
@@ -67,6 +67,18 @@ inspect structurally, but native style/TeX/PDF/render checks are unavailable.
 
 `documentId` is a UUID. The returned outline already carries the first page,
 layer, and view IDs; reuse them verbatim.
+
+To edit an existing document, pass an absolute `.ipe` path under
+`IPE_MCP_WORKSPACE_ROOT`:
+
+```jsonc
+// ipe_open_document { path: "/workspace/decks/quarterly-review.ipe" }
+// -> { documentId, revision: 0, outline: { pageCount, pages: [...] } }
+```
+
+Opening creates a private working copy and leaves the source byte-identical.
+Treat the returned IDs as a new session: do not reuse IDs from another open or
+create call, even when both sessions refer to the same source file.
 
 ### 2.3 Compose a semantic slide
 
@@ -124,7 +136,33 @@ page. Use `move_object` (with `position`) and the `position`/`positionInZOrder`
 argument to control stacking; use `set_object_layer` to change membership
 without changing z-order.
 
-### 2.5 Views, reveals, and scrolling
+### 2.5 Layout objects
+
+`layout_objects` applies row, column, grid, or stack placement as one atomic
+operation. Supply exact object IDs and the current measured bounds of each
+object in `source`; the server uses those caller-supplied boxes to derive the
+transforms and does not infer rendered bounds.
+
+```jsonc
+// ipe_apply_operations { documentId, expectedRevision, operations: [{
+//   op: "layout_objects", pageId,
+//   layout: {
+//     primitive: "row",
+//     container: { x: 40, y: 300, width: 500, height: 100 },
+//     items: [
+//       { objectId: rectangleId, source: { x: 40, y: 40, width: 200, height: 100 } },
+//       { objectId: circleId, source: { x: 270, y: 70, width: 60, height: 60 } }
+//     ],
+//     gap: 20, mainAlign: "center", crossAlign: "center"
+//   }
+// }] }
+```
+
+For `grid`, also provide `columns` and optional `rowGap`/`columnGap`; for
+`stack`, use `horizontalAlign` and `verticalAlign`. A bad ID, invalid source
+box, or impossible layout rejects the whole batch without advancing revision.
+
+### 2.6 Views, reveals, and scrolling
 
 ```jsonc
 // ipe_build_views { documentId, expectedRevision, build: { kind: "reveal", pageId, groups: [
@@ -143,7 +181,7 @@ without changing z-order.
 - `transition` assigns a PDF transition effect to existing views; effects are
   best-effort per viewer ([`viewer-effects-m7.md`](../reference/viewer-effects-m7.md)).
 
-### 2.6 Validate
+### 2.7 Validate
 
 ```jsonc
 // ipe_validate { documentId, level: "structural" }   // process-free
@@ -153,7 +191,7 @@ without changing z-order.
 `structural` is always available. `full` requires `full-7.2.30` and runs the
 bounded native pipeline; it reports `ok`, `diagnosticCount`, and `capabilityMode`.
 
-### 2.7 Render and export (resource links only)
+### 2.8 Render and export (resource links only)
 
 ```jsonc
 // ipe_render_preview { documentId }        // PNG per view (omit page/view for all)
@@ -164,7 +202,7 @@ bounded native pipeline; it reports `ok`, `diagnosticCount`, and `capabilityMode
 Both return `resources: [{ uri, mediaType, bytes, sha256, metadata }]`. Read
 the `uri` (`ipe://previews/{id}` or `ipe://artifacts/{id}`) only when needed.
 
-### 2.8 Save, snapshot, undo, restore, recover
+### 2.9 Save, snapshot, undo, restore, recover
 
 ```jsonc
 // ipe_history { documentId, action: "snapshot", expectedRevision }
@@ -182,6 +220,13 @@ the `uri` (`ipe://previews/{id}` or `ipe://artifacts/{id}`) only when needed.
 - Snapshots are private, opaque UUIDs; `list` and `recover` persist across
   restart. Artifacts are connection-local and must be regenerated.
 - Confirmations: `SAVE`, `DELETE`, `UNDO`, `RESTORE`.
+
+For a real restart recovery, stop the original MCP host/server process, start a
+new one with the same `IPE_MCP_STATE_ROOT` and `IPE_MCP_WORKSPACE_ROOT`, then
+call `ipe_history { action: "recover" }`. Match the returned `documentId` and
+revision before continuing, call `ipe_inspect` to refresh exact IDs, and
+regenerate any preview/export resources because their URIs belonged to the old
+connection.
 
 ## 3. Limits and budgets
 

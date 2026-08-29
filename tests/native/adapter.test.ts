@@ -167,6 +167,16 @@ describe("native Ipe adapter", () => {
     await expect((await NativeIpeAdapter.create()).reload(document)).resolves.toMatchObject({ diagnostics: expect.arrayContaining([expect.objectContaining({ code: "NATIVE_RELOAD_OK" })]) });
   });
 
+  it.skipIf(!nativeAvailable)("compares live layout matrices once and accepts Ipe removing identity matrices", async () => {
+    const source = '<ipe version="70218"><page><layer name="content"/><view layers="content" active="content"/><path layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000001">0 0 m 10 0 l</path></page></ipe>';
+    const adapter = await NativeIpeAdapter.create();
+    for (const matrix of [[1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 5, 6]] as const) {
+      const document = ipeDocumentCodec.parse(source);
+      document.pages[0]!.objects[0]!.matrix = matrix;
+      await expect(adapter.reload(document)).resolves.toMatchObject({ diagnostics: expect.arrayContaining([expect.objectContaining({ code: "NATIVE_RELOAD_OK" })]) });
+    }
+  });
+
   it.skipIf(!nativeAvailable)("rejects loss of root extension semantics", async () => {
     const document = await fixture("full.xml");
     document.extensions = { "x-ipe-mcp-conformance": { type: "element", name: "x-ipe-mcp-conformance", attributes: { probe: "required" }, children: [] } };

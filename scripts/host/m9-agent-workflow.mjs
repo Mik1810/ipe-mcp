@@ -13,6 +13,7 @@ const spawn = () => new StdioClientTransport({ command: process.execPath, args: 
 const transport = spawn();
 let stderr = ""; transport.stderr?.on("data", (chunk) => { stderr += String(chunk); });
 const client = new Client({ name: "ipe-m9-manual-host", version: "1.0.0" });
+let primaryClosed = false;
 let sections = 0;
 const section = (name) => { sections += 1; process.stdout.write(`  [${name}] ...\n`); };
 const ok = (name) => process.stdout.write(`  [${name}] PASS\n`);
@@ -62,9 +63,32 @@ try {
   ] });
   if (authored.ok !== true) throw new Error("authoring failed");
   let revision = authored.data.revision;
-  const firstObjectId = authored.data.createdIds.find((id) => id.startsWith("object-"));
-  if (firstObjectId === undefined) throw new Error("no object was authored");
+  const objectIds = authored.data.createdIds.filter((id) => id.startsWith("object-"));
+  const [firstObjectId, , circleId] = objectIds;
+  if (firstObjectId === undefined || circleId === undefined) throw new Error("expected authored object IDs are missing");
   ok("author objects");
+
+  section("layout objects");
+  const laidOut = await call("ipe_apply_operations", { documentId, expectedRevision: revision, operations: [{
+    op: "layout_objects", pageId: page.id, layout: {
+      primitive: "row", container: { x: 40, y: 300, width: 500, height: 100 },
+      items: [
+        { objectId: firstObjectId, source: { x: 40, y: 40, width: 200, height: 100 } },
+        { objectId: circleId, source: { x: 270, y: 70, width: 60, height: 60 } },
+      ],
+      gap: 20, mainAlign: "center", crossAlign: "center",
+    },
+  }] });
+  if (laidOut.ok !== true) throw new Error("layout failed");
+  revision = laidOut.data.revision;
+  ok("layout objects");
+
+  section("stale revision rollback");
+  const stale = await call("ipe_apply_operations", { documentId, expectedRevision: revision - 1, operations: [{ op: "set_metadata", title: "must not commit" }] });
+  const afterStale = await call("ipe_inspect", { documentId });
+  const staleRollback = stale.ok === false && stale.error?.code === "REVISION_CONFLICT" && afterStale.data.revision === revision;
+  if (!staleRollback) throw new Error(`stale mutation did not roll back: ${JSON.stringify(stale)}`);
+  ok("stale revision rollback");
 
   section("layers vs z-order");
   const annotationLayerId = (await call("ipe_inspect", { documentId })).data.outline.pages[0].layers.find((item) => item.name === "annotations").id;
@@ -106,8 +130,15 @@ try {
   const saved = await call("ipe_save_document", { documentId, expectedRevision: revision, targetPath: ipePath, confirmation: "SAVE" });
   if (saved.ok !== true) throw new Error("save failed");
   const source = await readFile(ipePath, "utf8");
-  if (!source.startsWith("<?xml") || !source.includes('version="70218"')) throw new Error("saved source invalid");
+  if (!source.startsWith("<?xml") || !source.includes('version="70218"') || source.includes("must not commit")) throw new Error("saved source invalid or stale mutation committed");
   ok("save");
+
+  section("open saved document");
+  const opened = await call("ipe_open_document", { path: ipePath });
+  const sourceAfterOpen = await readFile(ipePath, "utf8");
+  if (opened.ok !== true || opened.data.documentId === documentId || opened.data.revision !== 0 || opened.data.outline.pageCount !== 1 || sourceAfterOpen !== source) throw new Error("open failed or changed the source");
+  const openedDocumentId = opened.data.documentId;
+  ok("open saved document");
 
   section("compose slide (structural exercise)");
   const composed = await call("ipe_compose_slide", { documentId, expectedRevision: saved.data.revision, preset: "16:9", name: "opening", layers: ["content", "annotations"] });
@@ -128,17 +159,25 @@ try {
   if (undone.ok !== true || restored.ok !== true) throw new Error("undo/restore failed");
   ok("undo + restore");
 
-  section("recover (restart simulation)");
+  await client.close();
+  primaryClosed = true;
+  if (transport.pid !== null) throw new Error("primary MCP server did not stop before recovery");
+
+  section("recover after restart");
   const client2 = new Client({ name: "ipe-m9-manual-host-2", version: "1.0.0" });
   const transport2 = spawn();
   await client2.connect(transport2);
+  let restartRecovery = false;
   try {
     const recovered = await client2.callTool({ name: "ipe_history", arguments: { action: "recover" } });
     const recoveredStructured = recovered.structuredContent;
-    if (recoveredStructured === undefined || recoveredStructured.ok !== true || recoveredStructured.data.recovered.length < 1) throw new Error("recover failed");
+    restartRecovery = recoveredStructured !== undefined && recoveredStructured.ok === true
+      && recoveredStructured.data.recovered.some((item) => item.documentId === documentId && item.revision === restored.data.revision)
+      && recoveredStructured.data.recovered.some((item) => item.documentId === openedDocumentId && item.revision === 0);
+    if (!restartRecovery) throw new Error(`recover failed: ${JSON.stringify(recoveredStructured)}`);
   } finally { await client2.close(); }
-  ok("recover (restart simulation)");
+  ok("recover after restart");
 
-  const evidence = { manual: "m9-agent-manual-v1", documentId, revision: restored.data.revision, sections, staleRollback: "PASS", undoRestore: "PASS", fullValidation: "PASS", save: "PASS", recover: "PASS", resourcesRead: 3, stderrProtocolSafe: !stderr.includes("M9 manual walkthrough") && !stderr.includes("Hello $x^2$") };
+  const evidence = { manual: "m9-agent-manual-v1", documentId, revision: restored.data.revision, sections, open: "PASS", layout: "PASS", staleRollback: staleRollback ? "PASS" : "FAIL", undoRestore: "PASS", fullValidation: "PASS", save: "PASS", recover: restartRecovery ? "PASS" : "FAIL", resourcesRead: 3, stderrProtocolSafe: !stderr.includes("M9 manual walkthrough") && !stderr.includes("Hello $x^2$") };
   process.stdout.write(`${JSON.stringify(evidence)}\n`);
-} finally { await client.close(); }
+} finally { if (!primaryClosed) await client.close(); }
