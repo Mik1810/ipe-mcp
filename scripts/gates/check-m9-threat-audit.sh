@@ -7,8 +7,8 @@ M9_THREAT_TMP=$(mktemp -d)
 trap 'rm -rf "$M9_THREAT_TMP"' EXIT
 fail() { echo "M9 THREAT AUDIT FAIL: $*" >&2; exit 1; }
 
-CANDIDATE_SOURCE=ac854a747011f2e944619fefd3a3d0adf392ec98
-CANDIDATE_TREE=17b5fb3cb883b5af06f619483c11a8f9d1a8c73a
+CANDIDATE_SOURCE=5dbaca8a76665ba47ebcbc4305bbf68ed6434e10
+CANDIDATE_TREE=4090c820c72b866a1f7c242693075a6bc52e94d2
 [[ "$(cd "$ROOT" && git rev-parse "$CANDIDATE_SOURCE^{tree}")" == "$CANDIDATE_TREE" ]] || fail "frozen candidate identity"
 (cd "$ROOT" && git merge-base --is-ancestor "$CANDIDATE_SOURCE" HEAD) || fail "candidate source is not an ancestor of HEAD"
 (cd "$ROOT" && git diff --quiet "$CANDIDATE_SOURCE" -- src package.json package-lock.json) || fail "product surface changed after candidate freeze"

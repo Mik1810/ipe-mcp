@@ -5,13 +5,14 @@ issue #23 disposition for the eight canonical threat IDs in ADR-0004.
 
 ## Audit target and policy
 
-The product candidate under audit is the issue #21 frozen Git tree
-`17b5fb3cb883b5af06f619483c11a8f9d1a8c73a`, resolved from immutable source
-revision `ac854a747011f2e944619fefd3a3d0adf392ec98`. The issue #22 and #23
-changes are attestation documentation, gates, fixtures, and conformance
-tooling. The gate fails if `src/`, `package.json`, or `package-lock.json`
-differs from the frozen source revision; a product change requires a new
-candidate freeze before this audit can pass.
+The product candidate under audit is the issue #27 refresh of the issue #21
+freeze mechanism: Git tree `4090c820c72b866a1f7c242693075a6bc52e94d2`,
+resolved from immutable source revision
+`5dbaca8a76665ba47ebcbc4305bbf68ed6434e10`. The issue #22 and #23 changes
+remain the source of the attestation documentation, gates, fixtures, and
+conformance tooling. The gate fails if `src/`, `package.json`, or
+`package-lock.json` differs from the frozen source revision; a product change
+requires another candidate freeze before this audit can pass.
 
 `PASS` requires direct current execution, not documentation alone.
 `NOT APPLICABLE` is permitted only for an absent surface proved both

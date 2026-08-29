@@ -5,7 +5,7 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 M9_DOD_TMP=$(mktemp -d)
 trap 'rm -rf "$M9_DOD_TMP"' EXIT
 fail() { echo "M9 DOD FAIL: $*" >&2; exit 1; }
-CANDIDATE_SOURCE=ac854a747011f2e944619fefd3a3d0adf392ec98
+CANDIDATE_SOURCE=5dbaca8a76665ba47ebcbc4305bbf68ed6434e10
 CANDIDATE_TREE=$(cd "$ROOT" && git rev-parse "$CANDIDATE_SOURCE^{tree}") || fail "resolve frozen candidate tree"
 (cd "$ROOT" && git merge-base --is-ancestor "$CANDIDATE_SOURCE" HEAD) || fail "frozen candidate source is not an ancestor of HEAD"
 
@@ -64,10 +64,10 @@ source_revision = sys.argv[3]
 candidate_tree = sys.argv[4]
 doc_path = root / "docs/milestones/core-m9-dod.md"
 doc = doc_path.read_text(encoding="utf-8")
-current = "17b5fb3cb883b5af06f619483c11a8f9d1a8c73a"
+current = "4090c820c72b866a1f7c242693075a6bc52e94d2"
 old = "b35d7c398613542d8aa3fc4160c5b799dd6936c7"
 
-assert source_revision == "ac854a747011f2e944619fefd3a3d0adf392ec98"
+assert source_revision == "5dbaca8a76665ba47ebcbc4305bbf68ed6434e10"
 assert source_revision in doc, "matrix lacks immutable candidate source revision"
 assert candidate_tree == current, f"documented candidate {current} != source-revision tree {candidate_tree}"
 rows = [line for line in doc.splitlines() if re.match(r"^\| DOD-\d{2} \|", line)]
