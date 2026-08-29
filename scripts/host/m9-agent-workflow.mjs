@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir, readFile, rm } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 
 import { Client } from "@modelcontextprotocol/client";
@@ -123,6 +123,11 @@ try {
   const pdfData = await readBinary(pdf.data.resources[0].uri);
   const pngData = await readBinary(pngExp.data.resources[0].uri);
   if (!pdfData.subarray(0, 5).equals(Buffer.from("%PDF-")) || !pngData.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) || !previewData.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) throw new Error("binary signatures invalid");
+  await Promise.all([
+    writeFile(join(output, "walkthrough-preview.png"), previewData),
+    writeFile(join(output, "walkthrough.pdf"), pdfData),
+    writeFile(join(output, "walkthrough.png"), pngData),
+  ]);
   ok("render + export");
 
   section("save");

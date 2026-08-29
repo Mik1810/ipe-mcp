@@ -18,7 +18,9 @@
     "check:m6": "bash scripts/gates/check-m6.sh",
     "check:m7": "bash scripts/gates/check-m7.sh",
     "mcp": "node dist/src/cli/mcp-stdio.js",
-    "check:m8": "bash scripts/gates/check-m8.sh"
+    "check:m8": "bash scripts/gates/check-m8.sh",
+    "candidate:m9": "node scripts/tools/m9-release-candidate.mjs",
+    "check:m9:candidate": "bash scripts/gates/check-m9-candidate.sh"
   },
   "bin": {
     "ipe-mcp": "dist/src/cli/mcp-stdio.js"
