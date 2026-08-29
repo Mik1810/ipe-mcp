@@ -160,6 +160,8 @@ capability and failure matrix.
   manual, examples, and troubleshooting;
 - [docs/guides/support-policy.md](./docs/guides/support-policy.md): support policy and
   supported/degraded/warn/reject mode matrix;
+- [docs/guides/m9-release-notes.md](./docs/guides/m9-release-notes.md): M9 release notes,
+  migration guidance, and rollback procedure;
 - [docs/milestones/core-m9-sbom.md](./docs/milestones/core-m9-sbom.md): SBOM, license inventory, and the
   GPL subprocess boundary for the local release candidate;
 - [docs/viewer-effects-m7.md](./docs/reference/viewer-effects-m7.md): conservative M7 viewer/effect matrix;
