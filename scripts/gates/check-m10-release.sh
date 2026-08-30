@@ -27,15 +27,19 @@ for key in ["sha1", "sha256", "sha512"]:
     assert re.fullmatch(r"[0-9a-f]+", manifest["tarball"][key])
 
 required_workflow = [
-    "workflow_dispatch:", "default: verify-only", "bootstrap-publish", "runs-on: ubuntu-26.04",
+    "workflow_dispatch:", "default: verify-only", "stage-publish", "finalize-release", "runs-on: ubuntu-26.04",
     "permissions:\n  contents: read", "environment: npm-release", "contents: write", "id-token: write",
-    "persist-credentials: false", "npm run check:m10:package", "npm run check:m10:release", "--access public --tag next --provenance",
-    "secrets.NPM_TOKEN", "--verify-tag", "--prerelease", "cancel-in-progress: false", "npm audit signatures",
+    "persist-credentials: false", "npm run check:m10:package", "npm run check:m10:release", "npm stage publish", "--access public --tag next --provenance",
+    "--verify-tag", "--prerelease", "cancel-in-progress: false", "npm audit signatures",
 ]
 for token in required_workflow:
     assert token in workflow, f"release workflow missing {token}"
-for forbidden in ["pull_request_target", "schedule:", "push:\n", "npm publish .", "--tag latest"]:
+for forbidden in ["pull_request_target", "schedule:", "push:\n", "npm publish .", "run: npm publish", "--tag latest", "NODE_AUTH_TOKEN", "secrets.NPM_TOKEN", "bootstrap-publish"]:
     assert forbidden not in workflow, f"unsafe automatic publication trigger/command: {forbidden}"
+stage_job = workflow.split("\n  stage:\n", 1)[1].split("\n  finalize:\n", 1)[0]
+finalize_job = workflow.split("\n  finalize:\n", 1)[1]
+assert "contents: read" in stage_job and "id-token: write" in stage_job and "contents: write" not in stage_job
+assert "contents: write" in finalize_job and "id-token: write" not in finalize_job and "npm stage publish" not in finalize_job
 for action, digest in {
     "actions/checkout": "d23441a48e516b6c34aea4fa41551a30e30af803",
     "actions/setup-node": "249970729cb0ef3589644e2896645e5dc5ba9c38",
@@ -56,4 +60,4 @@ for token in ["verify-only", "npm-release", "v1.0.0-rc.1", "NPM_TOKEN", "2FA", "
 PY
 
 echo "M10 RELEASE MCP HARNESS: permissions-and-write-safety, transport-integration-and-privacy, code-architecture-and-verification"
-echo "M10 RELEASE PASS: inert verify-only default, bounded candidate manifest, pinned Actions, protected bootstrap publication path; no tag or publication"
+echo "M10 RELEASE PASS: inert verify-only default, bounded candidate manifest, pinned Actions, isolated stage-only OIDC and finalize paths; no tag or publication"

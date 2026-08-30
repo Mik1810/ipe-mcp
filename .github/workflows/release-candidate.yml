@@ -1,4 +1,4 @@
-name: Verify or publish npm release candidate
+name: Verify, stage, or finalize npm release candidate
 
 run-name: ${{ inputs.mode }} from ${{ github.ref_name }}
 
@@ -6,13 +6,14 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Verification is inert; bootstrap publication additionally requires an exact version tag and environment approval
+        description: Verification is inert; staging and finalization require an exact version tag and environment approval
         required: true
         default: verify-only
         type: choice
         options:
           - verify-only
-          - bootstrap-publish
+          - stage-publish
+          - finalize-release
 
 permissions:
   contents: read
@@ -31,10 +32,10 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     steps:
-      - name: Reject publication mode without a tag
-        if: inputs.mode == 'bootstrap-publish' && github.ref_type != 'tag'
+      - name: Reject release mode without a tag
+        if: inputs.mode != 'verify-only' && github.ref_type != 'tag'
         run: |
-          echo "bootstrap-publish must be dispatched from the exact annotated version tag" >&2
+          echo "stage-publish and finalize-release must be dispatched from the exact annotated version tag" >&2
           exit 1
 
       - name: Check out the selected revision
@@ -79,15 +80,15 @@ jobs:
           compression-level: 0
           retention-days: 30
 
-  publish:
-    name: Bootstrap npm publication
-    if: inputs.mode == 'bootstrap-publish' && github.ref_type == 'tag'
+  stage:
+    name: Stage npm candidate with trusted publishing
+    if: inputs.mode == 'stage-publish' && github.ref_type == 'tag'
     needs: verify
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     environment: npm-release
     permissions:
-      contents: write
+      contents: read
       id-token: write
     steps:
       - name: Check out release verification code
@@ -116,30 +117,58 @@ jobs:
         id: candidate
         run: node scripts/release/release-candidate.mjs verify release-candidate
 
-      - name: Inspect registry state
-        id: registry
+      - name: Reject an already-published immutable version
         env:
           PACKAGE_SPEC: ipe-mcp@${{ steps.candidate.outputs.version }}
-          EXPECTED_INTEGRITY: ${{ steps.candidate.outputs.integrity }}
         run: |
-          if integrity=$(npm view "$PACKAGE_SPEC" dist.integrity --json 2>/dev/null); then
-            integrity=${integrity#\"}
-            integrity=${integrity%\"}
-            if [[ "$integrity" != "$EXPECTED_INTEGRITY" ]]; then
-              echo "registry already contains this immutable version with a different integrity" >&2
-              exit 1
-            fi
-            echo "already-published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "already-published=false" >> "$GITHUB_OUTPUT"
+          if npm view "$PACKAGE_SPEC" version --json >/dev/null 2>&1; then
+            echo "registry already contains this immutable version; stage a new version instead" >&2
+            exit 1
           fi
 
-      - name: Publish first npm package with provenance
-        if: steps.registry.outputs.already-published != 'true'
+      - name: Stage candidate with OIDC provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           TARBALL: ./release-candidate/${{ steps.candidate.outputs.tarball }}
-        run: npm publish "$TARBALL" --access public --tag next --provenance
+        run: npm stage publish "$TARBALL" --access public --tag next --provenance
+
+      - name: Report owner approval checkpoint
+        run: echo "Candidate staged. The owner must inspect and approve it with npm stage approve and 2FA before finalization."
+
+  finalize:
+    name: Verify registry and create GitHub prerelease
+    if: inputs.mode == 'finalize-release' && github.ref_type == 'tag'
+    needs: verify
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    environment: npm-release
+    permissions:
+      contents: write
+    steps:
+      - name: Check out release verification code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Download the exact gated candidate
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: ipe-mcp-release-candidate-${{ github.sha }}
+          path: release-candidate
+
+      - name: Set up Node.js for registry verification
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Pin npm CLI
+        run: npm install --global "npm@${NPM_VERSION}"
+
+      - name: Verify downloaded candidate and exact tag
+        id: candidate
+        run: node scripts/release/release-candidate.mjs verify release-candidate
 
       - name: Verify registry integrity and next tag
         env:

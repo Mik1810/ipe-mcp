@@ -48,8 +48,8 @@ Before publication, protect `main` against force-push/deletion and keep changes
 on the reviewed pull-request path. The release script independently requires
 the annotated version tag to resolve to the current `origin/main` commit.
 
-The workflow also rejects `bootstrap-publish` unless it is dispatched from the
-exact tag matching the version in `package.json`.
+The workflow rejects both `stage-publish` and `finalize-release` unless they are
+dispatched from the exact tag matching the version in `package.json`.
 
 ## Owner-only bootstrap credential
 
@@ -64,29 +64,54 @@ Immediately before the separately authorized first publication, the owner must:
    exact tag, commit, package manifest, SBOM, and release notes.
 
 The assistant must stop before tag creation and again before triggering
-`bootstrap-publish` unless the owner has explicitly authorized those actions.
+`stage-publish` unless the owner has explicitly authorized those actions.
 
-## Authorized publication sequence
+## Authorized staged publication sequence
 
-Only after explicit owner authorization:
+After bootstrap, only the following staged flow is supported, and tag creation
+plus staging still require explicit owner authorization:
 
 1. rerun `npm run check:m10:package` and `npm run check:m10:release` on clean
    `main`;
-2. create and push annotated tag `v1.0.0-rc.1` at the reviewed commit;
+2. create and push the annotated version tag at the reviewed commit;
 3. dispatch `release-candidate.yml` from that tag with
-   `mode=bootstrap-publish`;
-4. review and approve the `npm-release` environment deployment;
-5. let the workflow publish the exact retained tarball with npm tag `next` and
-   provenance;
-6. verify registry integrity and provenance/signatures; accept npm's mandatory
-   `latest` alias only for the first-package bootstrap while no stable version
-   exists, and otherwise require `latest` to remain on the stable line;
-7. create the matching GitHub prerelease with tarball, manifest, and
+   `mode=stage-publish` and approve the `npm-release` environment deployment;
+4. inspect the pending package with `npm stage list`, `npm stage view`, and
+   `npm stage download`, then approve its stage ID with `npm stage approve`
+   and interactive 2FA;
+5. dispatch the same workflow and tag with `mode=finalize-release`, approve the
+   protected environment, and let it verify the now-public registry artifact;
+6. let finalization verify registry integrity and provenance/signatures,
+   require `next` to select the candidate, and preserve the stable `latest`
+   line;
+7. create or verify the matching GitHub prerelease with tarball, manifest, and
    SBOM assets.
 
-The workflow is restart-safe: if npm already contains the exact immutable
-version with the expected integrity, it skips republishing and continues the
-registry/GitHub Release verification. A different integrity fails closed.
+`stage-publish` has `id-token: write` but only read access to repository
+contents. `finalize-release` can create the GitHub Release but has no npm write
+credential and no OIDC permission. Neither job contains `NODE_AUTH_TOKEN`.
+
+The staging command is intentionally not restart-safe because npm reserves the
+version as soon as it is staged. If staging is interrupted, inspect the pending
+stage instead of submitting the same version again. Finalization is
+restart-safe: it does not publish and can repair a missing GitHub Release after
+the exact npm version becomes public.
+
+## Completed first-release bootstrap
+
+The one-time `1.0.0-rc.1` bootstrap from tag `v1.0.0-rc.1` used the former
+`mode=bootstrap-publish` path:
+
+1. the owner approved the `npm-release` environment;
+2. the workflow published the retained tarball with npm tag `next` and
+   provenance;
+3. registry integrity, provenance/signatures, and npm's mandatory initial
+   `latest` alias were verified;
+4. the matching GitHub prerelease was created with tarball, manifest, and SBOM
+   assets.
+
+That direct-publish mode and its `NPM_TOKEN` dependency are removed after the
+bootstrap.
 
 ## Immediate post-bootstrap hardening
 
@@ -107,8 +132,9 @@ cannot be inferred from a successful GitHub workflow.
 
 ## Recovery
 
-If publication fails before npm accepts the tarball, delete the environment
-secret, revoke the token, diagnose the bounded workflow output, and prepare a
-new run. Do not overwrite or reuse a version that npm accepted. If npm succeeds
-but GitHub Release creation fails, rerun the exact tagged workflow: its integrity
-guard skips npm publication and repairs only the missing release record.
+If staging fails before npm reserves the version, diagnose the bounded workflow
+output and prepare a new run. If npm has reserved the stage, inspect, approve,
+or reject that exact stage instead of staging the version again. Do not
+overwrite or reuse a version that npm accepted. If approval succeeds but
+GitHub Release creation fails, rerun `finalize-release` from the exact tag; it
+performs no npm write and repairs only the missing release record.
