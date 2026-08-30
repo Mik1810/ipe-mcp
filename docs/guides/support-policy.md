@@ -12,6 +12,23 @@ effect wording is defined in
 [`viewer-effects-m7.md`](../reference/viewer-effects-m7.md). This document
 does not add support outside its declared matrix.
 
+## Distribution Status
+
+The currently verified installation remains a source checkout using `npm ci`
+and `npm run build`; `package.json` is private and version `0.1.0`. ADR-0005
+approves a thin npm helper and a SemVer release line beginning with
+`1.0.0-rc.1`, but no package has been published. A locally built tarball does
+not become supported until it passes the specified packaging gate.
+
+The approved package model contains only the JavaScript stdio server and essential
+metadata/documentation. Users or system administrators remain responsible for
+installing Node.js and the native packages below. Package installation must not
+install native programs, change global MCP configuration, migrate documents or
+state, start HTTP, or enable telemetry. See
+[`ADR-0005`](../adr/0005-distribution-versioning-and-native-dependencies.md)
+and the approved
+[`versioning policy`](./versioning-and-releases.md).
+
 ## Modes
 
 | Mode | Runtime | Supported | Degraded | Warn | Reject |
@@ -96,5 +113,7 @@ an MVP commitment.
 - **Reject**: fails safely with no write; to be fixed, not retried blindly.
 
 This policy is technical and operational, not a legal or market-positioning
-statement; distribution remains an M10 decision (see ADR-0004 and the SBOM
-boundary analysis).
+statement. ADR-0005 records the owner's accepted license boundary. Public
+distribution remains blocked by the separate implementation, gate, and
+publication controls in #31; the M9 SBOM boundary analysis remains the current
+technical license inventory.

@@ -15,6 +15,9 @@ Start with the document that matches the task:
   for frozen implementation/evidence records.
 - Use [release notes](./releases/release-notes.md) for the M9 MVP candidate,
   migration, and rollback record.
+- Use the approved [versioning and release policy](./guides/versioning-and-releases.md)
+  for the distinct product, MCP contract, persistence, XML, and native-runtime
+  version axes; public distribution remains approval-gated by ADR-0005.
 - Use [audits](./audits/) for evidence-only review records.
 
 The [documentation policy](./documentation-policy.md) defines names, authority,
