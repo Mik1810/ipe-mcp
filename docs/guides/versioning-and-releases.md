@@ -2,9 +2,10 @@
 
 Lifecycle: **Maintained**. Audience: maintainers, release reviewers, package
 consumers, and MCP host integrators. This guide is the operational versioning
-policy approved by ADR-0005. No public release is authorized until issue #31
-implements and passes the packaging gate and the owner separately authorizes
-publication.
+policy approved by ADR-0005. Issue #31 implemented and passed the packaging
+gate; release issue #50 prepares the protected first-publication bootstrap.
+No public release is authorized until the owner separately authorizes the exact
+tag and publication workflow run.
 
 ## Independent Version Axes
 
@@ -82,6 +83,15 @@ package major.
 6. With separate publication authorization, create annotated tag `vX.Y.Z`,
    publish from the protected release environment with provenance, create the
    matching GitHub Release, and verify the registry artifact by digest.
+
+The first publication is a documented bootstrap exception because npm requires
+a package to exist before trusted publishing or staged publishing can be
+configured. It uses one short-lived environment-scoped npm credential on a
+GitHub-hosted runner with provenance. Immediately afterward, configure the
+workflow as the package's trusted publisher with stage-only permission, require
+2FA and disallow normal publishing tokens, then delete the bootstrap secret and
+revoke the credential. Future releases are staged by CI and approved by a human
+with 2FA.
 
 Steps 5 and 6 are never implied by a successful build, merge, tag proposal, or
 gate. Normal CI and pull requests must not possess publication authority.

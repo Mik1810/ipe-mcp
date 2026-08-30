@@ -163,6 +163,7 @@ capability and failure matrix.
 - [docs/milestones/core-m8.md](./docs/milestones/core-m8.md): MCP stdio contracts, resources, and verification;
 - [docs/guides/host-integration.md](./docs/guides/host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
 - [docs/guides/package-installation.md](./docs/guides/package-installation.md): thin npm candidate contents, native prerequisites, installation, and rollback;
+- [docs/guides/release-bootstrap.md](./docs/guides/release-bootstrap.md): protected first npm publication, owner approval, and post-bootstrap hardening;
 - [docs/reference/package-sbom.json](./docs/reference/package-sbom.json): deterministic CycloneDX inventory for the current npm candidate;
 - [docs/audits/agentic-harness-audit.md](./docs/audits/agentic-harness-audit.md): itemized Issue #8 dispositions;
 - [docs/guides/agent-manual.md](./docs/guides/agent-manual.md): the complete agent operational
@@ -171,6 +172,8 @@ capability and failure matrix.
   supported/degraded/warn/reject mode matrix;
 - [docs/releases/release-notes.md](./docs/releases/release-notes.md): M9 release notes,
   migration guidance, and rollback procedure;
+- [docs/releases/v1.0.0-rc.1.md](./docs/releases/v1.0.0-rc.1.md): gated npm
+  prerelease contents, verification, known limits, and rollback;
 - [docs/milestones/core-m9-sbom.md](./docs/milestones/core-m9-sbom.md): SBOM, license inventory, and the
   GPL subprocess boundary for the local release candidate;
 - [docs/milestones/core-m9-real.md](./docs/milestones/core-m9-real.md): licensed real-document

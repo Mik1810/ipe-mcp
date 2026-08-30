@@ -65,7 +65,8 @@
     "candidate:m9": "node scripts/tools/m9-release-candidate.mjs",
     "check:m9:candidate": "bash scripts/gates/check-m9-candidate.sh",
     "check:m10:harness": "bash scripts/gates/check-m10-harness.sh",
-    "check:m10:package": "bash scripts/gates/check-m10-package.sh"
+    "check:m10:package": "bash scripts/gates/check-m10-package.sh",
+    "check:m10:release": "bash scripts/gates/check-m10-release.sh"
   },
   "bin": {
     "ipe-mcp": "dist/src/cli/mcp-stdio.js"
