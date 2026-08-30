@@ -138,7 +138,7 @@ jobs:
         if: steps.registry.outputs.already-published != 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          TARBALL: release-candidate/${{ steps.candidate.outputs.tarball }}
+          TARBALL: ./release-candidate/${{ steps.candidate.outputs.tarball }}
         run: npm publish "$TARBALL" --access public --tag next --provenance
 
       - name: Verify registry integrity and next tag
