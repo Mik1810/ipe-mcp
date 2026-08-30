@@ -1,0 +1,204 @@
+name: Verify or publish npm release candidate
+
+run-name: ${{ inputs.mode }} from ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Verification is inert; bootstrap publication additionally requires an exact version tag and environment approval
+        required: true
+        default: verify-only
+        type: choice
+        options:
+          - verify-only
+          - bootstrap-publish
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "24"
+  NPM_VERSION: "11.16.0"
+
+jobs:
+  verify:
+    name: Build and verify candidate
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Reject publication mode without a tag
+        if: inputs.mode == 'bootstrap-publish' && github.ref_type != 'tag'
+        run: |
+          echo "bootstrap-publish must be dispatched from the exact annotated version tag" >&2
+          exit 1
+
+      - name: Check out the selected revision
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Pin npm CLI
+        run: npm install --global "npm@${NPM_VERSION}"
+
+      - name: Install supported native lane
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap
+
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run complete package gate
+        run: npm run check:m10:package
+
+      - name: Run release policy and manifest gate
+        run: npm run check:m10:release
+
+      - name: Build retained release candidate
+        run: node scripts/release/release-candidate.mjs prepare "$RUNNER_TEMP/release-candidate"
+
+      - name: Upload gated release candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ipe-mcp-release-candidate-${{ github.sha }}
+          path: ${{ runner.temp }}/release-candidate
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  publish:
+    name: Bootstrap npm publication
+    if: inputs.mode == 'bootstrap-publish' && github.ref_type == 'tag'
+    needs: verify
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    environment: npm-release
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Check out release verification code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Download the exact gated candidate
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: ipe-mcp-release-candidate-${{ github.sha }}
+          path: release-candidate
+
+      - name: Set up Node.js for npm OIDC and provenance
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Pin npm CLI
+        run: npm install --global "npm@${NPM_VERSION}"
+
+      - name: Verify downloaded candidate and exact tag
+        id: candidate
+        run: node scripts/release/release-candidate.mjs verify release-candidate
+
+      - name: Inspect registry state
+        id: registry
+        env:
+          PACKAGE_SPEC: ipe-mcp@${{ steps.candidate.outputs.version }}
+          EXPECTED_INTEGRITY: ${{ steps.candidate.outputs.integrity }}
+        run: |
+          if integrity=$(npm view "$PACKAGE_SPEC" dist.integrity --json 2>/dev/null); then
+            integrity=${integrity#\"}
+            integrity=${integrity%\"}
+            if [[ "$integrity" != "$EXPECTED_INTEGRITY" ]]; then
+              echo "registry already contains this immutable version with a different integrity" >&2
+              exit 1
+            fi
+            echo "already-published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already-published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish first npm package with provenance
+        if: steps.registry.outputs.already-published != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TARBALL: release-candidate/${{ steps.candidate.outputs.tarball }}
+        run: npm publish "$TARBALL" --access public --tag next --provenance
+
+      - name: Verify registry integrity and next tag
+        env:
+          PACKAGE_NAME: ipe-mcp
+          VERSION: ${{ steps.candidate.outputs.version }}
+          EXPECTED_INTEGRITY: ${{ steps.candidate.outputs.integrity }}
+        run: node scripts/release/verify-registry.mjs "$PACKAGE_NAME" "$VERSION" "$EXPECTED_INTEGRITY"
+
+      - name: Verify installed registry signatures and provenance
+        env:
+          PACKAGE_SPEC: ipe-mcp@${{ steps.candidate.outputs.version }}
+        run: |
+          mkdir "$RUNNER_TEMP/registry-verification"
+          cd "$RUNNER_TEMP/registry-verification"
+          npm init --yes >/dev/null
+          npm install --ignore-scripts --no-audit --no-fund "$PACKAGE_SPEC"
+          npm audit signatures
+
+      - name: Create matching GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.candidate.outputs.version }}
+          TARBALL: ${{ steps.candidate.outputs.tarball }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "GitHub Release already exists; verifying it without mutation"
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --verify-tag \
+              --prerelease \
+              --title "ipe-mcp $VERSION" \
+              --notes-file "release-candidate/v$VERSION.md" \
+              "release-candidate/$TARBALL#npm tarball" \
+              "release-candidate/release-manifest.json#release manifest" \
+              "release-candidate/package-sbom.json#CycloneDX SBOM"
+          fi
+
+      - name: Verify GitHub prerelease assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARBALL: ${{ steps.candidate.outputs.tarball }}
+        run: |
+          release=$(gh release view "$GITHUB_REF_NAME" --json tagName,isPrerelease,assets,body)
+          RELEASE_JSON="$release" node --input-type=module - "$GITHUB_REF_NAME" "$TARBALL" "release-candidate/v${GITHUB_REF_NAME#v}.md" <<'NODE'
+          import { readFileSync } from "node:fs";
+          const release = JSON.parse(process.env.RELEASE_JSON);
+          const expected = [process.argv[3], "release-manifest.json", "package-sbom.json"].sort();
+          const actual = release.assets.map((asset) => asset.name).sort();
+          const expectedBody = readFileSync(process.argv[4], "utf8").trim();
+          if (release.tagName !== process.argv[2] || release.isPrerelease !== true || release.body.trim() !== expectedBody || JSON.stringify(actual) !== JSON.stringify(expected)) {
+            throw new Error("GitHub prerelease identity or assets mismatch");
+          }
+          NODE
+          mkdir "$RUNNER_TEMP/github-release-verification"
+          gh release download "$GITHUB_REF_NAME" \
+            --dir "$RUNNER_TEMP/github-release-verification" \
+            --pattern "$TARBALL" \
+            --pattern release-manifest.json \
+            --pattern package-sbom.json
+          cmp "release-candidate/$TARBALL" "$RUNNER_TEMP/github-release-verification/$TARBALL"
+          cmp release-candidate/release-manifest.json "$RUNNER_TEMP/github-release-verification/release-manifest.json"
+          cmp release-candidate/package-sbom.json "$RUNNER_TEMP/github-release-verification/package-sbom.json"
