@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "portable-create-edit-export",
+  "title": "Portable create, recovery, validation, render, and export",
+  "requirements": {
+    "contract": "ipe-mcp/1",
+    "capabilityMode": "full-7.2.30",
+    "features": ["create", "edit", "history", "validate", "render", "export"]
+  },
+  "limits": {
+    "timeoutMs": 300000,
+    "toolCallTimeoutMs": 180000,
+    "maxSteps": 24,
+    "maxTranscriptEntries": 32,
+    "maxArtifacts": 4,
+    "maxArtifactBytes": 67108864
+  },
+  "task": {
+    "kind": "create-edit-validate-export",
+    "document": { "preset": "16:9", "title": "Portable M10 scenario" },
+    "rectangle": { "x": 160, "y": 250, "width": 500, "height": 160, "stroke": "0", "fill": "0.8" },
+    "recovery": ["stale-write", "undo", "snapshot-restore"],
+    "validation": "full",
+    "outputs": ["ipe", "preview-png", "pdf", "png"]
+  },
+  "approvals": [
+    { "id": "save-document", "action": "save", "decision": "grant" },
+    { "id": "undo-temporary-edit", "action": "undo", "decision": "grant" },
+    { "id": "restore-snapshot", "action": "restore", "decision": "grant" }
+  ],
+  "assertions": {
+    "semantic": {
+      "title": "Portable M10 scenario",
+      "pageCount": 1,
+      "objectCount": 1,
+      "rectanglePath": "160 250 m 660 250 l 660 410 l 160 410 l h"
+    },
+    "artifacts": [
+      { "kind": "ipe", "mediaType": "application/xml", "minBytes": 100 },
+      { "kind": "preview-png", "mediaType": "image/png", "minBytes": 100 },
+      { "kind": "pdf", "mediaType": "application/pdf", "minBytes": 100 },
+      { "kind": "png", "mediaType": "image/png", "minBytes": 100 }
+    ]
+  }
+}
