@@ -10,7 +10,7 @@ m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
 
 # Deterministic regeneration: must be byte-identical to the committed artifact.
-(cd "$ROOT" && node scripts/tools/sbom.mjs "$M9_SBOM_TMP/regenerated.json") || fail "sbom generation"
+(cd "$ROOT" && node scripts/tools/sbom.mjs "$M9_SBOM_TMP/regenerated.json" --project-version 0.1.0) || fail "sbom generation"
 cmp "$M9_SBOM_TMP/regenerated.json" "$ROOT/docs/reference/sbom.json" || fail "SBOM is not byte-deterministic"
 
 # Project license must be explicit and present.

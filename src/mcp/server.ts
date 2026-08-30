@@ -6,6 +6,7 @@ import { MCP_CONTRACT_VERSION, documentIdSchema, entityIdSchema, operationSchema
 import { failure, inputValidationFailure, safeLog, success } from "./errors.js";
 import { IpeMcpService } from "./service.js";
 import { DOCUMENT_SHAPE_LIMITS, MCP_LIMITS } from "../limits.js";
+import { PRODUCT_NAME, PRODUCT_VERSION } from "../version.js";
 
 export const SERVER_INSTRUCTIONS = `Ipe MCP ${MCP_CONTRACT_VERSION}. Start with ipe_orientation, then create/open and retain exact document/page/layer/view/object IDs. Every mutation requires the latest expectedRevision; on REVISION_CONFLICT inspect and retry. Validate before save/export. DELETE, SAVE, UNDO, and RESTORE require explicit confirmation tokens. Binary outputs are resource links: read only the artifact needed.`;
 
@@ -25,7 +26,7 @@ const mutation = { readOnlyHint: false, destructiveHint: false, idempotentHint: 
 const destructive = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false } as const;
 
 export function createMcpServer(service: IpeMcpService): McpServer {
-  const server = new McpServer({ name: "ipe-mcp", version: "0.1.0" }, { instructions: SERVER_INSTRUCTIONS, capabilities: { tools: {}, resources: {} } });
+  const server = new McpServer({ name: PRODUCT_NAME, version: PRODUCT_VERSION }, { instructions: SERVER_INSTRUCTIONS, capabilities: { tools: {}, resources: {} } });
   // SDK v2 validates registered schemas before invoking callbacks. Its default
   // error is text-only, so replace that last-resort formatter with the same
   // versioned text/structured envelope used by tool handlers.

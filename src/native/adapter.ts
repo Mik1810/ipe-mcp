@@ -25,6 +25,7 @@ import {
   NATIVE_OPERATION_LIMITS,
   NATIVE_PROCESS_LIMITS,
 } from "../limits.js";
+import { PACKAGE_ROOT } from "../version.js";
 
 const DEFAULT_LIMITS: ProcessLimits = NATIVE_PROCESS_LIMITS;
 const DEFAULT_MAX_ARTIFACT_BYTES = NATIVE_MAX_ARTIFACT_BYTES;
@@ -271,7 +272,7 @@ export class NativeIpeAdapter {
     await mkdir(temporaryRoot, { recursive: true, mode: 0o700 });
     return new NativeIpeAdapter(
       { ...DEFAULT_NATIVE_EXECUTABLES, ...options.executables },
-      resolve(options.helperDirectory ?? join(process.cwd(), "scripts", "conformance")),
+      resolve(options.helperDirectory ?? join(PACKAGE_ROOT, "scripts", "conformance")),
       await realpath(temporaryRoot),
       { ...limits, maxFileBytes: Math.min(limits.maxFileBytes, maxArtifactBytes) },
       maxArtifactBytes,

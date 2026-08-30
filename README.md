@@ -15,8 +15,9 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 > The local MVP and milestones M0–M9 are complete. They cover contracts,
 > conformance, semantic authoring, transactional persistence, layout, native
 > validation/render/export, the stdio MCP server, host integration, hardening,
-> and the audited release candidate. Distribution and post-MVP extensions are
-> intentionally deferred to M10.
+> and the audited release candidate. M10 has approved and implemented a thin
+> local npm package candidate; registry publication and the other post-MVP
+> extensions remain separate future actions.
 
 ## Goals
 
@@ -44,7 +45,7 @@ XML and native Ipe validation. Its baseline is Ipe 7.2.30 and XML format
 | [M7](https://github.com/Mik1810/ipe-mcp/issues/4) | Reveal, motion, scrolling, and viewer matrix | Complete ([details](./docs/milestones/core-m7.md), [matrix](./docs/reference/viewer-effects-m7.md)) |
 | [M8](https://github.com/Mik1810/ipe-mcp/issues/5) | MCP stdio server and host integration | Complete ([details](./docs/milestones/core-m8.md)) |
 | [M9](https://github.com/Mik1810/ipe-mcp/issues/6) | Hardening and MVP release candidate | Complete ([audit](./docs/milestones/core-m9-completion.md)) |
-| [M10](https://github.com/Mik1810/ipe-mcp/issues/7) | Post-MVP extensions and distribution | Future |
+| [M10](https://github.com/Mik1810/ipe-mcp/issues/7) | Post-MVP extensions and distribution | In progress ([distribution ADR](./docs/adr/0005-distribution-versioning-and-native-dependencies.md)) |
 
 See the [roadmap](./ROADMAP.md) for the complete scope, gates, risks, and design
 decisions.
@@ -106,22 +107,29 @@ npm run build
 npm test
 ```
 
-The package remains private/unpublished, but M8 provides the local `ipe-mcp`
-stdio executable after `npm run build`. See [host integration](./docs/guides/host-integration.md).
+The package metadata is `1.0.0-rc.1` and can produce a gated local tarball, but
+nothing has been published to npm or released on GitHub. Run
+`npm run check:m10:package` for the clean tarball install and native stdio
+smoke. See [package installation](./docs/guides/package-installation.md) and
+[host integration](./docs/guides/host-integration.md).
 
 ## Verification
 
-Run the cumulative MVP acceptance gate from the repository root:
+For the current M10 package candidate, run the stable tests, the cumulative
+M8 behavior gate, and the package gate:
 
 ```bash
-bash scripts/check-m9.sh
+npm test
+npm run check:m8
+npm run check:m10:package
 ```
 
-It includes the M0–M8 chain and the M9 limits, fuzz/property, hostile-input,
-clean-setup, manual, SBOM/license, support, release, real-document, DoD, threat,
-and completion audits. Individual component gates under `scripts/gates/` remain
-available for targeted development. M1 also supports an optional source-build
-lane:
+The M9 completion gate and `docs/reference/sbom.json` are frozen evidence for
+the `0.1.0` candidate. `scripts/check-m9.sh` intentionally audits that frozen
+product boundary and is not the current M10 product-surface gate. Individual
+M9 component gates remain useful where their historical inputs are explicit;
+the package gate generates and checks `docs/reference/package-sbom.json` for
+the current version. M1 also supports an optional source-build lane:
 
 ```bash
 IPE_M1_SOURCE_BIN_DIR=/path/to/ipe/build/bin bash scripts/gates/check-m1.sh
@@ -154,6 +162,8 @@ capability and failure matrix.
 - [docs/milestones/core-m7.md](./docs/milestones/core-m7.md): bounded discrete animation and handout policies;
 - [docs/milestones/core-m8.md](./docs/milestones/core-m8.md): MCP stdio contracts, resources, and verification;
 - [docs/guides/host-integration.md](./docs/guides/host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
+- [docs/guides/package-installation.md](./docs/guides/package-installation.md): thin npm candidate contents, native prerequisites, installation, and rollback;
+- [docs/reference/package-sbom.json](./docs/reference/package-sbom.json): deterministic CycloneDX inventory for the current npm candidate;
 - [docs/audits/agentic-harness-audit.md](./docs/audits/agentic-harness-audit.md): itemized Issue #8 dispositions;
 - [docs/guides/agent-manual.md](./docs/guides/agent-manual.md): the complete agent operational
   manual, examples, and troubleshooting;

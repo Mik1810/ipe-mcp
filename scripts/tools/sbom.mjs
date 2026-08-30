@@ -8,7 +8,7 @@
  * nondeterministic ordering.  A native-toolchain section is appended from the
  * installed dpkg packages and their /usr/share/doc copyright files.
  *
- * Usage: node scripts/tools/sbom.mjs [OUTPUT.json] [--stdout]
+ * Usage: node scripts/tools/sbom.mjs [OUTPUT.json] [--project-version VERSION] [--stdout]
  *   With --stdout, the JSON is written to standard output (no trailing noise).
  */
 import { execFileSync } from "node:child_process";
@@ -20,9 +20,20 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const args = process.argv.slice(2);
 const stdout = args.includes("--stdout");
-const outputPath = args.find((arg) => arg !== "--stdout") ?? join(root, "docs/reference/sbom.json");
-
 const lock = JSON.parse(readFileSync(join(root, "package-lock.json"), "utf8"));
+const project = lock.packages[""];
+if (typeof project?.name !== "string" || typeof project.version !== "string" || typeof project.license !== "string") {
+  throw new Error("package-lock root project metadata is incomplete");
+}
+const versionFlag = args.indexOf("--project-version");
+const projectVersion = versionFlag === -1 ? project.version : args[versionFlag + 1];
+if (typeof projectVersion !== "string" || projectVersion.length === 0) throw new Error("--project-version requires a value");
+const positional = args.filter((arg, index) => (
+  arg !== "--stdout"
+  && index !== versionFlag
+  && (versionFlag === -1 || index !== versionFlag + 1)
+));
+const outputPath = positional[0] ?? join(root, "docs/reference/package-sbom.json");
 
 function integrityToHash(integrity) {
   if (integrity === undefined) return undefined;
@@ -112,14 +123,14 @@ const sbom = {
     timestamp: "2026-01-01T00:00:00Z",
     component: {
       type: "application",
-      "bom-ref": "ipe-mcp@0.1.0",
-      name: "ipe-mcp",
-      version: "0.1.0",
-      licenses: [{ expression: "MIT" }],
-      purl: "pkg:npm/ipe-mcp@0.1.0",
+      "bom-ref": `${project.name}@${projectVersion}`,
+      name: project.name,
+      version: projectVersion,
+      licenses: [{ expression: project.license }],
+      purl: purlFor(project.name, projectVersion),
     },
     properties: [
-      { name: "ipe-mcp:project-license", value: "MIT" },
+      { name: "ipe-mcp:project-license", value: project.license },
       { name: "ipe-mcp:generator", value: "scripts/tools/sbom.mjs" },
     ],
   },

@@ -14,20 +14,21 @@ does not add support outside its declared matrix.
 
 ## Distribution Status
 
-The currently verified installation remains a source checkout using `npm ci`
-and `npm run build`; `package.json` is private and version `0.1.0`. ADR-0005
-approves a thin npm helper and a SemVer release line beginning with
-`1.0.0-rc.1`, but no package has been published. A locally built tarball does
-not become supported until it passes the specified packaging gate.
+The M9 source-checkout candidate remains the historical `0.1.0` baseline.
+ADR-0005 approves a thin npm helper, and the repository now builds the local
+`1.0.0-rc.1` tarball candidate. No package has been published. The packaged
+lane is supported only for a tarball that passes `check-m10-package.sh`; a
+successful `npm install` alone is not verification.
 
-The approved package model contains only the JavaScript stdio server and essential
+The approved package contains only the JavaScript stdio server and essential
 metadata/documentation. Users or system administrators remain responsible for
 installing Node.js and the native packages below. Package installation must not
 install native programs, change global MCP configuration, migrate documents or
 state, start HTTP, or enable telemetry. See
 [`ADR-0005`](../adr/0005-distribution-versioning-and-native-dependencies.md)
 and the approved
-[`versioning policy`](./versioning-and-releases.md).
+[`versioning policy`](./versioning-and-releases.md). Installation instructions
+are in [`package-installation.md`](./package-installation.md).
 
 ## Modes
 
@@ -37,8 +38,8 @@ and the approved
 | `full-7.2.30` | Ipe 7.2.30 package | everything in the MVP | viewer-dependent effects best-effort; layer transforms need explicit BBOX | classified native errors and viewer compatibility warnings | format ≠ 70218, unsafe XML/paths/images, over-limit documents |
 | `nightly-7.3.x` | 7.3.x package | probes only; does not rewrite a stable file without consent | separate divergence lane; never claims full-7.2.30 | `NIGHTLY_DIVERGENCE` | used as a stable write target without consent |
 
-Supports no macOS/Windows/non-WSL target, no marketplace/packaging, no HTTP
-transport.
+Supports no macOS/Windows/non-WSL target, no registry/marketplace publication,
+and no HTTP transport.
 
 ## Platform and runtime expectations
 
@@ -77,6 +78,7 @@ never a supported install path for the release candidate).
 | MCP Inspector | 2.4.0 real launcher/remote-session | host integration docs |
 | VS Code / SDK host | `.vscode/mcp.json`, `@modelcontextprotocol/client` | host integration docs |
 | Other MCP hosts | host-neutral contract, protocol-only stdout | design; no per-host token |
+| Local npm tarball | `1.0.0-rc.1`, exact allowlisted artifact | `check-m10-package.sh` clean install and stdio/native smoke |
 
 Resources: documents (summary/source/diagnostics) bounded, previews and
 artifacts behind `resource_link`, binary bytes only on explicit read. Artifacts
@@ -113,7 +115,8 @@ an MVP commitment.
 - **Reject**: fails safely with no write; to be fixed, not retried blindly.
 
 This policy is technical and operational, not a legal or market-positioning
-statement. ADR-0005 records the owner's accepted license boundary. Public
-distribution remains blocked by the separate implementation, gate, and
-publication controls in #31; the M9 SBOM boundary analysis remains the current
-technical license inventory.
+statement. ADR-0005 records the owner's accepted license boundary. Registry
+publication remains blocked by a separate explicit owner authorization; the M9
+SBOM boundary analysis remains the historical inventory and the package gate
+generates and audits the current candidate
+[`package-sbom.json`](../reference/package-sbom.json).
