@@ -1,0 +1,325 @@
+{
+  "$id": "https://github.com/Mik1810/ipe-mcp/schemas/harness/scenario-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "pattern": "^ipe-mcp\\/\\d+$"
+        },
+        "capabilityMode": {
+          "type": "string",
+          "enum": [
+            "structural-only",
+            "full-7.2.30"
+          ]
+        },
+        "features": {
+          "maxItems": 32,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        }
+      },
+      "required": [
+        "contract",
+        "capabilityMode",
+        "features"
+      ],
+      "additionalProperties": false
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "timeoutMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 300000
+        },
+        "toolCallTimeoutMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 180000
+        },
+        "maxSteps": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 32
+        },
+        "maxTranscriptEntries": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 64
+        },
+        "maxArtifacts": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 8
+        },
+        "maxArtifactBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 67108864
+        }
+      },
+      "required": [
+        "timeoutMs",
+        "toolCallTimeoutMs",
+        "maxSteps",
+        "maxTranscriptEntries",
+        "maxArtifacts",
+        "maxArtifactBytes"
+      ],
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "create-edit-validate-export"
+        },
+        "document": {
+          "type": "object",
+          "properties": {
+            "preset": {
+              "type": "string",
+              "const": "16:9"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            }
+          },
+          "required": [
+            "preset",
+            "title"
+          ],
+          "additionalProperties": false
+        },
+        "rectangle": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "stroke": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "fill": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height",
+            "stroke",
+            "fill"
+          ],
+          "additionalProperties": false
+        },
+        "recovery": {
+          "minItems": 1,
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stale-write",
+              "undo",
+              "snapshot-restore"
+            ]
+          }
+        },
+        "validation": {
+          "type": "string",
+          "const": "full"
+        },
+        "outputs": {
+          "minItems": 1,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ipe",
+              "preview-png",
+              "pdf",
+              "png"
+            ]
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "document",
+        "rectangle",
+        "recovery",
+        "validation",
+        "outputs"
+      ],
+      "additionalProperties": false
+    },
+    "approvals": {
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "save",
+              "undo",
+              "restore"
+            ]
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "grant",
+              "deny"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "decision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "assertions": {
+      "type": "object",
+      "properties": {
+        "semantic": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "pageCount": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            },
+            "objectCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "rectanglePath": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          },
+          "required": [
+            "title",
+            "pageCount",
+            "objectCount",
+            "rectanglePath"
+          ],
+          "additionalProperties": false
+        },
+        "artifacts": {
+          "minItems": 1,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "ipe",
+                  "preview-png",
+                  "pdf",
+                  "png"
+                ]
+              },
+              "mediaType": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "minBytes": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 67108864
+              }
+            },
+            "required": [
+              "kind",
+              "mediaType",
+              "minBytes"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "semantic",
+        "artifacts"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "requirements",
+    "limits",
+    "task",
+    "approvals",
+    "assertions"
+  ],
+  "additionalProperties": false
+}

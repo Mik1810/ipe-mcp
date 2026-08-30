@@ -1,0 +1,393 @@
+{
+  "$id": "https://github.com/Mik1810/ipe-mcp/schemas/harness/result-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "scenarioId": {
+      "type": "string",
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "adapter": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 80,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "transport": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "transport"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "contract": {
+      "type": "string",
+      "pattern": "^ipe-mcp\\/\\d+$"
+    },
+    "productVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "capabilityMode": {
+      "type": "string",
+      "enum": [
+        "structural-only",
+        "full-7.2.30"
+      ]
+    },
+    "limitsApplied": {
+      "type": "object",
+      "properties": {
+        "timeoutMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 300000
+        },
+        "toolCallTimeoutMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 180000
+        },
+        "maxSteps": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 32
+        },
+        "maxTranscriptEntries": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 64
+        },
+        "maxArtifacts": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 8
+        },
+        "maxArtifactBytes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 67108864
+        }
+      },
+      "required": [
+        "timeoutMs",
+        "toolCallTimeoutMs",
+        "maxSteps",
+        "maxTranscriptEntries",
+        "maxArtifacts",
+        "maxArtifactBytes"
+      ],
+      "additionalProperties": false
+    },
+    "approvals": {
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "save",
+              "undo",
+              "restore"
+            ]
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "grant",
+              "deny"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "decision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "transcript": {
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "tool",
+              "resource"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          }
+        },
+        "required": [
+          "sequence",
+          "kind",
+          "name",
+          "outcome"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "diagnostics": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "harness",
+              "agent-planning",
+              "protocol",
+              "server",
+              "native-ipe",
+              "artifact-quality"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400
+          }
+        },
+        "required": [
+          "stage",
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "mutationHistory": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "beforeRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "afterRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "rejected"
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "beforeRevision",
+          "afterRevision",
+          "outcome"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ipe",
+              "preview-png",
+              "pdf",
+              "png"
+            ]
+          },
+          "mediaType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 67108864
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "observations": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "mediaType",
+          "bytes",
+          "sha256"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "assertions": {
+      "type": "object",
+      "properties": {
+        "semantic": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "visual": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        }
+      },
+      "required": [
+        "semantic",
+        "visual"
+      ],
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": [
+            "harness",
+            "agent-planning",
+            "protocol",
+            "server",
+            "native-ipe",
+            "artifact-quality"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 80,
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        }
+      },
+      "required": [
+        "stage",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "adapter",
+    "status",
+    "limitsApplied",
+    "approvals",
+    "transcript",
+    "diagnostics",
+    "mutationHistory",
+    "artifacts",
+    "assertions"
+  ],
+  "additionalProperties": false
+}
