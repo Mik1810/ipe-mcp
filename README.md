@@ -109,8 +109,8 @@ npm test
 
 The package metadata is `1.0.0-rc.1` and can produce a gated local tarball, but
 nothing has been published to npm or released on GitHub. Run
-`npm run check:m10:package` for the clean tarball install and native stdio
-smoke. See [package installation](./docs/guides/package-installation.md) and
+`npm run check:m10:package` for the clean tarball install and provider-neutral
+native stdio scenario. See [package installation](./docs/guides/package-installation.md) and
 [host integration](./docs/guides/host-integration.md).
 
 ## Verification

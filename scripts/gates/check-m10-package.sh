@@ -9,7 +9,9 @@ fail() { echo "M10 PACKAGE FAIL: $*" >&2; exit 1; }
 PACK_DIR="$M10_PACKAGE_TMP/pack"
 INSTALL_DIR="$M10_PACKAGE_TMP/install"
 EXTRACT_DIR="$M10_PACKAGE_TMP/extract"
-SMOKE_DIR="$M10_PACKAGE_TMP/smoke"
+SMOKE_WORKSPACE="$M10_PACKAGE_TMP/smoke/workspace"
+SMOKE_ARTIFACTS="$M10_PACKAGE_TMP/smoke/artifacts"
+SMOKE_RESULT="$M10_PACKAGE_TMP/smoke/result.json"
 mkdir -p "$PACK_DIR" "$INSTALL_DIR" "$EXTRACT_DIR"
 PACKAGE_VERSION=$(node -p 'require(process.argv[1]).version' "$ROOT/package.json")
 
@@ -127,15 +129,29 @@ if (capabilities.mode !== "structural-only" || capabilities.verified !== false) 
 if (!capabilities.diagnostics.some((item) => item.includes("unavailable"))) throw new Error("missing native diagnostics are not actionable");
 NODE
 ) || fail "installed fail-closed capability probe"
-(cd "$ROOT" && node scripts/host/m10-package-smoke.mjs "$CLI" "$SMOKE_DIR" "$PACKAGE_VERSION" > "$M10_PACKAGE_TMP/smoke.json") || fail "installed stdio/native smoke"
+(cd "$ROOT" && node scripts/harness/run-scenario.mjs \
+  --scenario fixtures/conformance/m10/portable-create-edit-export.json \
+  --command "$CLI" \
+  --workspace "$SMOKE_WORKSPACE" \
+  --artifacts "$SMOKE_ARTIFACTS" \
+  --result "$SMOKE_RESULT" \
+  --expected-version "$PACKAGE_VERSION") || fail "installed provider-neutral stdio/native scenario"
 
-node --input-type=module - "$M10_PACKAGE_TMP/smoke.json" "$PACKAGE_VERSION" <<'NODE' || fail "smoke evidence"
+node --input-type=module - "$SMOKE_RESULT" "$SMOKE_ARTIFACTS" "$PACKAGE_VERSION" <<'NODE' || fail "portable scenario evidence"
 import { readFile } from "node:fs/promises";
 const evidence = JSON.parse(await readFile(process.argv[2], "utf8"));
-if (evidence.scenario !== "m10-package-smoke-v1" || evidence.productVersion !== process.argv[3] || evidence.contract !== "ipe-mcp/1") throw new Error("smoke identity mismatch");
-for (const field of ["create", "validate", "render", "export"]) if (evidence[field] !== "PASS") throw new Error(`smoke failed: ${field}`);
-if (evidence.transport !== "stdio" || evidence.capabilities !== "full-7.2.30" || evidence.socketListeners !== 0 || evidence.stdoutProtocolSafe !== true || evidence.stderrRedacted !== true) throw new Error("smoke boundary mismatch");
+if (evidence.schemaVersion !== 1 || evidence.scenarioId !== "portable-create-edit-export" || evidence.status !== "PASS") throw new Error("scenario identity/status mismatch");
+if (evidence.productVersion !== process.argv[4] || evidence.contract !== "ipe-mcp/1" || evidence.capabilityMode !== "full-7.2.30") throw new Error("installed product/contract/capability mismatch");
+if (evidence.adapter?.name !== "official-sdk-stdio" || evidence.adapter?.transport !== "stdio") throw new Error("adapter/transport mismatch");
+if (evidence.assertions?.semantic !== "PASS" || evidence.assertions?.visual !== "PASS" || evidence.failure !== undefined || evidence.diagnostics.length !== 0) throw new Error("scenario assertions or diagnostics failed");
+if (evidence.artifacts.length !== 4 || evidence.mutationHistory.length !== 5) throw new Error("portable artifact or mutation evidence incomplete");
+const tools = new Set(evidence.transcript.filter((entry) => entry.kind === "tool").map((entry) => entry.name));
+for (const required of ["ipe_orientation", "ipe_get_capabilities", "ipe_create_document", "ipe_apply_operations", "ipe_validate", "ipe_save_document", "ipe_render_preview", "ipe_export_document"]) {
+  if (!tools.has(required)) throw new Error(`portable scenario did not exercise ${required}`);
+}
+const serialized = JSON.stringify(evidence);
+if (serialized.includes(process.argv[3]) || /Bearer\s+|_authToken|password=|reasoning_content/iu.test(serialized)) throw new Error("portable result leaked private state");
 NODE
 
 echo "M10 PACKAGE MCP HARNESS: orientation-and-dynamic-behavior, result-quality-and-recovery, permissions-and-write-safety, transport-integration-and-privacy, code-architecture-and-verification"
-echo "M10 PACKAGE PASS: thin $PACKAGE_VERSION tarball, allowlist/secret/native/SBOM audit, clean install, fail-closed diagnostics, exports/bin, stdio full-7.2.30 create/validate/render/export, zero listeners; no publication"
+echo "M10 PACKAGE PASS: thin $PACKAGE_VERSION tarball, allowlist/secret/native/SBOM audit, clean install, fail-closed diagnostics, exports/bin, provider-neutral stdio full-7.2.30 create/edit/recovery/validate/render/export, zero listeners; no publication"

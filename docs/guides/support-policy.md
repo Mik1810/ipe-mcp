@@ -78,7 +78,7 @@ never a supported install path for the release candidate).
 | MCP Inspector | 2.4.0 real launcher/remote-session | host integration docs |
 | VS Code / SDK host | `.vscode/mcp.json`, `@modelcontextprotocol/client` | host integration docs |
 | Other MCP hosts | host-neutral contract, protocol-only stdout | design; no per-host token |
-| Local npm tarball | `1.0.0-rc.1`, exact allowlisted artifact | `check-m10-package.sh` clean install and stdio/native smoke |
+| Local npm tarball | `1.0.0-rc.1`, exact allowlisted artifact | `check-m10-package.sh` clean install and provider-neutral stdio/native scenario |
 
 Resources: documents (summary/source/diagnostics) bounded, previews and
 artifacts behind `resource_link`, binary bytes only on explicit read. Artifacts
