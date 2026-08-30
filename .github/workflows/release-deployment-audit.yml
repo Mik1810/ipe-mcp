@@ -1,0 +1,105 @@
+name: Audit deployed npm release
+
+run-name: Audit deployment ${{ inputs.tag }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing annotated prerelease tag to audit
+        required: true
+        default: v1.0.0-rc.1
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-deployment-audit-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "24"
+  NPM_VERSION: "11.16.0"
+
+jobs:
+  audit:
+    name: Verify deployed npm and GitHub artifacts
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    environment:
+      name: npm-release
+      url: https://github.com/Mik1810/ipe-mcp/releases/tag/${{ inputs.tag }}
+    permissions:
+      contents: read
+    steps:
+      - name: Check out deployment audit code and tags
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Node.js for registry verification
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Pin npm CLI
+        run: npm install --global "npm@${NPM_VERSION}"
+
+      - name: Validate requested immutable tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v1\.0\.0-rc\.[0-9]+$ ]]; then
+            echo "deployment audit requires an explicit v1.0.0-rc.N tag" >&2
+            exit 1
+          fi
+
+      - name: Download immutable GitHub Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          mkdir release-deployment
+          gh release download "$RELEASE_TAG" \
+            --dir release-deployment \
+            --pattern 'ipe-mcp-*.tgz' \
+            --pattern release-manifest.json \
+            --pattern package-sbom.json
+
+      - name: Audit tag, manifest, digests, SBOM, and release inventory
+        id: deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          release=$(gh release view "$RELEASE_TAG" --json tagName,isPrerelease,isDraft,assets)
+          RELEASE_JSON="$release" node scripts/release/audit-deployment.mjs "$RELEASE_TAG" release-deployment
+
+      - name: Verify public npm identity, integrity, provenance, and dist-tags
+        env:
+          VERSION: ${{ steps.deployment.outputs.version }}
+          EXPECTED_INTEGRITY: ${{ steps.deployment.outputs.integrity }}
+        run: node scripts/release/verify-registry.mjs ipe-mcp "$VERSION" "$EXPECTED_INTEGRITY"
+
+      - name: Compare npm registry tarball byte-for-byte
+        env:
+          PACKAGE_SPEC: ipe-mcp@${{ steps.deployment.outputs.version }}
+          TARBALL: ${{ steps.deployment.outputs.tarball }}
+        run: |
+          mkdir "$RUNNER_TEMP/npm-artifact"
+          npm pack "$PACKAGE_SPEC" --ignore-scripts --json --pack-destination "$RUNNER_TEMP/npm-artifact" >/dev/null
+          cmp "release-deployment/$TARBALL" "$RUNNER_TEMP/npm-artifact/$TARBALL"
+
+      - name: Verify installed registry signatures and attestations
+        env:
+          PACKAGE_SPEC: ipe-mcp@${{ steps.deployment.outputs.version }}
+        run: |
+          mkdir "$RUNNER_TEMP/registry-verification"
+          cd "$RUNNER_TEMP/registry-verification"
+          npm init --yes >/dev/null
+          npm install --ignore-scripts --no-audit --no-fund "$PACKAGE_SPEC"
+          npm audit signatures

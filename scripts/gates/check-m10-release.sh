@@ -15,6 +15,7 @@ import json, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 manifest = json.loads(pathlib.Path(sys.argv[2]).read_text())
 workflow = (root / ".github/workflows/release-candidate.yml").read_text()
+deployment_workflow = (root / ".github/workflows/release-deployment-audit.yml").read_text()
 notes = (root / f"docs/releases/v{manifest['version']}.md").read_text()
 guide = (root / "docs/guides/release-bootstrap.md").read_text()
 
@@ -40,6 +41,10 @@ stage_job = workflow.split("\n  stage:\n", 1)[1].split("\n  finalize:\n", 1)[0]
 finalize_job = workflow.split("\n  finalize:\n", 1)[1]
 assert "contents: read" in stage_job and "id-token: write" in stage_job and "contents: write" not in stage_job
 assert "contents: write" in finalize_job and "id-token: write" not in finalize_job and "npm stage publish" not in finalize_job
+for token in ["workflow_dispatch:", "environment:", "name: npm-release", "contents: read", "deployment audit requires an explicit", "audit-deployment.mjs", "verify-registry.mjs", "npm audit signatures", "cmp"]:
+    assert token in deployment_workflow, f"deployment audit workflow missing {token}"
+for forbidden in ["contents: write", "id-token: write", "NODE_AUTH_TOKEN", "secrets.", "npm publish", "npm stage publish"]:
+    assert forbidden not in deployment_workflow, f"deployment audit workflow has write capability: {forbidden}"
 for action, digest in {
     "actions/checkout": "d23441a48e516b6c34aea4fa41551a30e30af803",
     "actions/setup-node": "249970729cb0ef3589644e2896645e5dc5ba9c38",
