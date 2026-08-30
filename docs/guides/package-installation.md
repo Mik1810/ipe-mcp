@@ -45,8 +45,9 @@ npm run check:m10:package
 The gate builds `1.0.0-rc.1`, audits the exact allowlisted tarball, scans for
 secret-like content and native binaries, generates and checks the candidate
 SBOM, installs the tarball in an isolated temporary project with lifecycle
-scripts disabled, verifies fail-closed missing-native diagnostics, and runs an
-MCP stdio create/validate/render/export smoke with zero network listeners.
+scripts disabled, verifies fail-closed missing-native diagnostics, and runs the
+ADR-0006 provider-neutral MCP stdio create/edit/recovery/validate/render/export
+scenario with zero network listeners and a redacted portable result bundle.
 Temporary packages, dependencies, state, and artifacts are deleted afterward.
 The gate never publishes, tags, edits a dist-tag, or changes global config.
 
