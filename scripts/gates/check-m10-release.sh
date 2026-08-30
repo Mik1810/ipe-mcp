@@ -46,6 +46,9 @@ for action, digest in {
 release_script = (root / "scripts/release/release-candidate.mjs").read_text()
 for token in ["refs/remotes/origin/main", "release workflow requires an annotated Git tag", "release artifact source does not match the checked-out revision"]:
     assert token in release_script, f"release source/ref guard missing {token}"
+registry_script = (root / "scripts/release/verify-registry.mjs").read_text()
+for token in ["versions", "stableVersions", "bootstrapLatest", "after a stable release exists"]:
+    assert token in registry_script, f"registry bootstrap/latest guard missing {token}"
 for token in ["ipe-mcp", "1.0.0-rc.1", "ipe-mcp/1", "Ubuntu 26.04 WSL2", "npm install", "rollback", "not published"]:
     assert token in notes, f"release notes missing {token}"
 for token in ["verify-only", "npm-release", "v1.0.0-rc.1", "NPM_TOKEN", "2FA", "bypass-2FA", "stage publish", "delete", "revoke", "explicit owner authorization"]:

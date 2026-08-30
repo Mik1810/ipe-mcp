@@ -78,8 +78,9 @@ Only after explicit owner authorization:
 4. review and approve the `npm-release` environment deployment;
 5. let the workflow publish the exact retained tarball with npm tag `next` and
    provenance;
-6. verify registry integrity, provenance/signatures, and that `latest` did not
-   change;
+6. verify registry integrity and provenance/signatures; accept npm's mandatory
+   `latest` alias only for the first-package bootstrap while no stable version
+   exists, and otherwise require `latest` to remain on the stable line;
 7. create the matching GitHub prerelease with tarball, manifest, and
    SBOM assets.
 
