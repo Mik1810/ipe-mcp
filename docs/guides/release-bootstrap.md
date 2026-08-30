@@ -138,3 +138,14 @@ or reject that exact stage instead of staging the version again. Do not
 overwrite or reuse a version that npm accepted. If approval succeeds but
 GitHub Release creation fails, rerun `finalize-release` from the exact tag; it
 performs no npm write and repairs only the missing release record.
+
+## GitHub deployment audit
+
+After a release exists on both npm and GitHub, run
+`release-deployment-audit.yml` from `main` with the immutable release tag. The
+job enters the protected `npm-release` environment with read-only repository
+permissions and no OIDC or npm credential. It verifies the annotated tag,
+manifest source, tarball and evidence digests, release asset inventory, npm
+integrity and provenance, dist-tags, registry tarball bytes, signatures, and
+attestations. A successful job is the GitHub Deployment record for the release;
+it does not republish or mutate either registry.
