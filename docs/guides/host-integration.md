@@ -16,6 +16,11 @@ IPE_MCP_WORKSPACE_ROOT="$PWD" IPE_MCP_STATE_ROOT="$PWD/.ipe-mcp-state" npm run m
 
 Do not type into the server process: stdin/stdout carry MCP frames. Logs go to stderr. Stop with the host disconnect, `SIGINT`, or `SIGTERM`. The optional `IPE_MCP_NATIVE_TIMEOUT_MS` accepts 1-300000; native operations also retain the M6 total deadline and resource limits.
 
+For the gated local npm candidate, follow
+[`package-installation.md`](./package-installation.md) and configure the host to
+run the installed `ipe-mcp` command. Package installation does not install the
+native toolchain or change any MCP host configuration automatically.
+
 ## Codex
 
 The project-local `.codex/config.toml` launches the built entry point without changing user configuration. From this repository, `codex mcp list` should show `ipe-mcp` enabled. A non-interactive probe is:

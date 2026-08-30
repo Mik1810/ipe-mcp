@@ -41,8 +41,9 @@ compatibility.
 
 ## First Public Release Line
 
-The M9 source-checkout candidate remains `0.1.0`. The intended first packaged
-line is:
+The M9 source-checkout candidate remains `0.1.0`. The repository package
+metadata now identifies the locally gated candidate as `1.0.0-rc.1`; it is not
+published. The first packaged line is:
 
 ```text
 0.1.0 (historical local candidate)

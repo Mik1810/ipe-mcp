@@ -52,7 +52,7 @@ after the packaging gate passes.
 
 | Strategy | Decision | Rationale |
 |---|---|---|
-| Thin npm helper, native tools installed separately | **Selected, pending approval** | Smallest artifact; preserves the subprocess boundary; matches the TypeScript/MCP host ecosystem; supports tarball install and rollback by exact version. |
+| Thin npm helper, native tools installed separately | **Selected** | Smallest artifact; preserves the subprocess boundary; matches the TypeScript/MCP host ecosystem; supports tarball install and rollback by exact version. |
 | Source-checkout installable helper | Superseded as the primary distribution | Useful for contributors and recovery, but makes build tooling and repository internals part of the user installation and does not provide a clean release artifact. |
 | Bundle native executables with npm | Rejected | Enlarges the trust and support surface, complicates platform packaging, and requires a materially different GPL/AGPL distribution review. |
 | OS/system package containing server and native stack | Deferred | Could provide strong native provenance, but would require per-distribution maintainership and does not solve MCP-host installation across platforms yet. |

@@ -19,3 +19,4 @@ export * from "./mcp/contracts.js";
 export * from "./mcp/errors.js";
 export * from "./mcp/service.js";
 export * from "./mcp/server.js";
+export { PRODUCT_NAME, PRODUCT_VERSION } from "./version.js";

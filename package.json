@@ -1,14 +1,57 @@
 {
   "name": "ipe-mcp",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0-rc.1",
+  "description": "Local-first MCP server for creating, editing, validating, and rendering Ipe documents",
+  "private": false,
   "license": "MIT",
+  "author": "Michael Piccirilli",
+  "homepage": "https://github.com/Mik1810/ipe-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/Mik1810/ipe-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mik1810/ipe-mcp.git"
+  },
+  "keywords": [
+    "ipe",
+    "mcp",
+    "model-context-protocol",
+    "presentations",
+    "vector-graphics"
+  ],
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/src/**/*.js",
+    "dist/src/**/*.d.ts",
+    "docs/guides/package-installation.md",
+    "docs/guides/support-policy.md",
+    "docs/guides/versioning-and-releases.md",
+    "docs/reference/package-sbom.json",
+    "scripts/conformance/m6-artifact-worker.mjs",
+    "scripts/conformance/m6-native.lua"
+  ],
   "engines": {
     "node": ">=20"
   },
+  "packageManager": "npm@11.16.0",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "tag": "next"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
     "test": "vitest run --exclude 'dist/**'",
     "test:watch": "vitest",
     "check:m2": "bash scripts/gates/check-m2.sh",
@@ -20,7 +63,8 @@
     "mcp": "node dist/src/cli/mcp-stdio.js",
     "check:m8": "bash scripts/gates/check-m8.sh",
     "candidate:m9": "node scripts/tools/m9-release-candidate.mjs",
-    "check:m9:candidate": "bash scripts/gates/check-m9-candidate.sh"
+    "check:m9:candidate": "bash scripts/gates/check-m9-candidate.sh",
+    "check:m10:package": "bash scripts/gates/check-m10-package.sh"
   },
   "bin": {
     "ipe-mcp": "dist/src/cli/mcp-stdio.js"
