@@ -42,7 +42,7 @@ The server treats documents, LaTeX, assets, and metadata as untrusted input. The
 
 ## TM-HTTP
 - Risk: a future HTTP surface exposes sessions or permits DNS rebinding, CSRF, and unauthorized access.
-- Mitigation: no HTTP in the MVP; future localhost binding, Origin validation, authentication, and anti-rebinding.
-- Future gate: M10 threat review and auth/Origin/rebinding tests before release.
+- Mitigation: stdio only in the MVP. [ADR-0007](0007-local-streamable-http.md) defines authenticated loopback HTTP for M10.
+- Future gate: run the [TM-HTTP adversarial matrix](../security/tm-http.md) before claiming HTTP support.
 
 Distribution remains an approved deferral: it will be reassessed with licensing, packaging, and sandboxing.
