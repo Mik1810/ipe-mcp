@@ -113,6 +113,9 @@ nothing has been published to npm or released on GitHub. Run
 native stdio scenario. See [package installation](./docs/guides/package-installation.md) and
 [host integration](./docs/guides/host-integration.md).
 
+For an authenticated client on the same Linux or WSL host, see the
+[opt-in HTTP configuration](./docs/guides/local-http.md).
+
 ## Verification
 
 For the current M10 package candidate, run the stable tests, the cumulative

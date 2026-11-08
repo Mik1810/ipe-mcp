@@ -46,6 +46,7 @@ const fixed = new Set([
   "README.md",
   "package.json",
   "docs/guides/package-installation.md",
+  "docs/guides/local-http.md",
   "docs/guides/support-policy.md",
   "docs/guides/versioning-and-releases.md",
   "docs/reference/package-sbom.json",
@@ -59,7 +60,7 @@ for (const path of paths) {
   if (/\.(?:map|exe|dll|dylib|so)$/u.test(path)) throw new Error(`forbidden artifact type: ${path}`);
 }
 for (const required of fixed) if (!paths.includes(required)) throw new Error(`required package path missing: ${required}`);
-if (!paths.includes(packageJson.bin["ipe-mcp"]) || !paths.includes("dist/src/index.js") || !paths.includes("dist/src/index.d.ts")) throw new Error("entry point missing");
+if (packageJson.bin["ipe-mcp-http"] !== "dist/src/cli/mcp-http.js" || !paths.includes(packageJson.bin["ipe-mcp-http"]) || !paths.includes(packageJson.bin["ipe-mcp"]) || !paths.includes("dist/src/index.js") || !paths.includes("dist/src/index.d.ts")) throw new Error("entry point missing");
 await import(join(root, "dist/src/index.js"));
 process.stdout.write(`${JSON.stringify({ name: artifact.name, version: artifact.version, filename: artifact.filename, files: paths.length, size: artifact.size, unpackedSize: artifact.unpackedSize, integrity: artifact.integrity })}\n`);
 NODE
@@ -113,6 +114,12 @@ NODE
 (cd "$INSTALL_DIR" && npm ls --omit=dev --all >/dev/null) || fail "installed dependency tree"
 CLI="$INSTALL_DIR/node_modules/.bin/ipe-mcp"
 [[ -x "$CLI" ]] || fail "installed bin is not executable"
+HTTP_CLI="$INSTALL_DIR/node_modules/.bin/ipe-mcp-http"
+[[ -x "$HTTP_CLI" ]] || fail "installed HTTP bin is not executable"
+if env -u IPE_MCP_HTTP_TOKEN_FILE "$HTTP_CLI" >"$PACK_DIR/http-stdout.log" 2>"$PACK_DIR/http-stderr.log"; then
+  fail "HTTP bin unexpectedly started without a credential file"
+fi
+[[ ! -s "$PACK_DIR/http-stdout.log" ]] && grep -Fxq '{"event":"http_start_failed"}' "$PACK_DIR/http-stderr.log" || fail "installed HTTP fail-closed diagnostics"
 (cd "$INSTALL_DIR" && EXPECTED_VERSION="$PACKAGE_VERSION" node --input-type=module -e 'const m = await import("ipe-mcp"); if (m.PRODUCT_VERSION !== process.env.EXPECTED_VERSION) throw new Error("package export/version mismatch")') || fail "package export"
 (
 cd "$INSTALL_DIR"

@@ -65,6 +65,9 @@ jobs:
       - name: Run complete package gate
         run: npm run check:m10:package
 
+      - name: Run local HTTP protocol and security gate
+        run: npm run check:m10:http
+
       - name: Run release policy and manifest gate
         run: npm run check:m10:release
 

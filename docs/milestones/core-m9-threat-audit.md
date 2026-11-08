@@ -15,7 +15,11 @@ conformance tooling. The standalone historical audit requires `src/`,
 gate also checks the archived identity and matrix, then runs the hostile corpus
 and stdio probes on its current read-only frozen tree via `--current-tree`.
 Those probes verify current behavior while the historical attestation continues
-to refer to the original candidate.
+to refer to the original candidate. In current-tree mode, the static check
+excludes only the named opt-in M10 HTTP entry point and its transport modules,
+and checks that shared code does not import them. The stdio socket probe still
+runs on the current entry point. The optional endpoint is audited separately
+under [TM-HTTP](../security/tm-http.md).
 
 `PASS` requires direct current execution, not documentation alone.
 `NOT APPLICABLE` is permitted only for an absent surface proved both
