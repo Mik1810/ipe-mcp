@@ -163,6 +163,7 @@ capability and failure matrix.
 - [docs/milestones/core-m2.md](./docs/milestones/core-m2.md): IR, XML, identity, and persistence;
 - [docs/milestones/core-m3.md](./docs/milestones/core-m3.md): coordinates and layout;
 - [docs/milestones/core-m7.md](./docs/milestones/core-m7.md): bounded discrete animation and handout policies;
+- [docs/adr/0010-vector-import-fidelity.md](./docs/adr/0010-vector-import-fidelity.md): `ipe_import_svg`, `ipe_import_pdf`, supported source profiles, and original-byte recovery;
 - [docs/milestones/core-m8.md](./docs/milestones/core-m8.md): MCP stdio contracts, resources, and verification;
 - [docs/guides/host-integration.md](./docs/guides/host-integration.md): Codex, Inspector, VS Code, and independent-host operation;
 - [docs/guides/package-installation.md](./docs/guides/package-installation.md): thin npm candidate contents, native prerequisites, installation, and rollback;

@@ -8,7 +8,7 @@ import { HarnessFailure, portableFailure, redactPortableText } from "../privacy.
 
 const sha256 = (data) => createHash("sha256").update(data).digest("hex");
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-const supportedFeatures = new Set(["create", "edit", "history", "validate", "render", "export"]);
+const supportedFeatures = new Set(["create", "edit", "history", "validate", "render", "export", "import"]);
 
 const serverFailure = (tool, structured) => {
   const code = structured?.error?.code ?? "SERVER_ERROR";
@@ -141,42 +141,61 @@ export function createPortableMcpAdapter({ identity, workspaceDirectory, createC
         const capabilityMode = capabilities.data.capabilities.mode;
         if (capabilityMode !== scenario.requirements.capabilityMode) throw new HarnessFailure("server", "CAPABILITY_REQUIREMENT_UNMET", "Required capability mode is unavailable");
 
-        const created = await call("ipe_create_document", scenario.task.document);
-        const documentId = created.data.documentId;
-        const page = created.data.outline.pages[0];
-        const layerId = page?.layers[0]?.id;
-        if (page === undefined || layerId === undefined) throw new HarnessFailure("server", "SERVER_OUTLINE_INVALID", "Created document has no editable page and layer");
-        const rectangle = scenario.task.rectangle;
-        const added = await call("ipe_apply_operations", {
-          documentId, expectedRevision: created.data.revision,
-          operations: [{ op: "add_rectangle", pageId: page.id, layerId, ...rectangle }],
-        });
-        mutationHistory.push({ action: "add-rectangle", beforeRevision: created.data.revision, afterRevision: added.data.revision, outcome: "applied" });
-
-        let currentRevision = added.data.revision;
-        let snapshotId;
-        if (scenario.task.recovery.includes("snapshot-restore")) {
-          const snapshot = await call("ipe_history", { documentId, action: "snapshot", expectedRevision: currentRevision });
-          snapshotId = snapshot.data.snapshotId;
-        }
-        if (scenario.task.recovery.includes("stale-write") || scenario.task.recovery.includes("undo")) {
-          const temporary = await call("ipe_apply_operations", { documentId, expectedRevision: currentRevision, operations: [{ op: "set_metadata", author: "temporary" }] });
-          mutationHistory.push({ action: "temporary-metadata", beforeRevision: currentRevision, afterRevision: temporary.data.revision, outcome: "applied" });
-          if (scenario.task.recovery.includes("stale-write")) {
-            await callExpectedFailure("ipe_apply_operations", { documentId, expectedRevision: currentRevision, operations: [{ op: "set_metadata", title: "stale" }] }, "REVISION_CONFLICT");
-            mutationHistory.push({ action: "stale-write", beforeRevision: currentRevision, afterRevision: currentRevision, outcome: "rejected" });
+        const importing = scenario.task.kind === "import-validate-export";
+        let documentId;
+        let currentRevision;
+        let importedOutline;
+        let importDiagnostics;
+        if (importing) {
+          const input = await readFile(new URL("../../../fixtures/conformance/m10/import/mixed.pdf", import.meta.url));
+          const imported = await call("ipe_import_pdf", { dataBase64: input.toString("base64") });
+          if (imported.data.revision !== 0 || imported.data.source.sha256 !== sha256(input) ||
+              !(await readResource("original-import", imported.data.source.uri)).equals(input)) {
+            throw new HarnessFailure("artifact-quality", "IMPORT_SOURCE_ASSERTION_FAILED", "Import did not retain the exact source bytes and initial revision");
           }
-          currentRevision = temporary.data.revision;
-        }
-        if (scenario.task.recovery.includes("undo")) {
-          const undone = await call("ipe_history", { documentId, action: "undo", expectedRevision: currentRevision, confirmation: "UNDO" });
-          mutationHistory.push({ action: "undo", beforeRevision: currentRevision, afterRevision: undone.data.revision, outcome: "applied" });
-          currentRevision = undone.data.revision;
-        }
-        if (scenario.task.recovery.includes("snapshot-restore")) {
-          const restored = await call("ipe_history", { documentId, action: "restore", expectedRevision: currentRevision, snapshotId, confirmation: "RESTORE" });
-          mutationHistory.push({ action: "snapshot-restore", beforeRevision: currentRevision, afterRevision: restored.data.revision, outcome: "applied" });
-          currentRevision = restored.data.revision;
+          documentId = imported.data.documentId;
+          currentRevision = imported.data.revision;
+          importedOutline = imported.data.outline;
+          importDiagnostics = imported.data.diagnostics.map(({ code }) => code);
+          mutationHistory.push({ action: "import-pdf", beforeRevision: 0, afterRevision: 0, outcome: "applied" });
+        } else {
+          const created = await call("ipe_create_document", scenario.task.document);
+          documentId = created.data.documentId;
+          const page = created.data.outline.pages[0];
+          const layerId = page?.layers[0]?.id;
+          if (page === undefined || layerId === undefined) throw new HarnessFailure("server", "SERVER_OUTLINE_INVALID", "Created document has no editable page and layer");
+          const rectangle = scenario.task.rectangle;
+          const added = await call("ipe_apply_operations", {
+            documentId, expectedRevision: created.data.revision,
+            operations: [{ op: "add_rectangle", pageId: page.id, layerId, ...rectangle }],
+          });
+          mutationHistory.push({ action: "add-rectangle", beforeRevision: created.data.revision, afterRevision: added.data.revision, outcome: "applied" });
+
+          currentRevision = added.data.revision;
+          let snapshotId;
+          if (scenario.task.recovery.includes("snapshot-restore")) {
+            const snapshot = await call("ipe_history", { documentId, action: "snapshot", expectedRevision: currentRevision });
+            snapshotId = snapshot.data.snapshotId;
+          }
+          if (scenario.task.recovery.includes("stale-write") || scenario.task.recovery.includes("undo")) {
+            const temporary = await call("ipe_apply_operations", { documentId, expectedRevision: currentRevision, operations: [{ op: "set_metadata", author: "temporary" }] });
+            mutationHistory.push({ action: "temporary-metadata", beforeRevision: currentRevision, afterRevision: temporary.data.revision, outcome: "applied" });
+            if (scenario.task.recovery.includes("stale-write")) {
+              await callExpectedFailure("ipe_apply_operations", { documentId, expectedRevision: currentRevision, operations: [{ op: "set_metadata", title: "stale" }] }, "REVISION_CONFLICT");
+              mutationHistory.push({ action: "stale-write", beforeRevision: currentRevision, afterRevision: currentRevision, outcome: "rejected" });
+            }
+            currentRevision = temporary.data.revision;
+          }
+          if (scenario.task.recovery.includes("undo")) {
+            const undone = await call("ipe_history", { documentId, action: "undo", expectedRevision: currentRevision, confirmation: "UNDO" });
+            mutationHistory.push({ action: "undo", beforeRevision: currentRevision, afterRevision: undone.data.revision, outcome: "applied" });
+            currentRevision = undone.data.revision;
+          }
+          if (scenario.task.recovery.includes("snapshot-restore")) {
+            const restored = await call("ipe_history", { documentId, action: "restore", expectedRevision: currentRevision, snapshotId, confirmation: "RESTORE" });
+            mutationHistory.push({ action: "snapshot-restore", beforeRevision: currentRevision, afterRevision: restored.data.revision, outcome: "applied" });
+            currentRevision = restored.data.revision;
+          }
         }
 
         const validation = await call("ipe_validate", { documentId, level: scenario.task.validation });
@@ -185,11 +204,19 @@ export function createPortableMcpAdapter({ identity, workspaceDirectory, createC
         await call("ipe_save_document", { documentId, expectedRevision: currentRevision, targetPath, confirmation: "SAVE" });
         const source = await readFile(targetPath);
         const sourceText = source.toString("utf8");
+        if (importing) {
+          const reopened = await call("ipe_open_document", { path: targetPath });
+          if (!isDeepStrictEqual(reopened.data.outline, importedOutline)) {
+            throw new HarnessFailure("artifact-quality", "IMPORT_REOPEN_ASSERTION_FAILED", "Saved import changed its editable outline on reopen");
+          }
+          documentId = reopened.data.documentId;
+        }
         const inspected = await call("ipe_inspect", { documentId, maxObjects: 100 });
         const outline = inspected.data.outline;
         const semantic = scenario.assertions.semantic;
         const semanticPass = sourceText.startsWith("<?xml") && sourceText.includes('version="70218"') &&
-          sourceText.includes(`title="${semantic.title}"`) && sourceText.includes(semantic.rectanglePath) &&
+          (importing ? isDeepStrictEqual(importDiagnostics, semantic.importDiagnostics)
+            : sourceText.includes('title="' + semantic.title + '"') && sourceText.includes(semantic.rectanglePath)) &&
           outline.pageCount === semantic.pageCount && outline.objectCount === semantic.objectCount;
         if (!semanticPass) throw new HarnessFailure("artifact-quality", "SEMANTIC_ASSERTION_FAILED", "Saved document did not satisfy semantic assertions");
         const artifactAssertion = (kind) => scenario.assertions.artifacts.find((item) => item.kind === kind);

@@ -91,7 +91,8 @@ function semanticXml(value: unknown, unorderedChildren = false, ignoreLatexMetri
   const node = value as { type?: string; name?: string; attributes?: Record<string, string>; children?: unknown[]; text?: string };
   if (node.type === "text") return { type: "text", text: (node.text ?? "").replace(/\s+/gu, " ").trim() };
   const attributes = Object.fromEntries(Object.entries(node.attributes ?? {})
-    .map(([name, item]) => [name, (name === "stroke" || name === "fill") ? semanticColor(item) : item] as const)
+    .map(([name, item]) => [name, (name === "stroke" || name === "fill") ? semanticColor(item)
+      : node.name === "group" && name === "clip" ? semanticPathText(item.trim().replace(/\s+/gu, " ")) : item] as const)
     .filter(([name, item]) => name !== "x-ipe-mcp-id" && !(managedObjectRoot && ["custom", "matrix"].includes(name)) && name !== "layer" && !(name === "stroke" && item === "0") && !(name === "valign" && item === "bottom") && !(name === "BitsPerComponent" && item === "8") && !(name === "transition" && item === "1") && !(ignoreLatexMetrics && ["width", "height", "depth"].includes(name)))
     .sort(([a], [b]) => a.localeCompare(b)));
   const children = (node.children ?? []).map((child) => {
@@ -202,8 +203,17 @@ function assertMappingPreserved(before: DocumentIR, after: DocumentIR): readonly
   if (after.format !== 70218) throw new NativeIpeError("NATIVE_LOAD_ERROR", `native save emitted XML ${after.format}, expected 70218`);
   assertEqualRecord(before.metadata, after.metadata, "metadata");
   if ((before.preamble ?? "") !== (after.preamble ?? "")) throw new NativeIpeError("NATIVE_LOAD_ERROR", "native reload changed the preamble");
-  const beforeAssets = canonicalCollection((before.assets ?? []).map((asset) => asset.xml));
-  const afterAssets = canonicalCollection((after.assets ?? []).map((asset) => asset.xml));
+  const bitmapXml = (asset: NonNullable<DocumentIR["assets"]>[number]) => {
+    const xml = asset.xml;
+    if (xml?.name !== "bitmap" || asset.hash === undefined || xml.attributes?.Filter !== "FlateDecode"
+      || (xml.attributes.BitsPerComponent ?? "8") !== "8") return xml;
+    // Projected asset hashes already cover the dimensions and decoded RGBA.
+    // Keep the other rendering attributes while ignoring lossless compression.
+    const { encoding: _encoding, length: _length, alphaLength: _alphaLength, ...attributes } = xml.attributes;
+    return { ...xml, attributes, children: [{ type: "text", text: asset.hash }] };
+  };
+  const beforeAssets = canonicalCollection((before.assets ?? []).map(bitmapXml));
+  const afterAssets = canonicalCollection((after.assets ?? []).map(bitmapXml));
   if (JSON.stringify(beforeAssets) !== JSON.stringify(afterAssets)) throw new NativeIpeError("NATIVE_LOAD_ERROR", "native reload changed bitmap asset semantics");
   const extensionSemantics = (document: DocumentIR) => Object.entries(document.extensions ?? {}).sort(([left], [right]) => left.localeCompare(right)).map(([name, value]) => [name, canonicalCollection(Array.isArray(value) ? value : [value])]);
   if (JSON.stringify(extensionSemantics(before)) !== JSON.stringify(extensionSemantics(after))) throw new NativeIpeError("NATIVE_LOAD_ERROR", "native reload changed root extension semantics");

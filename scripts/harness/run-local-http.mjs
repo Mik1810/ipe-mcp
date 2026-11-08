@@ -319,6 +319,14 @@ try {
     assert.ok(link);
     await left.readResource({ uri: link.uri }, requestOptions);
     await assert.rejects(isolated.readResource({ uri: link.uri }, requestOptions));
+    const svg = await readFile(new URL("../../fixtures/conformance/m10/import/editable.svg", import.meta.url));
+    const vector = await left.callTool({ name: "ipe_import_svg", arguments: { dataBase64: svg.toString("base64") } }, requestOptions);
+    assert.equal(vector.structuredContent.ok, true);
+    const original = vector.content.find((item) => item.type === "resource_link");
+    assert.equal(original?.mimeType, "image/svg+xml");
+    const bytes = await right.readResource({ uri: original.uri }, requestOptions);
+    assert.deepEqual(Buffer.from(bytes.contents[0].blob, "base64"), svg);
+    await assert.rejects(isolated.readResource({ uri: original.uri }, requestOptions));
     await expectResponse(await post(other, ping, auth), 401);
     const escape = join(second.workspace, "escape.ipe");
     await writeFile(join(first.workspace, "private.ipe"), privateCanary);
