@@ -7,7 +7,7 @@ export interface PathPoint { readonly x: number; readonly y: number }
 export interface PathStyle {
   readonly stroke?: string;
   readonly fill?: string;
-  readonly pen?: string;
+  readonly pen?: string | number;
   readonly dash?: string;
   readonly cap?: "0" | "1" | "2";
   readonly join?: "0" | "1" | "2";
@@ -119,7 +119,7 @@ function styleAttributes(style: PathStyle | undefined): Record<string, string> {
   if ((style.gradient !== undefined || style.tiling !== undefined) && style.fill === undefined) throw new Error("gradient or tiling requires fill");
   const attrs: Record<string, string> = {};
   const strings: Array<[string, string | undefined]> = [
-    ["stroke", style.stroke], ["fill", style.fill], ["pen", style.pen], ["dash", style.dash], ["cap", style.cap], ["join", style.join],
+    ["stroke", style.stroke], ["fill", style.fill], ["pen", style.pen === undefined ? undefined : String(style.pen)], ["dash", style.dash], ["cap", style.cap], ["join", style.join],
     ["gradient", style.gradient], ["tiling", style.tiling], ["opacity", style.opacity], ["stroke-opacity", style.strokeOpacity],
   ];
   for (const [name, value] of strings) if (value !== undefined) { assertValidXml10String(value); attrs[name] = value; }

@@ -32,11 +32,11 @@ describe("controlled native subprocess", () => {
   it("centralizes exact operation subprocess boundaries", () => {
     expect(NATIVE_SUBPROCESS_COUNTS.capabilities).toBe(24);
     expect(NATIVE_SUBPROCESS_COUNTS.exportPdf(0)).toBe(5);
-    expect(NATIVE_SUBPROCESS_COUNTS.exportPdf(2)).toBe(11);
+    expect(NATIVE_SUBPROCESS_COUNTS.exportPdf(2)).toBe(13);
     expect(NATIVE_SUBPROCESS_COUNTS.renderViews(0)).toBe(0);
     expect(NATIVE_SUBPROCESS_COUNTS.renderViews(2)).toBe(8);
     expect(NATIVE_SUBPROCESS_COUNTS.validateFull(0)).toBe(34);
-    expect(NATIVE_SUBPROCESS_COUNTS.validateFull(2)).toBe(48);
+    expect(NATIVE_SUBPROCESS_COUNTS.validateFull(2)).toBe(50);
   });
 
   it.skipIf(process.platform !== "linux")("kills surviving process-group descendants after parent success", async () => {

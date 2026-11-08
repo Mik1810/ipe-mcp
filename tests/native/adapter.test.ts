@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { PNG } from "pngjs";
 
 import { ipeDocumentCodec } from "../../src/core/ipe-document-codec.js";
+import { addView } from "../../src/composition/index.js";
 import type { XmlElement } from "../../src/ipe/xml/parser.js";
 import { NativeIpeAdapter } from "../../src/native/adapter.js";
 import { DEFAULT_RASTER_LIMITS, validateSvg } from "../../src/native/artifact-validation.js";
@@ -166,6 +167,16 @@ describe("native Ipe adapter", () => {
     const document = ipeDocumentCodec.parse('<ipe version="70218"><page><layer name="content"/><view layers="content" active="content"/><path layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000001">0 0 m 10 0 l</path><text layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000002" pos="2 3" type="label" valign="baseline">M8</text></page></ipe>');
     await expect((await NativeIpeAdapter.create()).reload(document)).resolves.toMatchObject({ diagnostics: expect.arrayContaining([expect.objectContaining({ code: "NATIVE_RELOAD_OK" })]) });
   });
+
+  it.skipIf(!nativeAvailable)("reloads an added view and exports it with speaker notes", async () => {
+    const document = ipeDocumentCodec.parse('<ipe version="70218"><page><layer name="content"/><view layers="content" active="content"/><path layer="content" stroke="0.10 0.21 0.76" fill="0.10 0.10 0.10" custom="ipe-mcp:00000000-0000-4000-8000-000000000001">10 20 m 20 447.15999999999997 l 30 20 l h</path></page></ipe>');
+    const page = document.pages[0]!;
+    page.notes = "Speaker notes are preserved by the PDF round trip.";
+    addView(document, page.id);
+    const report = await (await NativeIpeAdapter.create()).validateFull(document);
+    expect(report.pdf.metadata.mapping.map(({ viewId }) => viewId)).toEqual(document.pages[0]!.views.map(({ id }) => id));
+    expect(ipeDocumentCodec.parse(report.reloaded.source).pages[0]!.notes).toBe(page.notes);
+  }, 30_000);
 
   it.skipIf(!nativeAvailable)("compares live layout matrices once and accepts Ipe removing identity matrices", async () => {
     const source = '<ipe version="70218"><page><layer name="content"/><view layers="content" active="content"/><path layer="content" custom="ipe-mcp:00000000-0000-4000-8000-000000000001">0 0 m 10 0 l</path></page></ipe>';
