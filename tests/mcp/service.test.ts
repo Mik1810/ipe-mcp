@@ -49,6 +49,17 @@ describe("M8 service transactions and recovery", () => {
     expect(service.documentResource(created.documentId, "source").text).toContain('fill="0.2"');
   });
 
+  it("accepts a numeric pen on a path operation", async () => {
+    const { service } = await serviceFixture();
+    const created = await service.createDocument("standard");
+    const [page] = created.outline.pages as Array<{ id: string; layers: Array<{ id: string }> }>;
+    await service.apply(created.documentId, 0, [{
+      op: "add_path", pageId: page!.id, layerId: page!.layers[0]!.id,
+      path: { kind: "segment", from: { x: 1, y: 2 }, to: { x: 3, y: 4 }, style: { pen: 0.8, stroke: "black" } },
+    }]);
+    expect(service.documentResource(created.documentId, "source").text).toContain('pen="0.8"');
+  });
+
   it("requires confirmation and returns deleted-state evidence", async () => {
     const { service } = await serviceFixture();
     const created = await service.createDocument("standard");

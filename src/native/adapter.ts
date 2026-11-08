@@ -71,14 +71,35 @@ export interface NativeDocumentArtifact {
   readonly diagnostics: readonly NativeDiagnostic[];
 }
 
+const DECIMAL_TOKEN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/iu;
+
+function semanticColor(value: string): string {
+  const tokens = value.trim().split(/\s+/u);
+  if (![1, 3].includes(tokens.length) || tokens.some((token) => !DECIMAL_TOKEN.test(token))) return value;
+  const components = tokens.map(Number);
+  if (components.some((component) => !Number.isFinite(component))) return value;
+  return components.every((component) => component === components[0]) ? String(components[0]) : components.join(" ");
+}
+
+function semanticPathText(value: string): string {
+  // Ignore floating-point spelling noise, while keeping path commands and order exact.
+  return value.replace(/\S+/gu, (token) => DECIMAL_TOKEN.test(token) && Number.isFinite(Number(token)) ? Number(token).toPrecision(15) : token);
+}
+
 function semanticXml(value: unknown, unorderedChildren = false, ignoreLatexMetrics = false, managedObjectRoot = false): unknown {
   if (!value || typeof value !== "object") return value;
   const node = value as { type?: string; name?: string; attributes?: Record<string, string>; children?: unknown[]; text?: string };
   if (node.type === "text") return { type: "text", text: (node.text ?? "").replace(/\s+/gu, " ").trim() };
   const attributes = Object.fromEntries(Object.entries(node.attributes ?? {})
+    .map(([name, item]) => [name, (name === "stroke" || name === "fill") ? semanticColor(item) : item] as const)
     .filter(([name, item]) => name !== "x-ipe-mcp-id" && !(managedObjectRoot && ["custom", "matrix"].includes(name)) && name !== "layer" && !(name === "stroke" && item === "0") && !(name === "valign" && item === "bottom") && !(name === "BitsPerComponent" && item === "8") && !(name === "transition" && item === "1") && !(ignoreLatexMetrics && ["width", "height", "depth"].includes(name)))
     .sort(([a], [b]) => a.localeCompare(b)));
-  const children = (node.children ?? []).map((child) => semanticXml(child, unorderedChildren, ignoreLatexMetrics, false)).filter((child) => JSON.stringify(child) !== '{"type":"text","text":""}');
+  const children = (node.children ?? []).map((child) => {
+    const semantic = semanticXml(child, unorderedChildren, ignoreLatexMetrics, false) as { type?: string; text?: string } | undefined;
+    return node.name === "path" && semantic?.type === "text" && semantic.text !== undefined
+      ? { type: "text", text: semanticPathText(semantic.text) }
+      : semantic;
+  }).filter((child) => JSON.stringify(child) !== '{"type":"text","text":""}');
   if (unorderedChildren) children.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return { name: node.name, attributes, children };
 }
@@ -123,7 +144,7 @@ function retainedViewXml(view: DocumentIR["pages"][number]["views"][number]): un
   const attributes = Object.fromEntries(Object.entries(xml.attributes ?? {}).filter(([name]) => !managed.has(name)).sort(([left], [right]) => left.localeCompare(right)));
   const children = (xml.children ?? []).filter((child) => typeof child !== "object" || child === null || !["map", "transform"].includes((child as { name?: string }).name ?? ""))
     .map((child) => semanticXml(child)).filter((child) => JSON.stringify(child) !== '{"type":"text","text":""}');
-  return { attributes, children };
+  return Object.keys(attributes).length === 0 && children.length === 0 ? undefined : { attributes, children };
 }
 
 export interface BinaryArtifactMetadata {
@@ -367,12 +388,16 @@ export class NativeIpeAdapter {
       }
       for (const [index] of mapping.entries()) {
         const expected = states[index]!;
-        const direct = join(workspace, `pdf-expected-${index + 1}.png`);
-        await this.#run(this.#executables.iperender, ["-png", "-nocrop", "-page", String(expected.page), "-view", String(expected.view), input, direct], workspace, "NATIVE_EXPORT_ERROR", budget);
+        const direct = join(workspace, `pdf-expected-${index + 1}`);
         const prefix = join(workspace, `pdf-physical-${index + 1}`);
-        const directSnapshot = await this.#stableArtifact(direct, workspace, "NATIVE_EXPORT_ERROR", budget);
+        // Use the same rasterizer on both PDFs and exclude viewer overlays such as note icons.
+        await this.#run(this.#executables.iperender, ["-pdf", "-nocrop", "-page", String(expected.page), "-view", String(expected.view), input, `${direct}.pdf`], workspace, "NATIVE_EXPORT_ERROR", budget);
+        const referencePdf = await this.#stableArtifact(`${direct}.pdf`, workspace, "NATIVE_EXPORT_ERROR", budget);
+        try { await this.#rasterizePdfPage(referencePdf.path, 1, direct, workspace, budget); }
+        finally { await referencePdf.close(); }
+        const directSnapshot = await this.#stableArtifact(`${direct}.png`, workspace, "NATIVE_EXPORT_ERROR", budget);
         try {
-          await this.#run("/usr/bin/pdftoppm", ["-f", String(index + 1), "-l", String(index + 1), "-singlefile", "-r", "72", "-png", pdf.path, prefix], workspace, "NATIVE_EXPORT_ERROR", budget);
+          await this.#rasterizePdfPage(pdf.path, index + 1, prefix, workspace, budget);
           const physicalSnapshot = await this.#stableArtifact(`${prefix}.png`, workspace, "NATIVE_EXPORT_ERROR", budget);
           try { await this.#artifact("compare-png", [physicalSnapshot, directSnapshot], workspace, "NATIVE_EXPORT_ERROR", budget); }
           finally { await physicalSnapshot.close(); }
@@ -393,6 +418,10 @@ export class NativeIpeAdapter {
       } finally { await recoveredSnapshot.close(); }
       } finally { await pdf.close(); }
     });
+  }
+
+  async #rasterizePdfPage(pdf: string, page: number, prefix: string, workspace: string, budget: OperationBudget): Promise<void> {
+    await this.#run("/usr/bin/pdftoppm", ["-hide-annotations", "-f", String(page), "-l", String(page), "-singlefile", "-r", "72", "-png", pdf, prefix], workspace, "NATIVE_EXPORT_ERROR", budget);
   }
 
   async renderViews(document: IpeDocument, format: "png" | "svg" = "png"): Promise<readonly ViewArtifact[]> {
