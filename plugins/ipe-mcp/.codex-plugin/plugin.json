@@ -1,0 +1,15 @@
+{
+  "name": "ipe-mcp",
+  "version": "0.1.0",
+  "description": "Create, edit, validate, and export local Ipe documents.",
+  "license": "MIT",
+  "repository": "https://github.com/Mik1810/ipe-mcp",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "requires_local_executor": true,
+  "interface": {
+    "displayName": "Ipe MCP",
+    "shortDescription": "Author local Ipe drawings and slide decks.",
+    "category": "Productivity"
+  }
+}

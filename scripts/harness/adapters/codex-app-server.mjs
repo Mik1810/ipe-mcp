@@ -12,7 +12,7 @@ const unsupported = () => new HarnessFailure("harness", "ADAPTER_CAPABILITY_UNME
 class AppServerRpcError extends Error {}
 
 function openRpc({ codex, cwd, env, config, timeoutMs, maxResponseBytes }) {
-  const child = spawn(codex, ["app-server", "--listen", "stdio://", "-c", config], {
+  const child = spawn(codex, ["app-server", "--listen", "stdio://", ...(config === undefined ? [] : ["-c", config])], {
     // App Server may log its private working directory. Only the validated RPC
     // results are used as evidence; discard raw host diagnostics at the source.
     cwd, env, detached: true, stdio: ["pipe", "pipe", "ignore"],
@@ -104,7 +104,7 @@ function openRpc({ codex, cwd, env, config, timeoutMs, maxResponseBytes }) {
   };
 }
 
-export function createCodexAppServerAdapter({ codex, command, args = [], cwd, workspaceDirectory }) {
+export function createCodexAppServerAdapter({ codex, command, args = [], cwd, workspaceDirectory, installedPlugin }) {
   return createPortableMcpAdapter({
     identity: { name: "codex-app-server", version: "1", transport: "stdio" },
     workspaceDirectory,
@@ -113,10 +113,11 @@ export function createCodexAppServerAdapter({ codex, command, args = [], cwd, wo
       let threadId;
       return {
         async connect(signal) {
-          const codexHome = await mkdtemp(join(workspaceDirectory, ".codex-host-"));
+          const codexHome = installedPlugin?.codexHome ?? await mkdtemp(join(workspaceDirectory, ".codex-host-"));
+          const server = installedPlugin?.server ?? SERVER;
           signal.throwIfAborted();
           const quote = (value) => JSON.stringify(value);
-          const config = "mcp_servers={" + SERVER + "={command=" + quote(command) +
+          const config = installedPlugin !== undefined ? undefined : "mcp_servers={" + SERVER + "={command=" + quote(command) +
             ",args=" + quote(args) + ",cwd=" + quote(cwd) + ",env={IPE_MCP_WORKSPACE_ROOT=" + quote(workspaceDirectory) +
             ",IPE_MCP_STATE_ROOT=" + quote(join(workspaceDirectory, ".state")) + "}}}";
           rpc = openRpc({
@@ -133,18 +134,24 @@ export function createCodexAppServerAdapter({ codex, command, args = [], cwd, wo
           });
           threadId = started.thread?.id;
           if (typeof threadId !== "string") throw new Error("App Server did not start an ephemeral session");
+          if (installedPlugin !== undefined) {
+            const { data } = await rpc.request("mcpServerStatus/list", { threadId, serverName: server });
+            if (!data.some(({ name }) => name === server)) {
+              throw new HarnessFailure("protocol", "PLUGIN_MCP_NOT_REGISTERED", "The installed plugin did not register its MCP server");
+            }
+          }
           // Probe the resource route before any mutation. A missing document is
           // expected; a missing RPC method is a host capability skip.
           try {
             await rpc.request("mcpServer/resource/read", {
-              threadId, server: SERVER, uri: "ipe://documents/00000000-0000-4000-8000-000000000000/summary",
+              threadId, server, uri: "ipe://documents/00000000-0000-4000-8000-000000000000/summary",
             });
           } catch (error) {
             if (!(error instanceof AppServerRpcError)) throw error;
           }
         },
-        callTool: ({ name, arguments: args }) => rpc.request("mcpServer/tool/call", { threadId, server: SERVER, tool: name, arguments: args }),
-        readResource: ({ uri }) => rpc.request("mcpServer/resource/read", { threadId, server: SERVER, uri }),
+        callTool: ({ name, arguments: args }) => rpc.request("mcpServer/tool/call", { threadId, server: installedPlugin?.server ?? SERVER, tool: name, arguments: args }),
+        readResource: ({ uri }) => rpc.request("mcpServer/resource/read", { threadId, server: installedPlugin?.server ?? SERVER, uri }),
         close: async () => { await rpc?.close(); },
       };
     },
