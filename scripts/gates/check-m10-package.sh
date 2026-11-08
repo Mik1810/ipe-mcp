@@ -18,7 +18,9 @@ PACKAGE_VERSION=$(node -p 'require(process.argv[1]).version' "$ROOT/package.json
 (cd "$ROOT" && npm run build) || fail "build"
 (cd "$ROOT" && npm test -- --run tests/version.test.ts tests/mcp/protocol.test.ts) || fail "directly affected tests"
 (cd "$ROOT" && node scripts/tools/sbom.mjs "$M10_PACKAGE_TMP/package-sbom.json") || fail "candidate SBOM generation"
-cmp "$M10_PACKAGE_TMP/package-sbom.json" "$ROOT/docs/reference/package-sbom.json" || fail "candidate SBOM is not byte-deterministic"
+(cd "$ROOT" && node scripts/tools/sbom.mjs "$M10_PACKAGE_TMP/repeated-sbom.json") || fail "repeated SBOM generation"
+cmp "$M10_PACKAGE_TMP/package-sbom.json" "$M10_PACKAGE_TMP/repeated-sbom.json" || fail "candidate SBOM is not byte-deterministic"
+python3 "$ROOT/scripts/tools/check-sbom-inventory.py" "$ROOT/docs/reference/package-sbom.json" "$M10_PACKAGE_TMP/package-sbom.json" || fail "candidate SBOM inventory changed"
 (cd "$ROOT" && npm pack --ignore-scripts --json --pack-destination "$PACK_DIR" > "$M10_PACKAGE_TMP/pack.json") || fail "npm pack"
 
 node --input-type=module - "$ROOT" "$M10_PACKAGE_TMP" "$PACKAGE_VERSION" <<'NODE' || fail "metadata and package allowlist"
