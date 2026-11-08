@@ -14,7 +14,7 @@ import {
   type NativeExecutables,
 } from "./capabilities.js";
 import { NativeIpeError, type NativeErrorCode } from "./errors.js";
-import { runControlledProcess, type ProcessLimits, type ProcessResult } from "./process.js";
+import { assertNativeRequestActive, runControlledProcess, type ProcessLimits, type ProcessResult } from "./process.js";
 import { NATIVE_SUBPROCESS_COUNTS } from "./process-accounting.js";
 import { openStableArtifact, type StableArtifact } from "./stable-artifact.js";
 import { DEFAULT_RASTER_LIMITS, type RasterLimits } from "./artifact-validation.js";
@@ -572,6 +572,7 @@ export class NativeIpeAdapter {
   #budget(): OperationBudget { return { deadline: Date.now() + this.#operationLimits.deadlineMs, subprocesses: 0, artifactBytes: 0 }; }
 
   #remaining(budget: OperationBudget): number {
+    assertNativeRequestActive();
     const remaining = budget.deadline - Date.now();
     if (remaining < 1) throw new NativeIpeError("NATIVE_TIMEOUT", `native operation exceeded ${this.#operationLimits.deadlineMs} ms`);
     return remaining;
