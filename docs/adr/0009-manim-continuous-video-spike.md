@@ -1,8 +1,8 @@
-# ADR-0009 — Defer continuous video after the Manim spike
+# ADR-0009 — Keep presentations on discrete Ipe views
 
-- Status: **Deferred after measurement**
+- Status: **Accepted scope decision. Manim experiment archived.**
 - Spike: [#43](https://github.com/Mik1810/ipe-mcp/issues/43)
-- Conditional implementation: [#44](https://github.com/Mik1810/ipe-mcp/issues/44)
+- Out-of-scope proposals: [web presenter #42](https://github.com/Mik1810/ipe-mcp/issues/42) and [continuous video #44](https://github.com/Mik1810/ipe-mcp/issues/44)
 
 ## User value and decision
 
@@ -13,20 +13,19 @@ shape and a mathematical label still. The reference is native Ipe
 rendering at both endpoints. Between endpoints the oracle is the
 analytic center of the moving polygon.
 
-Defer the Manim backend. This experiment verifies a small linear
-motion subset and reproducible encoding. The label changes size in
-the rendered clip and the backend cannot yet represent common Ipe
-clipping, gradient, affine and transition semantics. A supported
-backend would also add a separate Python and codec distribution
-surface to the thin npm model. This decision leaves #44 conditional
-on a future explicit adoption decision.
+The product uses discrete Ipe views and PDF pages. The dedicated web
+presenter and continuous video are outside its scope. The Manim spike
+verified a small linear motion subset and reproducible encoding. The
+label changed size in the rendered clip, and the prototype excluded
+common Ipe clipping, gradient, affine and transition semantics.
+Supporting video would also require a separate Python and codec toolchain.
 
 ## Evidence
 
-The [MIT fixture](../../fixtures/conformance/m10/manim/translation.ipe)
-is authored in this repository. The [comparison sheet](../../fixtures/conformance/m10/manim/side-by-side.png)
+The [MIT fixture](https://github.com/Mik1810/ipe-mcp/blob/e371efff1a8a385e7222043b803b2dd8b2d3a3b5/fixtures/conformance/m10/manim/translation.ipe)
+is authored in this repository. The [comparison sheet](https://github.com/Mik1810/ipe-mcp/blob/e371efff1a8a385e7222043b803b2dd8b2d3a3b5/fixtures/conformance/m10/manim/side-by-side.png)
 shows the exact two native endpoint frames, the corresponding decoded
-Manim frames, and Manim's generated midpoint. The [measurements](../../fixtures/conformance/m10/manim/evidence.json)
+Manim frames, and Manim's generated midpoint. The [measurements](https://github.com/Mik1810/ipe-mcp/blob/e371efff1a8a385e7222043b803b2dd8b2d3a3b5/fixtures/conformance/m10/manim/evidence.json)
 contain the per-frame boxes, colors, media properties, and sampled
 render costs. No upstream deck or video is retained.
 
@@ -80,17 +79,11 @@ retrieval. The spike creates no MCP tool and changes no product
 capabilities. Rolling it back requires removing the temporary Python
 environment and its downloaded development dependencies.
 
-## Reproduce
+## Archived experiment
 
-Create a Python 3.13 environment from
-[the pinned dependencies](../../fixtures/conformance/m10/manim/requirements.txt)
-with Cairo and Pango development headers available at build time. Provide
-Ipe 7.2.30, latex, standalone.cls, dvisvgm, ffmpeg, ffprobe, pdffonts
-and bubblewrap on the verified Ubuntu WSL lane. Set MANIM_SPIKE_PYTHON
-to the absolute path of that interpreter, then run
-bash scripts/gates/check-m10-manim-spike.sh. The gate uses fresh
-temporary outputs and compares endpoint geometry, color, timing,
-repeat encoding and explicit rejection codes.
+The scripts, gate, dependency pins, and corpus were removed from the
+active tree. The [original experiment and reproduction instructions](https://github.com/Mik1810/ipe-mcp/blob/e371efff1a8a385e7222043b803b2dd8b2d3a3b5/docs/adr/0009-manim-continuous-video-spike.md#reproduce)
+remain available at the commit that integrated the spike.
 
 ## References
 
