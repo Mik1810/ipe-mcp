@@ -54,6 +54,20 @@ export interface MutationResult<Document> {
   readonly diagnostics: readonly SessionDiagnostic[];
 }
 
+export interface BridgeSnapshotRequest {
+  readonly epoch: string;
+  readonly sequence: number;
+  readonly snapshotHash: string;
+  readonly sourceStamp: string;
+}
+
+export interface BridgeCommit {
+  readonly epoch: string;
+  readonly sequence: number;
+  readonly snapshotHash: string;
+  readonly revision: number;
+}
+
 export interface SaveResult {
   readonly documentId: string;
   readonly revision: number;
@@ -87,6 +101,7 @@ interface StoredSession<Document> {
   sourceDevice: string;
   sourceInode: string;
   manifestState: TargetState;
+  bridgeCommit?: BridgeCommit;
 }
 
 interface ExistingTargetState {
@@ -112,6 +127,7 @@ interface SessionManifestV1 {
   readonly sourceInode: string;
   readonly revision: number;
   readonly workingFile: string;
+  readonly bridgeCommit?: BridgeCommit;
 }
 
 interface SaveJournalV1 {
@@ -134,7 +150,7 @@ function hash(data: string | Uint8Array): string {
 async function targetState(path: string, maxBytes: number): Promise<TargetState> {
   let handle;
   try {
-    handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return { exists: false };
     throw error;
@@ -184,11 +200,29 @@ function parseSaveJournal(input: unknown): SaveJournalV1 {
   return value as unknown as SaveJournalV1;
 }
 
+function sha256Hex(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/u.test(value);
+}
+
+function validBridgeSequence(epoch: unknown, sequence: unknown): boolean {
+  return typeof epoch === "string" && /^[a-f0-9]{32}$/u.test(epoch)
+    && typeof sequence === "number" && Number.isSafeInteger(sequence) && sequence >= 1 && sequence <= 0x7fff_ffff;
+}
+
+function validBridgeCommit(input: unknown, revision: number): boolean {
+  if (typeof input !== "object" || input === null) return false;
+  const entry = input as Record<string, unknown>;
+  return Object.keys(entry).length === 4 && validBridgeSequence(entry.epoch, entry.sequence) && sha256Hex(entry.snapshotHash)
+    && typeof entry.revision === "number" && Number.isSafeInteger(entry.revision)
+    && entry.revision > 0 && entry.revision <= revision;
+}
+
 function parseManifest(input: unknown): SessionManifestV1 {
   if (typeof input !== "object" || input === null) throw new Error("invalid session manifest");
   const value = input as Record<string, unknown>;
   const keys = Object.keys(value).sort();
   const expected = ["documentId", "revision", "schemaVersion", "sourceDevice", "sourceHash", "sourceInode", "sourcePath", "workingFile"];
+  if (Object.hasOwn(value, "bridgeCommit")) expected.unshift("bridgeCommit");
   if (JSON.stringify(keys) !== JSON.stringify(expected)) throw new Error("invalid session manifest fields");
   if (value.schemaVersion !== 1 || typeof value.documentId !== "string" || typeof value.sourcePath !== "string" ||
       typeof value.sourceHash !== "string" || !/^[a-f0-9]{64}$/u.test(value.sourceHash) ||
@@ -197,6 +231,9 @@ function parseManifest(input: unknown): SessionManifestV1 {
       typeof value.revision !== "number" || !Number.isSafeInteger(value.revision) || value.revision < 0 ||
       typeof value.workingFile !== "string" || !/^working-r\d+-[a-f0-9-]+\.ipe$/u.test(value.workingFile)) {
     throw new Error("invalid session manifest values");
+  }
+  if (Object.hasOwn(value, "bridgeCommit") && !validBridgeCommit(value.bridgeCommit, value.revision)) {
+    throw new Error("invalid bridge commit receipt");
   }
   return value as unknown as SessionManifestV1;
 }
@@ -328,36 +365,97 @@ export class DocumentSessionManager<Document> {
       this.#assertRevision(session, expectedRevision);
       const draft = clone(session.document);
       await operation(draft);
-      this.#mutationGuard?.(draft);
-      const diagnostics = this.#codec.validate(draft);
-      if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
-        throw new StructuralValidationError(diagnostics);
-      }
-      const serialized = this.#codec.serialize(draft);
-      this.#assertSerializedSize(serialized);
-      const nextRevision = session.revision + 1;
-      const nextWorkingPath = join(session.workDirectory, `working-r${nextRevision}-${randomUUID()}.ipe`);
-      await atomicWriteFile(nextWorkingPath, serialized, this.#atomicOptions());
-      try {
-        await this.#writeManifest(session, { revision: nextRevision, workingPath: nextWorkingPath });
-      } catch (error) {
-        if (error instanceof AtomicWriteError && error.committed) {
-          session.document = draft;
-          session.revision = nextRevision;
-          session.workingPath = nextWorkingPath;
+      return await this.#commitWorkingDocument(session, draft);
+    });
+  }
+
+  /** Compare the real source and the revision before establishing a bridge base. */
+  bridgeSourceStamp(documentId: string, expectedRevision: number): Promise<string> {
+    const session = this.#session(documentId);
+    return session.mutex.run(async () => {
+      this.#assertRevision(session, expectedRevision);
+      return await this.#sourceStamp(session);
+    });
+  }
+
+  /** Commit the admitted bridge snapshot and its replay marker in one manifest rename. */
+  commitBridgeSnapshot(
+    documentId: string,
+    expectedRevision: number,
+    request: BridgeSnapshotRequest,
+    prepare: (baseline: Document) => Document,
+    hasReceipt?: (commit: BridgeCommit) => Promise<boolean>,
+  ): Promise<{ readonly revision: number; readonly replayed: boolean }> {
+    if (!validBridgeSequence(request.epoch, request.sequence) || !sha256Hex(request.snapshotHash) || !sha256Hex(request.sourceStamp)) {
+      throw new Error("Invalid bridge snapshot request");
+    }
+    const session = this.#session(documentId);
+    return session.mutex.run(async () => {
+      const last = session.bridgeCommit;
+      if (last?.epoch === request.epoch && last.sequence === request.sequence) {
+        if (last.snapshotHash !== request.snapshotHash || last.revision !== expectedRevision + 1) {
+          throw new Error("Bridge snapshot replay does not match its receipt");
         }
-        throw error;
+        return { revision: last.revision, replayed: true };
       }
+      this.#assertRevision(session, expectedRevision);
+      if (last !== undefined && await hasReceipt?.(last) !== true) {
+        throw new Error("Previous bridge commit awaits its durable receipt");
+      }
+      const checkSource = async () => {
+        if (await this.#sourceStamp(session) !== request.sourceStamp) throw new SourceChangedError(session.sourcePath);
+      };
+      await checkSource();
+      const draft = prepare(clone(session.document));
+      const bridgeCommit = { epoch: request.epoch, sequence: request.sequence, snapshotHash: request.snapshotHash, revision: expectedRevision + 1 };
+      const result = await this.#commitWorkingDocument(session, draft, bridgeCommit, checkSource);
+      return { revision: result.revision, replayed: false };
+    });
+  }
+
+  async #sourceStamp(session: StoredSession<Document>): Promise<string> {
+    try {
+      if (await this.#resolveExistingAllowed(session.sourcePath) !== session.sourcePath) throw new SourceChangedError(session.sourcePath);
+      const observed = await targetState(session.sourcePath, this.#maxSourceBytes);
+      if (observed.exists && observed.hash === session.sourceHash && observed.device === session.sourceDevice && observed.inode === session.sourceInode) {
+        return hash(observed.device + ":" + observed.inode + ":" + observed.hash);
+      }
+    } catch (error) {
+      if (error instanceof PathOutsideWorkspaceError) throw error;
+    }
+    throw new SourceChangedError(session.sourcePath);
+  }
+
+  async #commitWorkingDocument(
+    session: StoredSession<Document>,
+    draft: Document,
+    bridgeCommit?: BridgeCommit,
+    precondition?: () => Promise<void>,
+  ): Promise<MutationResult<Document>> {
+    this.#mutationGuard?.(draft);
+    const diagnostics = this.#codec.validate(draft);
+    if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+      throw new StructuralValidationError(diagnostics);
+    }
+    const serialized = this.#codec.serialize(draft);
+    this.#assertSerializedSize(serialized);
+    const nextRevision = session.revision + 1;
+    const nextWorkingPath = join(session.workDirectory, "working-r" + nextRevision + "-" + randomUUID() + ".ipe");
+    await atomicWriteFile(nextWorkingPath, serialized, this.#atomicOptions());
+    const finish = () => {
       session.document = draft;
       session.revision = nextRevision;
       session.workingPath = nextWorkingPath;
-      return {
-        documentId,
-        revision: session.revision,
-        document: clone(draft),
-        diagnostics,
-      };
-    });
+      if (bridgeCommit !== undefined) session.bridgeCommit = bridgeCommit;
+    };
+    try {
+      await this.#writeManifest(session, { revision: nextRevision, workingPath: nextWorkingPath, ...(bridgeCommit === undefined ? {} : { bridgeCommit }) }, precondition);
+    } catch (error) {
+      if (error instanceof AtomicWriteError && error.committed) finish();
+      throw error;
+    }
+    finish();
+    return { documentId: session.documentId, revision: nextRevision, document: clone(draft), diagnostics };
   }
 
   save(
@@ -477,6 +575,7 @@ export class DocumentSessionManager<Document> {
         sourceDevice: manifest.sourceDevice,
         sourceInode: manifest.sourceInode,
         manifestState,
+        ...(manifest.bridgeCommit === undefined ? {} : { bridgeCommit: manifest.bridgeCommit }),
       };
       this.#sessions.set(session.documentId, session);
       await this.#recoverSaveJournals(session);
@@ -638,8 +737,10 @@ export class DocumentSessionManager<Document> {
 
   async #writeManifest(
     session: StoredSession<Document>,
-    overrides: { readonly revision?: number; readonly workingPath?: string } = {},
+    overrides: { readonly revision?: number; readonly workingPath?: string; readonly bridgeCommit?: BridgeCommit } = {},
+    precondition?: () => Promise<void>,
   ): Promise<void> {
+    const bridgeCommit = overrides.bridgeCommit ?? session.bridgeCommit;
     const manifest: SessionManifestV1 = {
       schemaVersion: 1,
       documentId: session.documentId,
@@ -649,6 +750,7 @@ export class DocumentSessionManager<Document> {
       sourceInode: session.sourceInode,
       revision: overrides.revision ?? session.revision,
       workingFile: basename(overrides.workingPath ?? session.workingPath),
+      ...(bridgeCommit === undefined ? {} : { bridgeCommit }),
     };
     const path = join(session.workDirectory, "session.json");
     const expected = session.manifestState;
@@ -668,6 +770,7 @@ export class DocumentSessionManager<Document> {
           ...this.#atomicOptions(),
           precondition: async () => {
             if (!sameTargetState(expected, await targetState(path, METADATA_BYTES))) throw new SourceChangedError(path);
+            await precondition?.();
           },
         },
       );

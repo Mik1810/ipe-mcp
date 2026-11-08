@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, readdir, rm, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rename, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -474,5 +474,52 @@ describe("DocumentSessionManager", () => {
     expect(snapshots.map((path) => path.match(/snapshot-s(\d+)-/u)?.[1])).toEqual(["1", "2"]);
     const contents = await Promise.all(snapshots.map((path) => readFile(path, "utf8")));
     expect(contents.map((value) => JSON.parse(value).value).sort()).toEqual(["first backup", "second backup"]);
+  });
+});
+
+
+describe("bridge snapshot commit", () => {
+  it("retains a committed receipt through lost acknowledgement, ordinary edits, and restart", async () => {
+    let loseAck = false;
+    const session = await DocumentSessionManager.create({
+      workspaceRoots: [workspace], stateRoot, atomicWriteHooks: {
+        async afterRename(path) {
+          if (loseAck && path.endsWith("/session.json")) throw new Error("lost acknowledgement");
+        },
+      },
+    }, codec);
+    const { documentId } = await session.open(source);
+    const request = { epoch: "a".repeat(32), sequence: 1, snapshotHash: "b".repeat(64), sourceStamp: await session.bridgeSourceStamp(documentId, 0) };
+    loseAck = true;
+    await expect(session.commitBridgeSnapshot(documentId, 0, request, () => ({ value: "GUI", valid: true }))).rejects.toMatchObject({ committed: true });
+    expect(session.inspect(documentId)).toMatchObject({ revision: 1, document: { value: "GUI" } });
+    loseAck = false;
+    await session.mutate(documentId, 1, (draft) => { draft.value = "later MCP edit"; });
+    const restarted = await manager();
+    await restarted.recover();
+    const replay = await restarted.commitBridgeSnapshot(documentId, 0, request, () => { throw new Error("replayed GUI edit"); });
+    expect(replay).toEqual({ revision: 1, replayed: true });
+    expect(restarted.inspect(documentId)).toMatchObject({ revision: 2, document: { value: "later MCP edit" } });
+    await expect(restarted.commitBridgeSnapshot(documentId, 2, { ...request, epoch: "d".repeat(32) }, () => ({ value: "later GUI", valid: true })))
+      .rejects.toThrow(/durable receipt/u);
+    await expect(restarted.commitBridgeSnapshot(documentId, 0, { ...request, snapshotHash: "c".repeat(64) }, () => ({ value: "wrong", valid: true })))
+      .rejects.toThrow(/does not match/u);
+    expect(JSON.parse(await readFile(source, "utf8"))).toEqual({ value: "original", valid: true });
+  });
+
+  it("rejects a stale revision and a source replaced during the working-copy commit", async () => {
+    let replace = false;
+    const session = await manager(async (_temporary, target) => {
+      if (!replace || !target.endsWith("/session.json")) return;
+      const copy = source + ".replacement";
+      await writeFile(copy, await readFile(source));
+      await rename(copy, source);
+    });
+    const { documentId } = await session.open(source);
+    const request = { epoch: "a".repeat(32), sequence: 1, snapshotHash: "b".repeat(64), sourceStamp: await session.bridgeSourceStamp(documentId, 0) };
+    await expect(session.commitBridgeSnapshot(documentId, 1, request, () => ({ value: "stale", valid: true }))).rejects.toBeInstanceOf(RevisionConflictError);
+    replace = true;
+    await expect(session.commitBridgeSnapshot(documentId, 0, request, () => ({ value: "GUI", valid: true }))).rejects.toBeInstanceOf(SourceChangedError);
+    expect(session.inspect(documentId)).toMatchObject({ revision: 0, document: { value: "original" } });
   });
 });

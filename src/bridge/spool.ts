@@ -9,6 +9,8 @@ import { readHandleBounded } from "../persistence/bounded-read.js";
 
 const entryLimits = {
   attachment: 32 * 1024,
+  intent: 32 * 1024,
+  offer: 32 * 1024,
   snapshot: NATIVE_OPERATION_LIMITS.maxDocumentSourceBytes,
   proposal: NATIVE_OPERATION_LIMITS.maxDocumentSourceBytes,
   receipt: 32 * 1024,
