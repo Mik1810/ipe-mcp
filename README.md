@@ -114,7 +114,8 @@ native stdio scenario. See [package installation](./docs/guides/package-installa
 [host integration](./docs/guides/host-integration.md).
 
 For an authenticated client on the same Linux or WSL host, see the
-[opt-in HTTP configuration](./docs/guides/local-http.md).
+[opt-in HTTP configuration](./docs/guides/local-http.md). For an open Ipe
+window on the verified WSL lane, see the [live Ipe bridge](./docs/guides/live-ipe-bridge.md).
 
 ## Verification
 

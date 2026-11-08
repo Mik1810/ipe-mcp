@@ -10,6 +10,7 @@ import {
   type AtomicWriteOptions,
 } from "./atomic.js";
 import {
+  BridgeReviewPendingError,
   PathOutsideWorkspaceError,
   RevisionConflictError,
   SourceChangedError,
@@ -68,6 +69,13 @@ export interface BridgeCommit {
   readonly revision: number;
 }
 
+export interface BridgeGrant {
+  readonly epoch: string;
+  readonly sequence: number;
+  readonly revision: number;
+  readonly proposalHash: string;
+}
+
 export interface SaveResult {
   readonly documentId: string;
   readonly revision: number;
@@ -102,6 +110,7 @@ interface StoredSession<Document> {
   sourceInode: string;
   manifestState: TargetState;
   bridgeCommit?: BridgeCommit;
+  bridgeGrant?: BridgeGrant;
 }
 
 interface ExistingTargetState {
@@ -128,6 +137,7 @@ interface SessionManifestV1 {
   readonly revision: number;
   readonly workingFile: string;
   readonly bridgeCommit?: BridgeCommit;
+  readonly bridgeGrant?: BridgeGrant;
 }
 
 interface SaveJournalV1 {
@@ -217,11 +227,23 @@ function validBridgeCommit(input: unknown, revision: number): boolean {
     && entry.revision > 0 && entry.revision <= revision;
 }
 
+function validBridgeGrant(input: unknown, revision: number): boolean {
+  if (typeof input !== "object" || input === null) return false;
+  const entry = input as Record<string, unknown>;
+  return Object.keys(entry).length === 4 && validBridgeSequence(entry.epoch, entry.sequence)
+    && sha256Hex(entry.proposalHash) && Number.isSafeInteger(revision) && revision >= 1 && entry.revision === revision;
+}
+
+function sameBridgeGrant(a: BridgeGrant, b: BridgeGrant): boolean {
+  return a.epoch === b.epoch && a.sequence === b.sequence && a.revision === b.revision && a.proposalHash === b.proposalHash;
+}
+
 function parseManifest(input: unknown): SessionManifestV1 {
   if (typeof input !== "object" || input === null) throw new Error("invalid session manifest");
   const value = input as Record<string, unknown>;
   const keys = Object.keys(value).sort();
   const expected = ["documentId", "revision", "schemaVersion", "sourceDevice", "sourceHash", "sourceInode", "sourcePath", "workingFile"];
+  if (Object.hasOwn(value, "bridgeGrant")) expected.unshift("bridgeGrant");
   if (Object.hasOwn(value, "bridgeCommit")) expected.unshift("bridgeCommit");
   if (JSON.stringify(keys) !== JSON.stringify(expected)) throw new Error("invalid session manifest fields");
   if (value.schemaVersion !== 1 || typeof value.documentId !== "string" || typeof value.sourcePath !== "string" ||
@@ -234,6 +256,9 @@ function parseManifest(input: unknown): SessionManifestV1 {
   }
   if (Object.hasOwn(value, "bridgeCommit") && !validBridgeCommit(value.bridgeCommit, value.revision)) {
     throw new Error("invalid bridge commit receipt");
+  }
+  if (Object.hasOwn(value, "bridgeGrant") && !validBridgeGrant(value.bridgeGrant, value.revision)) {
+    throw new Error("invalid bridge grant");
   }
   return value as unknown as SessionManifestV1;
 }
@@ -362,7 +387,7 @@ export class DocumentSessionManager<Document> {
   ): Promise<MutationResult<Document>> {
     const session = this.#session(documentId);
     return session.mutex.run(async () => {
-      this.#assertRevision(session, expectedRevision);
+      this.#assertWritableRevision(session, expectedRevision);
       const draft = clone(session.document);
       await operation(draft);
       return await this.#commitWorkingDocument(session, draft);
@@ -398,7 +423,7 @@ export class DocumentSessionManager<Document> {
         }
         return { revision: last.revision, replayed: true };
       }
-      this.#assertRevision(session, expectedRevision);
+      this.#assertWritableRevision(session, expectedRevision);
       if (last !== undefined && await hasReceipt?.(last) !== true) {
         throw new Error("Previous bridge commit awaits its durable receipt");
       }
@@ -411,6 +436,57 @@ export class DocumentSessionManager<Document> {
       const result = await this.#commitWorkingDocument(session, draft, bridgeCommit, checkSource);
       return { revision: result.revision, replayed: false };
     });
+  }
+
+  /** Freeze the working revision until the GUI outcome has a durable receipt. */
+  reserveBridgeGrant(documentId: string, grant: BridgeGrant, sourceStamp: string, stillPending: () => Promise<boolean>): Promise<void> {
+    if (!validBridgeGrant(grant, grant.revision) || !sha256Hex(sourceStamp)) throw new Error("Invalid bridge grant");
+    const session = this.#session(documentId);
+    return session.mutex.run(async () => {
+      const checkSource = async () => {
+        if (await this.#sourceStamp(session) !== sourceStamp) throw new SourceChangedError(session.sourcePath);
+        if (!await stillPending()) throw new Error("The bridge proposal is already settled");
+      };
+      this.#assertRevision(session, grant.revision);
+      if (session.bridgeGrant !== undefined) {
+        if (!sameBridgeGrant(session.bridgeGrant, grant)) throw new BridgeReviewPendingError();
+        await checkSource();
+        return;
+      }
+      await this.#writeBridgeGrant(session, grant, checkSource);
+    });
+  }
+
+  async confirmBridgeGrant(documentId: string, grant: BridgeGrant): Promise<void> {
+    const session = this.#session(documentId);
+    await session.mutex.run(async () => {
+      if (session.bridgeGrant === undefined || !sameBridgeGrant(session.bridgeGrant, grant)) {
+        throw new Error("The Ipe bridge grant is not active");
+      }
+    });
+  }
+
+  releaseBridgeGrant(documentId: string, grant: BridgeGrant): Promise<void> {
+    const session = this.#session(documentId);
+    return session.mutex.run(async () => {
+      if (session.bridgeGrant !== undefined && sameBridgeGrant(session.bridgeGrant, grant)) {
+        await this.#writeBridgeGrant(session, null);
+      }
+    });
+  }
+
+  async #writeBridgeGrant(session: StoredSession<Document>, grant: BridgeGrant | null, precondition?: () => Promise<void>): Promise<void> {
+    const finish = () => {
+      if (grant === null) delete session.bridgeGrant;
+      else session.bridgeGrant = { ...grant };
+    };
+    try {
+      await this.#writeManifest(session, { bridgeGrant: grant }, precondition);
+    } catch (error) {
+      if (error instanceof AtomicWriteError && error.committed) finish();
+      throw error;
+    }
+    finish();
   }
 
   async #sourceStamp(session: StoredSession<Document>): Promise<string> {
@@ -465,7 +541,7 @@ export class DocumentSessionManager<Document> {
   ): Promise<SaveResult> {
     const session = this.#session(documentId);
     return session.mutex.run(async () => {
-      this.#assertRevision(session, expectedRevision);
+      this.#assertWritableRevision(session, expectedRevision);
       const target = await this.#resolveTargetAllowed(targetPath ?? session.sourcePath);
       const previous = await targetState(target, this.#maxSourceBytes);
       if (target === session.sourcePath) {
@@ -576,6 +652,7 @@ export class DocumentSessionManager<Document> {
         sourceInode: manifest.sourceInode,
         manifestState,
         ...(manifest.bridgeCommit === undefined ? {} : { bridgeCommit: manifest.bridgeCommit }),
+        ...(manifest.bridgeGrant === undefined ? {} : { bridgeGrant: manifest.bridgeGrant }),
       };
       this.#sessions.set(session.documentId, session);
       await this.#recoverSaveJournals(session);
@@ -596,7 +673,7 @@ export class DocumentSessionManager<Document> {
   async createSnapshot(documentId: string, expectedRevision: number): Promise<string> {
     const session = this.#session(documentId);
     return await session.mutex.run(async () => {
-      this.#assertRevision(session, expectedRevision);
+      this.#assertWritableRevision(session, expectedRevision);
       const serialized = this.#codec.serialize(session.document);
       this.#assertSerializedSize(serialized);
       const sequence = await this.#allocateSnapshotSequence(session);
@@ -613,7 +690,7 @@ export class DocumentSessionManager<Document> {
   async undo(documentId: string, expectedRevision: number): Promise<MutationResult<Document>> {
     const session = this.#session(documentId);
     return await session.mutex.run(async () => {
-      this.#assertRevision(session, expectedRevision);
+      this.#assertWritableRevision(session, expectedRevision);
       if (expectedRevision < 1) throw new Error("session has no previous revision to undo");
       const prefix = `working-r${expectedRevision - 1}-`;
       const previousName = (await readdir(session.workDirectory)).find((name) => name.startsWith(prefix) && name.endsWith(".ipe"));
@@ -650,7 +727,7 @@ export class DocumentSessionManager<Document> {
   ): Promise<MutationResult<Document>> {
     const session = this.#session(documentId);
     return session.mutex.run(async () => {
-      this.#assertRevision(session, expectedRevision);
+      this.#assertWritableRevision(session, expectedRevision);
       const available = await this.snapshots(documentId);
       const selected = snapshotPath ?? available.at(-1);
       if (selected === undefined) throw new Error("session has no snapshot to restore");
@@ -695,6 +772,11 @@ export class DocumentSessionManager<Document> {
     }
   }
 
+  #assertWritableRevision(session: StoredSession<Document>, expectedRevision: number): void {
+    this.#assertRevision(session, expectedRevision);
+    if (session.bridgeGrant !== undefined) throw new BridgeReviewPendingError();
+  }
+
   #atomicOptions(): AtomicWriteOptions {
     return this.#hooks === undefined ? {} : { hooks: this.#hooks };
   }
@@ -737,10 +819,11 @@ export class DocumentSessionManager<Document> {
 
   async #writeManifest(
     session: StoredSession<Document>,
-    overrides: { readonly revision?: number; readonly workingPath?: string; readonly bridgeCommit?: BridgeCommit } = {},
+    overrides: { readonly revision?: number; readonly workingPath?: string; readonly bridgeCommit?: BridgeCommit; readonly bridgeGrant?: BridgeGrant | null } = {},
     precondition?: () => Promise<void>,
   ): Promise<void> {
     const bridgeCommit = overrides.bridgeCommit ?? session.bridgeCommit;
+    const bridgeGrant = overrides.bridgeGrant === undefined ? session.bridgeGrant : overrides.bridgeGrant;
     const manifest: SessionManifestV1 = {
       schemaVersion: 1,
       documentId: session.documentId,
@@ -751,6 +834,7 @@ export class DocumentSessionManager<Document> {
       revision: overrides.revision ?? session.revision,
       workingFile: basename(overrides.workingPath ?? session.workingPath),
       ...(bridgeCommit === undefined ? {} : { bridgeCommit }),
+      ...(bridgeGrant == null ? {} : { bridgeGrant }),
     };
     const path = join(session.workDirectory, "session.json");
     const expected = session.manifestState;

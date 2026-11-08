@@ -11,6 +11,10 @@ const entryLimits = {
   attachment: 32 * 1024,
   intent: 32 * 1024,
   offer: 32 * 1024,
+  approval: 32 * 1024,
+  grant: 32 * 1024,
+  consumed: 32 * 1024,
+  outcome: 32 * 1024,
   snapshot: NATIVE_OPERATION_LIMITS.maxDocumentSourceBytes,
   proposal: NATIVE_OPERATION_LIMITS.maxDocumentSourceBytes,
   receipt: 32 * 1024,
@@ -108,6 +112,14 @@ export class BridgeSpool {
   }
 
   async publish(key: BridgeEntryKey, data: Uint8Array): Promise<string> {
+    return await this.#publish(key, data, false);
+  }
+
+  async publishOnce(key: BridgeEntryKey, data: Uint8Array): Promise<string> {
+    return await this.#publish(key, data, true);
+  }
+
+  async #publish(key: BridgeEntryKey, data: Uint8Array, exclusive: boolean): Promise<string> {
     const name = entryName(key);
     const limit = entryLimits[key.kind];
     if (data.byteLength === 0 || data.byteLength > limit) throw new Error("Bridge entry size exceeds its bounds");
@@ -127,6 +139,7 @@ export class BridgeSpool {
         });
       } catch (error) {
         if (!(error instanceof EntryAlreadyExists)) throw error;
+        if (exclusive) throw new Error("Bridge entry was already consumed");
         const existing = await readEntry(path, limit);
         if (existing === undefined || !bytes.equals(existing.bytes)) throw new Error("Bridge entry already exists with different content");
       }

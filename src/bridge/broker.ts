@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 
 import { ipeDocumentCodec, type IpeDocument } from "../core/ipe-document-codec.js";
-import type { BridgeCommit, DocumentSessionManager } from "../persistence/session-manager.js";
+import type { BridgeCommit, BridgeGrant, DocumentSessionManager } from "../persistence/session-manager.js";
 import { BridgeConflictError, checkInitialBridgeSnapshot, parseBridgeSnapshot, reconcileBridgeSnapshot } from "./snapshot.js";
 import { BridgeSpool } from "./spool.js";
 
@@ -13,6 +13,12 @@ const invitationSchema = z.object({ documentId: z.uuid(), revision, sourceStamp:
 const receiptSchema = z.object({ revision, snapshotHash: digest }).strict();
 const offerSchema = z.object({
   baseRevision: revision, targetRevision: revision, baseSnapshotHash: digest, proposalHash: digest,
+}).strict();
+const approvalSchema = z.object({
+  proposalHash: digest, baseSnapshotHash: digest, decision: z.enum(["approved", "declined"]),
+}).strict();
+const outcomeSchema = z.object({
+  proposalHash: digest, snapshotHash: digest, disposition: z.enum(["applied", "unchanged"]),
 }).strict();
 type Receipt = z.infer<typeof receiptSchema>;
 type Offer = z.infer<typeof offerSchema>;
@@ -96,6 +102,83 @@ export class BridgeBroker {
     });
     await this.spool.publish({ epoch, sequence, kind: "offer" }, encode(result));
     return result;
+  }
+
+  /** A local GUI decision, both hashes, and the current revision are required. */
+  async authorize(epoch: string, sequence: number): Promise<{ readonly targetRevision: number }> {
+    requireSequence(sequence);
+    const invitation = await this.#invitation(epoch);
+    const offer = await this.#offer(epoch, sequence);
+    const approval = await this.#approval(epoch, sequence, offer);
+    if (approval.decision !== "approved") throw new BridgeConflictError("Ipe did not approve the proposal");
+    if (await this.#receipt(epoch, sequence) !== undefined) throw new BridgeConflictError("proposal already settled");
+    const grant = this.#grant(epoch, sequence, offer);
+    await this.sessions.reserveBridgeGrant(invitation.documentId, grant, invitation.sourceStamp,
+      async () => await this.#receipt(epoch, sequence) === undefined);
+    await this.spool.publish({ epoch, sequence, kind: "grant" }, encode(grant));
+    return { targetRevision: grant.revision };
+  }
+
+  async settle(epoch: string, sequence: number): Promise<Receipt> {
+    requireSequence(sequence);
+    const invitation = await this.#invitation(epoch);
+    const offer = await this.#offer(epoch, sequence);
+    const approval = await this.#approval(epoch, sequence, offer);
+    const grant = this.#grant(epoch, sequence, offer);
+    const snapshot = await this.#snapshot(epoch, sequence);
+    const existing = await this.#receipt(epoch, sequence);
+    if (existing !== undefined) {
+      this.#sameSnapshot(existing, snapshot.sha256);
+      await this.sessions.releaseBridgeGrant(invitation.documentId, grant);
+      return existing;
+    }
+    const record = await this.spool.read({ epoch, sequence, kind: "outcome" });
+    if (record === undefined) throw new BridgeConflictError("GUI outcome is absent");
+    const outcome = decode(outcomeSchema, record.bytes);
+    if (outcome.proposalHash !== offer.proposalHash || outcome.snapshotHash !== snapshot.sha256) {
+      throw new BridgeConflictError("GUI outcome does not match the proposal or snapshot");
+    }
+    if (approval.decision === "approved") {
+      const consumed = await this.spool.read({ epoch, sequence, kind: "consumed" });
+      if (consumed === undefined) throw new BridgeConflictError("GUI did not consume the grant");
+      await this.sessions.confirmBridgeGrant(invitation.documentId, grant);
+    } else if (outcome.disposition !== "unchanged") {
+      throw new BridgeConflictError("declined proposal reported a GUI write");
+    }
+    const unchanged = outcome.disposition === "unchanged";
+    if (unchanged) {
+      if (snapshot.sha256 !== offer.baseSnapshotHash) throw new BridgeConflictError("GUI baseline changed");
+    } else {
+      const proposal = await this.spool.read({ epoch, sequence, kind: "proposal" });
+      if (proposal?.sha256 !== offer.proposalHash) throw new BridgeConflictError("proposal bytes changed");
+      checkInitialBridgeSnapshot(parseBridgeSnapshot(proposal.bytes), parseBridgeSnapshot(snapshot.bytes));
+    }
+    const receipt = await this.#publishReceipt(epoch, sequence, {
+      revision: unchanged ? offer.baseRevision : offer.targetRevision,
+      snapshotHash: snapshot.sha256,
+    });
+    await this.sessions.releaseBridgeGrant(invitation.documentId, grant);
+    return receipt;
+  }
+
+  #grant(epoch: string, sequence: number, offer: Offer): BridgeGrant {
+    return { epoch, sequence, revision: offer.targetRevision, proposalHash: offer.proposalHash };
+  }
+
+  async #offer(epoch: string, sequence: number): Promise<Offer> {
+    const record = await this.spool.read({ epoch, sequence, kind: "offer" });
+    if (record === undefined) throw new BridgeConflictError("proposal is absent");
+    return decode(offerSchema, record.bytes);
+  }
+
+  async #approval(epoch: string, sequence: number, offer: Offer) {
+    const record = await this.spool.read({ epoch, sequence, kind: "approval" });
+    if (record === undefined) throw new BridgeConflictError("Ipe approval is absent");
+    const approval = decode(approvalSchema, record.bytes);
+    if (approval.proposalHash !== offer.proposalHash || approval.baseSnapshotHash !== offer.baseSnapshotHash) {
+      throw new BridgeConflictError("Ipe decision does not match the proposal");
+    }
+    return approval;
   }
 
   async #claim(epoch: string, sequence: number, direction: "gui" | "mcp", hash: string): Promise<void> {

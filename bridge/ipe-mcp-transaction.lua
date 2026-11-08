@@ -72,15 +72,17 @@ function transaction.stage(model, baseline, bytes, checkSource)
   local candidate = loadCandidate(bytes)
   if not candidate or #candidate == 0 then return nil, "invalid-candidate" end
   local reviewed = false
-  return function(confirm)
+  local summary = { previousPages = #model.doc, proposedPages = #candidate }
+  local function review(confirm)
     if reviewed then return "already-reviewed" end
     reviewed = true
     if not unchanged() then return "conflict" end
-    if confirm({ previousPages = #model.doc, proposedPages = #candidate }) ~= true then return "declined" end
+    if confirm(summary) ~= true then return "declined" end
     if not unchanged() then return "conflict" end
     replaceDocument(model, candidate)
     return "applied"
   end
+  return review, summary
 end
 
 return transaction

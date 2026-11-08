@@ -8,6 +8,10 @@ export class BridgeConflictError extends Error {
   constructor(readonly aspect: string) { super("Bridge identity or baseline conflict: " + aspect); }
 }
 
+function derivedTextMetrics(object: IpeObject): readonly string[] {
+  return object.xml?.attributes?.type === "minipage" ? ["height", "depth"] : ["width", "height", "depth"];
+}
+
 export function parseBridgeSnapshot(bytes: Uint8Array): IpeDocument {
   const parsed = ipeDocumentCodec.parse(bytes);
   checkDocumentShapeLimits(parsed);
@@ -21,12 +25,20 @@ export function parseBridgeSnapshot(bytes: Uint8Array): IpeDocument {
 /** Pair the initial snapshots only after proving their native semantics agree. */
 export function checkInitialBridgeSnapshot(base: IpeDocument, snapshot: IpeDocument): void {
   const comparable = structuredClone(snapshot);
+  const expected = structuredClone(base);
   if (comparable.pages.length !== base.pages.length) throw new BridgeConflictError("page count");
   for (const [index, page] of comparable.pages.entries()) {
-    const reference = base.pages[index]!;
+    const reference = expected.pages[index]!;
     if (page.objects.length !== reference.objects.length) throw new BridgeConflictError("object count");
     for (const [position, object] of page.objects.entries()) {
       const old = reference.objects[position]!;
+      // Ipe Qt can save a working copy before LaTeX metrics have been built.
+      // A present metric still has to match exactly.
+      if (object.xml?.name === "text" && old.xml?.name === "text" && old.xml.attributes !== undefined) {
+        for (const metric of derivedTextMetrics(old)) {
+          if (object.xml.attributes?.[metric] === undefined) delete old.xml.attributes[metric];
+        }
+      }
       if (object.xml?.attributes?.custom === undefined && old.xml?.attributes?.custom === undefined) {
         // Ipe may assign a different positional fallback after native XML normalization.
         object.id = old.id;
@@ -34,7 +46,7 @@ export function checkInitialBridgeSnapshot(base: IpeDocument, snapshot: IpeDocum
       }
     }
   }
-  try { assertMappingPreserved(base, comparable); }
+  try { assertMappingPreserved(expected, comparable); }
   catch { throw new BridgeConflictError("open Ipe and MCP documents differ"); }
 }
 
@@ -223,6 +235,13 @@ export function reconcileBridgeSnapshot(canonical: IpeDocument, previous: IpeDoc
     if (custom(object) === undefined && baseline.custom !== undefined) object.custom = baseline.custom;
   }
   rebindStyles(previous, canonical, next);
+  // GUI render metrics describe a particular LaTeX run. Recompute them through
+  // the native pipeline instead of declaring them as persistent geometry.
+  for (const object of afterObjects) {
+    if (object.xml?.name === "text" && object.xml.attributes !== undefined) {
+      for (const metric of derivedTextMetrics(object)) delete object.xml.attributes[metric];
+    }
+  }
   if (ipeDocumentCodec.validate(next).some(({ severity }) => severity === "error")) throw new BridgeConflictError("reconciled identity");
   return next;
 }

@@ -118,4 +118,38 @@ describe.skipIf(process.platform !== "linux")("bridge broker and revisioned Ipe 
     expect(service.sessions.inspect(opened.documentId).revision).toBe(0);
   });
 
+
+  it("requires a GUI decision, reserves the revision across restart, and only releases on a verified outcome", async () => {
+    const opened = await service.sessions.open(source);
+    const broker = new BridgeBroker(service.sessions, spool);
+    const { epoch } = await broker.invite(opened.documentId, 0);
+    const gui = (await service.native.reload(opened.document)).source;
+    await post(epoch, 0, gui);
+    await broker.attach(epoch);
+    await service.sessions.mutate(opened.documentId, 0, (document) => { document.metadata = { ...document.metadata, title: "Approved proposal" }; });
+    const offer = await broker.offer(epoch, 1, 1);
+    const write = (kind: "approval" | "consumed" | "outcome", value: object) =>
+      spool.publish({ epoch, sequence: 1, kind }, Buffer.from(JSON.stringify(value)));
+    await expect(broker.authorize(epoch, 1)).rejects.toMatchObject({ code: "BRIDGE_CONFLICT" });
+    await write("approval", { decision: "approved", baseSnapshotHash: offer.baseSnapshotHash, proposalHash: offer.proposalHash });
+    expect(await broker.authorize(epoch, 1)).toEqual({ targetRevision: 1 });
+    await expect(service.sessions.mutate(opened.documentId, 1, () => undefined)).rejects.toMatchObject({ code: "BRIDGE_REVIEW_PENDING" });
+
+    const restarted = await IpeMcpService.create([workspace], state);
+    await restarted.recover();
+    const recovered = new BridgeBroker(restarted.sessions, spool);
+    await expect(restarted.sessions.save(opened.documentId, 1, join(workspace, "blocked.ipe"))).rejects.toMatchObject({ code: "BRIDGE_REVIEW_PENDING" });
+    expect(await recovered.authorize(epoch, 1)).toEqual({ targetRevision: 1 });
+    const proposal = await spool.read({ epoch, sequence: 1, kind: "proposal" });
+    const snapshot = (await restarted.native.reload(ipeDocumentCodec.parse(proposal!.bytes))).source;
+    const snapshotHash = await post(epoch, 1, snapshot);
+    await write("outcome", { disposition: "applied", proposalHash: offer.proposalHash, snapshotHash });
+    await expect(recovered.settle(epoch, 1)).rejects.toMatchObject({ code: "BRIDGE_CONFLICT" });
+    await write("consumed", { proposalHash: offer.proposalHash });
+    expect(await recovered.settle(epoch, 1)).toEqual({ revision: 1, snapshotHash });
+    expect(await recovered.settle(epoch, 1)).toEqual({ revision: 1, snapshotHash });
+    await expect(recovered.authorize(epoch, 1)).rejects.toThrow(/already settled/u);
+    expect((await restarted.sessions.mutate(opened.documentId, 1, () => undefined)).revision).toBe(2);
+  });
+
 });

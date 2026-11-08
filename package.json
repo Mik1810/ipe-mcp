@@ -39,7 +39,10 @@
     "docs/reference/package-sbom.json",
     "scripts/conformance/m6-artifact-worker.mjs",
     "scripts/conformance/m6-native.lua",
-    "docs/guides/local-http.md"
+    "docs/guides/local-http.md",
+    "bridge/ipe-mcp-live.lua",
+    "bridge/ipe-mcp-transaction.lua",
+    "docs/guides/live-ipe-bridge.md"
   ],
   "engines": {
     "node": ">=20"
@@ -70,7 +73,8 @@
     "check:m10:package": "bash scripts/gates/check-m10-package.sh",
     "check:m10:release": "bash scripts/gates/check-m10-release.sh",
     "mcp:http": "node dist/src/cli/mcp-http.js",
-    "check:m10:http": "bash scripts/gates/check-m10-http.sh"
+    "check:m10:http": "bash scripts/gates/check-m10-http.sh",
+    "check:m10:bridge": "bash scripts/gates/check-m10-bridge-transaction.sh"
   },
   "bin": {
     "ipe-mcp": "dist/src/cli/mcp-stdio.js",
