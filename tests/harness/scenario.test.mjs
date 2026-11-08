@@ -4,10 +4,35 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { runScenario } from "../../scripts/harness/core.mjs";
+import { crossHostOutcome } from "../../scripts/harness/cross-host.mjs";
 import { assertPortableValue, HarnessFailure, portableFailure, redactPortableText } from "../../scripts/harness/privacy.mjs";
 import { GLOBAL_LIMITS, parseResult, parseScenario } from "../../scripts/harness/schema.mjs";
 
 const fixture = JSON.parse(await readFile(resolve("fixtures/conformance/m10/portable-create-edit-export.json"), "utf8"));
+
+describe("cross-host conformance", () => {
+  const passing = {
+    status: "PASS", scenarioId: fixture.id, contract: fixture.requirements.contract,
+    capabilityMode: fixture.requirements.capabilityMode, assertions: { semantic: "PASS", visual: "PASS" },
+    mutationHistory: [], artifacts: [{ kind: "ipe", mediaType: "application/xml", observations: { pageCount: 1 } }],
+  };
+
+  it("compares public observations rather than generated artifact hashes", () => {
+    const withHash = { ...passing, artifacts: [{ ...passing.artifacts[0], sha256: "different" }] };
+    expect(crossHostOutcome(passing, withHash)).toMatchObject({ status: "PASS", differences: [] });
+    const changed = { ...passing, artifacts: [{ ...passing.artifacts[0], observations: { pageCount: 2 } }] };
+    expect(crossHostOutcome(passing, changed)).toMatchObject({ status: "FAIL", differences: ["ARTIFACT_OBSERVATIONS_MISMATCH"] });
+    const incomplete = { ...passing, assertions: { semantic: "PASS", visual: "NOT_RUN" } };
+    expect(crossHostOutcome(incomplete, incomplete)).toMatchObject({ status: "FAIL" });
+  });
+
+  it("skips missing capability only before any mutation and never counts it as passing", () => {
+    const unsupported = { ...passing, status: "FAIL", failure: { code: "ADAPTER_CAPABILITY_UNMET" } };
+    expect(crossHostOutcome(passing, undefined)).toMatchObject({ status: "SKIP" });
+    expect(crossHostOutcome(passing, unsupported)).toMatchObject({ status: "SKIP" });
+    expect(crossHostOutcome(passing, { ...unsupported, mutationHistory: [{ action: "add-rectangle" }] })).toMatchObject({ status: "FAIL" });
+  });
+});
 
 describe("provider-neutral scenario schema", () => {
   it("accepts the representative semantic scenario", () => {

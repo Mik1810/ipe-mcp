@@ -102,8 +102,8 @@ errors; never claim verification for a skipped or blocked check).
   fixture + `LICENSE.TUD-slides`. The gate asserts the fixture is
   byte-identical to the pinned commit hash and that no other `.ipe`/PDF/PNG
   artifact is retained.
-- The runner is deterministic per run (same source hashes, same pinned
-  commit, same edit); classifications are observed on the machine state
-  captured above and are expected to move only with intentional candidate
-  changes (e.g. the M6 LaTeX profile or the format boundary), never as a
-  result of re-running the review.
+- The live gate checks the same source hashes, document shape, edit and revision
+  outcomes, per-page coverage, and native classification codes against the
+  archived run. It accepts a native pass in place of a recorded failure when
+  the corresponding artifact evidence is present. Capture dates, generated
+  IDs, generated artifact hashes, and diagnostic prose can vary by run.

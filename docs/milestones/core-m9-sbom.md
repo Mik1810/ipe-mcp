@@ -88,10 +88,14 @@ the subprocess boundary would normally keep the server's MIT code independent.
 ## Regeneration and verification
 
 ```bash
-node scripts/tools/sbom.mjs docs/reference/sbom.json      # regenerate (byte-deterministic)
-bash scripts/gates/check-m9-sbom.sh                # gate: determinism + coverage
+node scripts/tools/sbom.mjs /tmp/ipe-m9-sbom.json --project-version 0.1.0
+bash scripts/gates/check-m9-sbom.sh
 ```
 
-The SBOM is deterministic: identical inputs produce byte-identical output
-(no timestamps, UUIDs, or map-iteration ordering). The gate regenerates into a
-temporary directory and asserts it matches `docs/reference/sbom.json` exactly.
+Identical inputs produce byte-identical output. The gate generates twice from
+the installed toolchain and compares the results byte for byte. It also checks
+the live inventory against the archived M9 SBOM, including every npm component,
+license, provenance field, and native package identity. Only newer Ubuntu point
+revisions in the same `ubuntu0` series for `bubblewrap` and `poppler-utils` may
+differ, with their versioned references updated consistently. The archived
+SBOM remains the record of the original environment.

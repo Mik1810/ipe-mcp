@@ -25,6 +25,26 @@ The paths are runner inputs only and are never written into the portable result.
 The result's transcript records public event names and outcomes, not raw MCP
 arguments, prompts, resource URIs, local paths, or private reasoning.
 
+Run `npm run check:m10:cross-host` to exercise that same scenario through the
+official SDK and a local Codex App Server. Codex CLI must be on `PATH` and expose
+the App Server MCP tool and resource methods. The runner uses an ephemeral,
+read-only App Server session with an isolated configuration and an allowlisted
+environment. It calls the registered Ipe server directly, without starting a
+model turn or requiring an account. The Ipe server writes only into the private
+scenario workspace under the fixture's explicit approvals.
+
+The comparison checks the contract, capability mode, semantic and visual
+assertions, artifact observations, and mutation outcomes. Host-local IDs,
+artifact hashes, tool-call order, and private App Server diagnostics are not
+comparison inputs. A host that lacks a required capability before mutation is
+reported as `SKIP` (exit 77), a mismatch or failure as `FAIL`, and a `PASS`
+requires both hosts to pass. For retained per-host result bundles and bounded
+comparison codes, call `scripts/harness/run-cross-host.mjs` with the same
+scenario and command arguments plus `--codex /path/to/codex --output /path/to/results`.
+The official SDK checks MCP initialize identity and server version. App Server
+does not expose that handshake to the runner, so its result omits the product
+version and checks the contract through the explicitly configured server.
+
 ## Adapter contract
 
 An adapter exposes an `identity` and an asynchronous `execute()` function. The
