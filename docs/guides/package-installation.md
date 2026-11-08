@@ -84,6 +84,8 @@ supported packaged lane must report product `1.0.0-rc.1` during MCP initialize,
 contract `ipe-mcp/1`, and capability mode `full-7.2.30`. A
 `structural-only` result is usable only within its explicitly degraded limits.
 
+For the optional local Codex integration, see the [plugin template](./codex-plugin.md).
+
 ## Update and Rollback
 
 There is no automatic updater. Retain the previous exact tarball or, after a
