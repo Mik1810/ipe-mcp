@@ -45,4 +45,11 @@ The server treats documents, LaTeX, assets, and metadata as untrusted input. The
 - Mitigation: stdio only in the MVP. [ADR-0007](0007-local-streamable-http.md) defines authenticated loopback HTTP for M10.
 - Future gate: run the [TM-HTTP adversarial matrix](../security/tm-http.md) before claiming HTTP support.
 
+## Open Ipe bridge
+
+[ADR-0008](0008-live-ipe-bridge.md) defines the bridge boundary for M10.
+The bridge extends TM-FS, TM-CONCURRENCY and TM-METADATA to an open GUI
+document. Private staging, explicit operator consent and rechecking the
+common revision before apply are required before enabling any GUI writes.
+
 Distribution remains an approved deferral: it will be reassessed with licensing, packaging, and sandboxing.
