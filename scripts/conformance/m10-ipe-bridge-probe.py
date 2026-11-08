@@ -1,5 +1,7 @@
 """Probe an actual Ipe Qt model, using only a disposable copy of a fixture."""
 import os
+import re
+import sys
 import shutil
 import subprocess
 import tempfile
@@ -33,7 +35,7 @@ def stop(process):
             process.wait(timeout=3)
 
 
-def run_probe():
+def verify_ipe_package():
     observed = subprocess.run(
         ["/usr/bin/dpkg-query", "-W", "-f=${Status} ${Version}", "ipe"],
         text=True, capture_output=True, timeout=3, check=True,
@@ -44,6 +46,8 @@ def run_probe():
     if observed.stdout != "install ok installed " + PACKAGE_VERSION or owner.stdout.strip() != "ipe: " + str(IPE):
         raise RuntimeError("Verified Ipe 7.2.30 package required")
 
+def run_probe():
+    verify_ipe_package()
     fixture = ROOT / "fixtures/conformance/minimal.ipe"
     original = fixture.read_bytes()
     with tempfile.TemporaryDirectory(prefix="ipe-bridge-probe-") as temporary:
@@ -83,9 +87,53 @@ def run_probe():
     print("M10 IPE BRIDGE PASS: Ipe 7.2.30 Qt model, dirty snapshot, external replacement isolation, native undo, unchanged fixture and private cleanup")
 
 
+def run_transaction_probe():
+    verify_ipe_package()
+    fixture = ROOT / "fixtures/conformance/minimal.ipe"
+    original = fixture.read_bytes()
+    page = re.search(rb"<page>.*?</page>", original, re.DOTALL).group()
+    tracked = original.replace(b'<path layer="base"', b'<path layer="base" custom="ipe-mcp:bridge-probe-object"', 1)
+    base = tracked.replace(b"</ipe>", page + b"\n</ipe>", 1)
+    candidate = tracked.replace(b"<ipestyle", b'<info title="Reviewed candidate"/>\n<ipestyle', 1)
+    with tempfile.TemporaryDirectory(prefix="ipe-bridge-transaction-") as temporary:
+        directory = Path(temporary)
+        plugins = directory / "ipelets"
+        plugins.mkdir()
+        shutil.copyfile(Path(__file__).with_name("m10-ipe-bridge-transaction.lua"), plugins / "transaction-probe.lua")
+        source, proposal, diagnostics = (directory / name for name in ("source.ipe", "proposal.ipe", "diagnostics"))
+        source.write_bytes(base)
+        proposal.write_bytes(candidate)
+        environment = os.environ | {
+            "QT_QPA_PLATFORM": "offscreen",
+            "IPELETPATH": str(plugins),
+            "IPESTYLES": "_",
+            "XDG_CONFIG_HOME": str(directory / "config"),
+            "XDG_DATA_HOME": str(directory / "data"),
+            "IPE_BRIDGE_TRANSACTION": str(ROOT / "bridge/ipe-mcp-transaction.lua"),
+            "IPE_BRIDGE_PROPOSAL": str(proposal),
+        }
+        with diagnostics.open("wb") as stderr:
+            process = subprocess.Popen([str(IPE), str(source)], cwd=directory, env=environment,
+                                       stdout=subprocess.DEVNULL, stderr=stderr)
+            try:
+                wait_for(process, diagnostics, "REVIEW_APPLY_UNDO_REDO_PASS")
+                assert source.read_bytes() == base, "GUI transaction overwrote the source"
+                assert proposal.read_bytes() == candidate, "GUI transaction rewrote the proposal"
+            finally:
+                stop(process)
+        assert fixture.read_bytes() == original, "source fixture changed"
+    print("M10 IPE BRIDGE PASS: declined and stale review, one approved undoable replacement, custom identity and unchanged source")
+
+
 if __name__ == "__main__":
     try:
-        run_probe()
+        match sys.argv[1:]:
+            case ["--transaction"]:
+                run_transaction_probe()
+            case []:
+                run_probe()
+            case _:
+                raise RuntimeError("Unknown probe mode")
     except (AssertionError, OSError, RuntimeError, subprocess.SubprocessError, ET.ParseError) as failure:
         outcome = str(failure) if type(failure) is RuntimeError else type(failure).__name__
         raise SystemExit("M10 IPE BRIDGE FAIL: " + outcome) from None
