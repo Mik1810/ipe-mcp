@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import { constants } from "node:fs";
 import { open, readFile, realpath } from "node:fs/promises";
 
+import { requestSignal } from "../runtime/request-lifetime.js";
+
 import { NativeIpeError, type NativeErrorCode } from "./errors.js";
 
 export interface ProcessLimits {
@@ -25,8 +27,11 @@ export async function runControlledProcess(
   failureCode: NativeErrorCode,
   environment: Readonly<Record<string, string>> = {},
 ): Promise<ProcessResult> {
+  const signal = requestSignal();
+  assertNativeRequestActive();
   const started = Date.now();
   if (process.platform === "linux") await attestBubblewrap();
+  assertNativeRequestActive();
   const remainingTimeout = limits.timeoutMs - (Date.now() - started);
   if (remainingTimeout < 1) throw new NativeIpeError("NATIVE_TIMEOUT", `native process exceeded ${limits.timeoutMs} ms before spawn`);
   return await new Promise<ProcessResult>((resolve, reject) => {
@@ -55,6 +60,7 @@ export async function runControlledProcess(
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
       if (error !== undefined) reject(error);
       else resolve(result!);
     };
@@ -78,12 +84,26 @@ export async function runControlledProcess(
       else if (signal !== null || (code !== null && code >= 128)) finish(new NativeIpeError("NATIVE_CRASH", `native process terminated by ${signal ?? `status ${code}`}`, compact(err)));
       else finish(new NativeIpeError(failureCode, `native process exited with status ${code ?? "unknown"}`, compact(err)));
     });
+    const abort = () => {
+      limitError ??= nativeCancellation();
+      killTree(child.pid);
+    };
     const timer = setTimeout(() => {
-      limitError = new NativeIpeError("NATIVE_TIMEOUT", `native process exceeded ${limits.timeoutMs} ms`);
+      limitError ??= new NativeIpeError("NATIVE_TIMEOUT", `native process exceeded ${limits.timeoutMs} ms`);
       killTree(child.pid);
     }, remainingTimeout);
     timer.unref();
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
   });
+}
+
+function nativeCancellation(): NativeIpeError {
+  return new NativeIpeError("NATIVE_CANCELLED", "The HTTP request ended before the native operation completed");
+}
+
+export function assertNativeRequestActive(): void {
+  if (requestSignal()?.aborted) throw nativeCancellation();
 }
 
 let bubblewrapAttestation: Promise<void> | undefined;

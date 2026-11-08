@@ -56,3 +56,26 @@ assumptions. Shared host resources mean a local process can still cause
 temporary denial of service within or outside the endpoint's quotas. A client
 disconnect can leave a successfully committed mutation with no delivered
 response. The revision and recovery contract is the reconciliation mechanism.
+
+## Verification
+
+Run the opt-in gate with npm run check:m10:http on the verified Linux or
+WSL native toolchain. It checks the process's actual listener in procfs,
+uses both SDK protocol revisions for the portable native authoring scenario,
+and probes malformed requests with raw TCP when fetch would normalize them.
+The socket checks cover profiles, revisions, rate and size limits, metadata,
+credential handling, process cancellation, active shutdown, rotation and
+durable restart on the same port. A separate controlled lifecycle test
+interrupts the client during an admitted save and verifies that shutdown waits
+for the real atomic write and that the saved document can be recovered.
+
+For 2026-07-28, the official client cancels the request-scoped stream. For
+2025-11-25, closing the request or connection cancels native work. A separate
+legacy cancellation notification carries only a JSON-RPC ID, which cannot
+identify an exchange across stateless clients sharing a credential. It
+does not cancel another exchange. Bound any surviving work with the
+exchange deadline.
+
+The cumulative M9 gate separately audits the default stdio entry point,
+including zero listening sockets. The package gate verifies both installed
+commands and the HTTP startup refusal with a missing credential.

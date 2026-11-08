@@ -30,13 +30,15 @@ for key in ["sha1", "sha256", "sha512"]:
 required_workflow = [
     "workflow_dispatch:", "default: verify-only", "stage-publish", "finalize-release", "runs-on: ubuntu-26.04",
     "permissions:\n  contents: read", "environment: npm-release", "contents: write", "id-token: write",
-    "persist-credentials: false", "npm run check:m10:package", "npm run check:m10:release", "npm stage publish", "--access public --tag next --provenance",
+    "persist-credentials: false", "npm run check:m10:package", "npm run check:m10:http", "npm run check:m10:release", "npm stage publish", "--access public --tag next --provenance",
     "--verify-tag", "--prerelease", "cancel-in-progress: false", "npm audit signatures",
 ]
 for token in required_workflow:
     assert token in workflow, f"release workflow missing {token}"
 for forbidden in ["pull_request_target", "schedule:", "push:\n", "npm publish .", "run: npm publish", "--tag latest", "NODE_AUTH_TOKEN", "secrets.NPM_TOKEN", "bootstrap-publish"]:
     assert forbidden not in workflow, f"unsafe automatic publication trigger/command: {forbidden}"
+verify_job = workflow.split("\n  stage:\n", 1)[0]
+assert verify_job.index("npm run check:m10:http") < verify_job.index("release-candidate.mjs prepare")
 stage_job = workflow.split("\n  stage:\n", 1)[1].split("\n  finalize:\n", 1)[0]
 finalize_job = workflow.split("\n  finalize:\n", 1)[1]
 assert "contents: read" in stage_job and "id-token: write" in stage_job and "contents: write" not in stage_job

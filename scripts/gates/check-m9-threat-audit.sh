@@ -78,7 +78,7 @@ try {
 }
 NODE
 
-python3 - "$ROOT" "$M9_THREAT_TMP" "$CANDIDATE_SOURCE" "$CANDIDATE_TREE" <<'PY' || fail "eight-ID matrix audit"
+python3 - "$ROOT" "$M9_THREAT_TMP" "$CANDIDATE_SOURCE" "$CANDIDATE_TREE" "${1:-}" <<'PY' || fail "eight-ID matrix audit"
 import json
 import pathlib
 import re
@@ -88,6 +88,7 @@ root = pathlib.Path(sys.argv[1])
 temporary = pathlib.Path(sys.argv[2])
 source_revision = sys.argv[3]
 candidate_tree = sys.argv[4]
+current_tree = sys.argv[5] == "--current-tree"
 doc_path = root / "docs/milestones/core-m9-threat-audit.md"
 doc = doc_path.read_text(encoding="utf-8")
 expected_ids = ["TM-XML", "TM-TEX", "TM-FS", "TM-ASSET", "TM-PROC", "TM-CONCURRENCY", "TM-METADATA", "TM-HTTP"]
@@ -135,11 +136,24 @@ http = json.loads((temporary / "http-surface.json").read_text(encoding="utf-8"))
 assert http == {"transport": "stdio", "orientation": "PASS", "socketListeners": 0, "authSurface": "ABSENT", "stderrProtocolSafe": True}
 
 package = json.loads((root / "package.json").read_text(encoding="utf-8"))
-assert package["bin"] == {"ipe-mcp": "dist/src/cli/mcp-stdio.js"}
+expected_bins = {"ipe-mcp": "dist/src/cli/mcp-stdio.js"}
+if current_tree and "ipe-mcp-http" in package["bin"]:
+    expected_bins["ipe-mcp-http"] = "dist/src/cli/mcp-http.js"
+assert package["bin"] == expected_bins
 assert package["scripts"]["mcp"] == "node dist/src/cli/mcp-stdio.js"
 entry = (root / "src/cli/mcp-stdio.ts").read_text(encoding="utf-8")
 assert 'from "@modelcontextprotocol/server/stdio"' in entry and "serveStdio" in entry
-source = "\n".join(path.read_text(encoding="utf-8") for path in (root / "src").rglob("*.ts"))
+# The archived candidate scans its entire source. Only the explicitly named
+# opt-in M10 files are separate from the current stdio source boundary.
+http_paths = {
+    "cli/mcp-http.ts", "mcp/http/listener.ts", "mcp/http/profile.ts", "mcp/http/protocol.ts",
+} if "ipe-mcp-http" in expected_bins else set()
+source_root = root / "src"
+source = "\n".join(
+    path.read_text(encoding="utf-8")
+    for path in source_root.rglob("*.ts") if path.relative_to(source_root).as_posix() not in http_paths
+)
+assert not re.search(r'/(?:mcp-http|http/(?:listener|profile|protocol))\.js', source)
 for forbidden in ['from "node:http"', 'from "node:https"', 'from "node:net"', 'from "node:tls"', "StreamableHTTP", "SSEServerTransport", ".listen(", "WebSocket", "EventSource", "OAuth", "Bearer" + " ", "client_secret"]:
     assert forbidden not in source, f"network/auth surface present: {forbidden}"
 

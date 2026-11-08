@@ -7,6 +7,7 @@ import { failure, inputValidationFailure, safeLog, success } from "./errors.js";
 import { IpeMcpService } from "./service.js";
 import { DOCUMENT_SHAPE_LIMITS, MCP_LIMITS } from "../limits.js";
 import { PRODUCT_NAME, PRODUCT_VERSION } from "../version.js";
+import { trackRequestWork } from "../runtime/request-lifetime.js";
 
 export const SERVER_INSTRUCTIONS = `Ipe MCP ${MCP_CONTRACT_VERSION}. Start with ipe_orientation, then create/open and retain exact document/page/layer/view/object IDs. Every mutation requires the latest expectedRevision; on REVISION_CONFLICT inspect and retry. Validate before save/export. DELETE, SAVE, UNDO, and RESTORE require explicit confirmation tokens. Binary outputs are resource links: read only the artifact needed.`;
 
@@ -17,7 +18,7 @@ function response(result: PublicResult, links: readonly LinkInput[] = []): CallT
 }
 
 async function run(kind: string, operation: () => Promise<PublicResult>, links?: (result: PublicResult) => readonly LinkInput[]): Promise<CallToolResult> {
-  try { const result = await operation(); safeLog("tool_complete", { tool: kind, ok: true }); return response(result, links?.(result)); }
+  try { const result = await trackRequestWork(operation); safeLog("tool_complete", { tool: kind, ok: true }); return response(result, links?.(result)); }
   catch (error) { const result = failure(kind, error); safeLog("tool_complete", { tool: kind, ok: false, code: result.error?.code ?? "unknown" }); return response(result); }
 }
 
