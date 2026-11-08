@@ -19,4 +19,3 @@ for recorded, live in zip(archived["components"], sbom["components"]):
     version = live["version"]
     assert live["bom-ref"] == f"deb:{name}@{version}" and live["purl"] == f"pkg:deb/ubuntu/{name}@{version}", f"{name} identity does not match its installed version"
     print(f"SBOM INFO: {name} Ubuntu revision {recorded['version']} -> {version}")
-
