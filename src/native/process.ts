@@ -26,7 +26,11 @@ export async function runControlledProcess(
   limits: ProcessLimits,
   failureCode: NativeErrorCode,
   environment: Readonly<Record<string, string>> = {},
+  profile?: "pdf-import",
 ): Promise<ProcessResult> {
+  if (profile === "pdf-import" && process.platform !== "linux") {
+    throw new NativeIpeError("NATIVE_UNAVAILABLE", "PDF import requires the isolated Linux native runtime");
+  }
   const signal = requestSignal();
   assertNativeRequestActive();
   const started = Date.now();
@@ -39,7 +43,11 @@ export async function runControlledProcess(
     const launchArgs = process.platform === "linux"
       ? [
         "--unshare-user", "--unshare-pid", "--die-with-parent", "--new-session",
-        "--ro-bind", "/", "/", "--bind", cwd, cwd, "--proc", "/proc", "--dev", "/dev", "--chdir", cwd, "--",
+        ...(profile === "pdf-import"
+          ? ["--unshare-net", "--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind-try", "/lib64", "/lib64",
+            "--ro-bind", cwd, "/work", "--chdir", "/work"]
+          : ["--ro-bind", "/", "/", "--bind", cwd, cwd, "--chdir", cwd]),
+        "--proc", "/proc", "--dev", "/dev", "--",
         "/usr/bin/prlimit", `--as=${limits.maxMemoryBytes}`, `--nproc=${limits.maxProcesses}`, `--fsize=${limits.maxFileBytes}`, "--", executable, ...args,
       ]
       : [...args];
@@ -47,7 +55,7 @@ export async function runControlledProcess(
       cwd,
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
-      env: { PATH: "/usr/local/bin:/usr/bin:/bin", HOME: cwd, LANG: "C.UTF-8", LC_ALL: "C.UTF-8", ...environment },
+      env: { PATH: "/usr/local/bin:/usr/bin:/bin", HOME: profile === "pdf-import" ? "/work" : cwd, LANG: "C.UTF-8", LC_ALL: "C.UTF-8", ...environment },
       windowsHide: true,
       detached: process.platform !== "win32",
     });

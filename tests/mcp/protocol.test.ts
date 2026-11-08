@@ -43,7 +43,7 @@ describe("M8 real stdio protocol", () => {
       const orientation = await client.callTool({ name: "ipe_orientation", arguments: {} });
       const text = orientation.content.find((item) => item.type === "text");
       expect(text?.type === "text" ? JSON.parse(text.text) : undefined).toEqual(orientation.structuredContent);
-      expect(structured(orientation).data.resources).toHaveLength(5);
+      expect(structured(orientation).data.resources).toHaveLength(6);
       expect(structured(orientation).data.workflow).toEqual(expect.arrayContaining([expect.stringContaining("ipe_import_svg")]));
       const capabilities = await client.callTool({ name: "ipe_get_capabilities", arguments: {} });
       expect(JSON.stringify(capabilities.structuredContent)).not.toContain("/usr/");

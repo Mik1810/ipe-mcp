@@ -39,6 +39,7 @@
     "docs/reference/package-sbom.json",
     "scripts/conformance/m6-artifact-worker.mjs",
     "scripts/conformance/m6-native.lua",
+    "scripts/conformance/m10-pdf-import.js",
     "docs/guides/local-http.md"
   ],
   "engines": {

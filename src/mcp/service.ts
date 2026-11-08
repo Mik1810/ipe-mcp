@@ -5,6 +5,7 @@ import { buildCameraPan, buildMotion, buildPanelScroll, buildReveal, setTransiti
 import { composeSlide, addLayer, addView, createPage, deleteLayer, deletePage, deleteView, reorderLayers, reorderPages, reorderViews, updateLayer, updatePage, updateView } from "../composition/index.js";
 import { ipeDocumentCodec, type IpeDocument } from "../core/ipe-document-codec.js";
 import { rejectImport } from "../import/errors.js";
+import { importPdf, PDF_IMPORT_MAX_BYTES } from "../import/pdf.js";
 import { importSvg, SVG_IMPORT_MAX_BYTES } from "../import/svg.js";
 import { validateDocument } from "../domain/validate.js";
 import { applyLayoutPlan, createLayoutPlan } from "../layout/plan.js";
@@ -32,6 +33,14 @@ function ids(document: IpeDocument): Set<string> {
     ...(document.assets ?? []).map((asset) => asset.id),
     ...document.pages.flatMap((page) => [page.id, ...page.layers.map((layer) => layer.id), ...page.views.map((view) => view.id), ...page.objects.map((object) => object.id)]),
   ]);
+}
+
+function vectorSource(value: string, maxBytes: number, format: "svg" | "pdf"): Buffer {
+  const prefix = format.toUpperCase();
+  if (value.length > 4 * Math.ceil(maxBytes / 3)) rejectImport(prefix + "_BYTE_LIMIT", format);
+  const source = Buffer.from(value, "base64");
+  if (source.toString("base64") !== value) rejectImport(prefix + "_INVALID_BASE64", format);
+  return source;
 }
 
 function decodeBase64(value: string): Buffer {
@@ -166,23 +175,29 @@ export class IpeMcpService {
   }
 
   async importSvgDocument(dataBase64: string) {
-    if (dataBase64.length > 4 * Math.ceil(SVG_IMPORT_MAX_BYTES / 3)) rejectImport("SVG_BYTE_LIMIT", "svg");
-    const source = Buffer.from(dataBase64, "base64");
-    if (source.toString("base64") !== dataBase64) rejectImport("SVG_INVALID_BASE64", "svg");
-    const document = importSvg(source);
-    const original = this.artifacts.put({
-      family: "artifact", data: source, mediaType: "image/svg+xml", name: "original.svg",
-      sha256: createHash("sha256").update(source).digest("hex"), metadata: { sourceFormat: "svg" },
-    });
-    const opened = await this.sessions.create(document).catch((error: unknown) => {
-      this.artifacts.discard(original.id);
-      throw error;
-    });
+    const source = vectorSource(dataBase64, SVG_IMPORT_MAX_BYTES, "svg");
+    return await this.#storeVectorImport(importSvg(source), source, "svg");
+  }
+
+  async importPdfDocument(dataBase64: string) {
+    const source = vectorSource(dataBase64, PDF_IMPORT_MAX_BYTES, "pdf");
+    const { document, diagnostics } = await importPdf(source);
+    return await this.#storeVectorImport(document, source, "pdf", diagnostics);
+  }
+
+  async #storeVectorImport(document: IpeDocument, data: Buffer, format: "svg" | "pdf", diagnostics: string[] = []) {
+    const opened = await this.sessions.create(document, { format, data, diagnostics });
     return {
       documentId: opened.documentId, revision: opened.revision, outline: outline(opened.document),
-      source: { uri: this.artifacts.uri(original), name: original.name, mediaType: original.mediaType,
-        bytes: original.data.length, sha256: original.sha256 },
+      source: { uri: "ipe://documents/" + opened.documentId + "/original", name: "original." + format,
+        mediaType: format === "svg" ? "image/svg+xml" : "application/pdf", bytes: data.length, sha256: opened.original!.sha256 },
+      diagnostics: diagnostics.map((code) => ({ code, location: format })),
     };
+  }
+
+  async originalResource(documentId: string) {
+    const { data, receipt } = await this.sessions.readOriginal(documentId);
+    return { data, mediaType: receipt.format === "svg" ? "image/svg+xml" : "application/pdf", receipt };
   }
 
   inspect(documentId: string, maxObjects: number = MCP_LIMITS.inspectObjectsDefault) {
@@ -335,7 +350,11 @@ export class IpeMcpService {
   documentResource(documentId: string, kind: "summary" | "source" | "diagnostics") {
     const current = this.sessions.inspect(documentId);
     if (kind === "summary") return { mimeType: "application/json", text: JSON.stringify({ documentId, revision: current.revision, outline: outline(current.document) }) };
-    if (kind === "diagnostics") return { mimeType: "application/json", text: JSON.stringify({ documentId, revision: current.revision, diagnostics: this.#diagnostics.get(documentId) ?? [] }) };
+    if (kind === "diagnostics") {
+      const original = current.original?.diagnostics.map((code) => ({ code, location: current.original!.format })) ?? [];
+      return { mimeType: "application/json", text: JSON.stringify({ documentId, revision: current.revision,
+        diagnostics: [...original, ...(this.#diagnostics.get(documentId) ?? [])] }) };
+    }
     const source = ipeDocumentCodec.serialize(current.document); const bytes = Buffer.byteLength(source); const bounded = Buffer.from(source).subarray(0, SOURCE_RESOURCE_LIMIT).toString("utf8");
     return { mimeType: "application/xml", text: bounded, metadata: { truncated: bytes > SOURCE_RESOURCE_LIMIT, bytes, returnedBytes: Buffer.byteLength(bounded), sha256: createHash("sha256").update(source).digest("hex") } };
   }

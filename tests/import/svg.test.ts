@@ -118,7 +118,7 @@ describe.skipIf(process.platform !== "linux")("SVG native pipeline", () => {
       const service = await IpeMcpService.create([work], join(work, "state"));
       const source = await readFile(fixture);
       const imported = await service.importSvgDocument(source.toString("base64"));
-      const original = service.artifactResource("artifact", imported.source.uri.split("/").at(-1)!);
+      const original = await service.originalResource(imported.documentId);
       expect(original.data).toEqual(source);
       const output = join(work, "reference.png");
       await runControlledProcess("/usr/bin/mutool", ["draw", "-q", "-F", "png", "-r", "72", "-o", output, resolve(fixture)], work,

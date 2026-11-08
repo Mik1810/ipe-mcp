@@ -167,7 +167,7 @@ function ipeChannel(value: number): number {
 
 // Match the precision of Ipe 7.2 XML output before creating persistent IDs.
 function ipeNumber(value: number): string {
-  return String(Number(value.toPrecision(6)));
+  return String(Number(Number(value.toFixed(8)).toPrecision(6)));
 }
 
 function paint(value: string, location: string): string | undefined {
