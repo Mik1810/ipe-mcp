@@ -24,6 +24,11 @@ export class ArtifactStore {
     this.#items.set(stored.id, stored); this.#bytes += stored.data.length;
     return stored;
   }
+  discard(id: string): void {
+    const item = this.#items.get(id);
+    if (item !== undefined && this.#items.delete(id)) this.#bytes -= item.data.length;
+  }
+
   get(id: string): StoredArtifact | undefined { return this.#items.get(id); }
   uri(item: StoredArtifact): string { return `ipe://${item.family === "preview" ? "previews" : "artifacts"}/${item.id}`; }
 }

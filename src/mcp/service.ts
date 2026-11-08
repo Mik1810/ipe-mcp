@@ -4,6 +4,8 @@ import { basename } from "node:path";
 import { buildCameraPan, buildMotion, buildPanelScroll, buildReveal, setTransition } from "../animation/index.js";
 import { composeSlide, addLayer, addView, createPage, deleteLayer, deletePage, deleteView, reorderLayers, reorderPages, reorderViews, updateLayer, updatePage, updateView } from "../composition/index.js";
 import { ipeDocumentCodec, type IpeDocument } from "../core/ipe-document-codec.js";
+import { rejectImport } from "../import/errors.js";
+import { importSvg, SVG_IMPORT_MAX_BYTES } from "../import/svg.js";
 import { validateDocument } from "../domain/validate.js";
 import { applyLayoutPlan, createLayoutPlan } from "../layout/plan.js";
 import { layoutGrid, layoutLinear, layoutStack, transformForPlacement, type Placement } from "../layout/layout.js";
@@ -161,6 +163,26 @@ export class IpeMcpService {
   async openDocument(path: string) {
     const opened = await this.sessions.open(path);
     return { documentId: opened.documentId, revision: opened.revision, outline: outline(opened.document) };
+  }
+
+  async importSvgDocument(dataBase64: string) {
+    if (dataBase64.length > 4 * Math.ceil(SVG_IMPORT_MAX_BYTES / 3)) rejectImport("SVG_BYTE_LIMIT", "svg");
+    const source = Buffer.from(dataBase64, "base64");
+    if (source.toString("base64") !== dataBase64) rejectImport("SVG_INVALID_BASE64", "svg");
+    const document = importSvg(source);
+    const original = this.artifacts.put({
+      family: "artifact", data: source, mediaType: "image/svg+xml", name: "original.svg",
+      sha256: createHash("sha256").update(source).digest("hex"), metadata: { sourceFormat: "svg" },
+    });
+    const opened = await this.sessions.create(document).catch((error: unknown) => {
+      this.artifacts.discard(original.id);
+      throw error;
+    });
+    return {
+      documentId: opened.documentId, revision: opened.revision, outline: outline(opened.document),
+      source: { uri: this.artifacts.uri(original), name: original.name, mediaType: original.mediaType,
+        bytes: original.data.length, sha256: original.sha256 },
+    };
   }
 
   inspect(documentId: string, maxObjects: number = MCP_LIMITS.inspectObjectsDefault) {

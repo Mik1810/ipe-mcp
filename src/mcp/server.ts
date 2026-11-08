@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { MCP_CONTRACT_VERSION, documentIdSchema, entityIdSchema, operationSchema, resultSchema, revisionSchema, viewBuildSchema, type PublicResult } from "./contracts.js";
 import { failure, inputValidationFailure, safeLog, success } from "./errors.js";
+import { SVG_IMPORT_MAX_BYTES } from "../import/svg.js";
 import { IpeMcpService } from "./service.js";
 import { DOCUMENT_SHAPE_LIMITS, MCP_LIMITS } from "../limits.js";
 import { PRODUCT_NAME, PRODUCT_VERSION } from "../version.js";
@@ -36,8 +37,8 @@ export function createMcpServer(service: IpeMcpService): McpServer {
   server.registerTool("ipe_orientation", {
     title: "Orient to Ipe MCP", description: "Stable bootstrap: returns workflow, contract version, limits, resource routes, and revision/write rules without invoking native tools.",
     inputSchema: z.object({}).strict(), outputSchema: resultSchema, annotations: readOnly,
-  }, async () => response(success("orientation", "Use create/open → inspect → revision-guarded mutation → validate → save/export; binary results stay behind resource links.", {
-    contractVersion: MCP_CONTRACT_VERSION, instructionsVersion: 1, workflow: ["ipe_create_document|ipe_open_document", "ipe_inspect", "ipe_apply_operations|ipe_compose_slide|ipe_build_views", "ipe_validate", "ipe_save_document|ipe_export_document"],
+  }, async () => response(success("orientation", "Use create/open/import → inspect → revision-guarded mutation → validate → save/export; binary results stay behind resource links.", {
+    contractVersion: MCP_CONTRACT_VERSION, instructionsVersion: 1, workflow: ["ipe_create_document|ipe_open_document|ipe_import_svg", "ipe_inspect", "ipe_apply_operations|ipe_compose_slide|ipe_build_views", "ipe_validate", "ipe_save_document|ipe_export_document"],
     invariants: ["Use exact IDs from results/resources", "Every mutation needs current expectedRevision", "Delete/save/undo/restore need confirmation", "Read binary resources only on demand", "Duplicate create calls deliberately create distinct local sessions"],
     resources: ["ipe://documents/{documentId}/summary", "ipe://documents/{documentId}/source", "ipe://documents/{documentId}/diagnostics", "ipe://previews/{artifactId}", "ipe://artifacts/{artifactId}"], limits: { operationsPerBatch: MCP_LIMITS.operationsPerBatch, inspectObjectsDefault: MCP_LIMITS.inspectObjectsDefault, maxInspectObjects: MCP_LIMITS.maxInspectObjects, sourceResourceBytes: MCP_LIMITS.sourceResourceBytes, hints: MCP_LIMITS.maxHints, documentShape: DOCUMENT_SHAPE_LIMITS },
   })));
@@ -60,6 +61,20 @@ export function createMcpServer(service: IpeMcpService): McpServer {
     title: "Open Ipe document", description: "Opens an allowed local .ipe path into a private working copy; the source stays byte-identical until explicit save.",
     inputSchema: z.object({ path: z.string().min(1).max(MCP_LIMITS.pathChars).describe("Local .ipe path inside a configured workspace root; remote URLs and symlink escapes are rejected.") }).strict(), outputSchema: resultSchema, annotations: mutation,
   }, async ({ path }) => await run("open_document", async () => { const data = await service.openDocument(path); return success("open_document", "Opened a private working copy; the source was not modified.", data); }));
+
+  server.registerTool("ipe_import_svg", {
+    title: "Import an SVG into a private Ipe document",
+    description: "Imports supported SVG shapes as editable paths and embedded PNGs as images. Unsupported constructs reject the whole import. The source link retrieves the exact original bytes while this server is running.",
+    inputSchema: z.object({
+      dataBase64: z.string().min(4).max(4 * Math.ceil(SVG_IMPORT_MAX_BYTES / 3))
+        .describe("Canonical base64 of the UTF-8 SVG, limited to one MiB decoded."),
+    }).strict(),
+    outputSchema: resultSchema,
+    annotations: mutation,
+  }, async ({ dataBase64 }) => await run("import_svg", async () => {
+    const data = await service.importSvgDocument(dataBase64);
+    return success("import_svg", "Imported SVG into a private working document.", data);
+  }, (result) => result.data.source === undefined ? [] : [result.data.source as LinkInput]));
 
   server.registerTool("ipe_inspect", {
     title: "Inspect Ipe document", description: "Returns bounded outline, exact actionable IDs, counts and an explicit truncation flag. Read the summary resource for the same stable orientation shape.",

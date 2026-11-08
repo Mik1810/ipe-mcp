@@ -1,3 +1,4 @@
+import { VectorImportError } from "../import/errors.js";
 import { NativeIpeError } from "../native/errors.js";
 import { PathOutsideWorkspaceError, RevisionConflictError, SourceChangedError, StructuralValidationError } from "../persistence/errors.js";
 import { LimitsExceededError, MODEL_TEXT_CAPS } from "../limits.js";
@@ -29,6 +30,11 @@ export function failure(kind: string, error: unknown): PublicResult {
   if (error instanceof RevisionConflictError) {
     code = error.code; message = "The expected revision is stale; no mutation was applied."; correction = "Call ipe_inspect, then retry with its current revision."; retryable = true;
     details = { expectedRevision: error.expectedRevision, actualRevision: error.actualRevision };
+  } else if (error instanceof VectorImportError) {
+    code = error.code;
+    message = "The source contains an unsupported or invalid vector construct.";
+    correction = "Review the import diagnostic at the reported source location.";
+    details = { diagnostic: error.diagnostic.code, location: error.diagnostic.location };
   } else if (error instanceof SourceChangedError) {
     code = error.code; message = "The source changed outside this session; it was not overwritten."; correction = "Open the changed source as a new session or save to a different approved path."; retryable = true;
   } else if (error instanceof PathOutsideWorkspaceError) {

@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 
@@ -44,6 +44,7 @@ describe("M8 real stdio protocol", () => {
       const text = orientation.content.find((item) => item.type === "text");
       expect(text?.type === "text" ? JSON.parse(text.text) : undefined).toEqual(orientation.structuredContent);
       expect(structured(orientation).data.resources).toHaveLength(5);
+      expect(structured(orientation).data.workflow).toEqual(expect.arrayContaining([expect.stringContaining("ipe_import_svg")]));
       const capabilities = await client.callTool({ name: "ipe_get_capabilities", arguments: {} });
       expect(JSON.stringify(capabilities.structuredContent)).not.toContain("/usr/");
     } finally { await client.close(); }
@@ -121,4 +122,32 @@ describe("M8 real stdio protocol", () => {
     } finally { await client.close(); }
     expect(stderr.join("")).not.toMatch(/\.ipe|\/tmp|private/iu);
   });
+
+  it("imports bounded SVG bytes, links the exact source and classifies hostile SVG without partial results", async () => {
+    const { client, stderr } = await connect();
+    try {
+      const source = await readFile("fixtures/conformance/m10/import/editable.svg");
+      const imported = await client.callTool({ name: "ipe_import_svg", arguments: { dataBase64: source.toString("base64") } });
+      const body = structured(imported);
+      expect(body).toMatchObject({ ok: true, kind: "import_svg", data: { revision: 0, outline: { objectCount: 4 } } });
+      expect(imported.content[0]).toMatchObject({ type: "text", text: JSON.stringify(body) });
+      const link = imported.content.find((item) => item.type === "resource_link");
+      expect(link).toBeDefined();
+      const payload = await client.readResource({ uri: link!.uri });
+      const content = payload.contents[0]!;
+      expect("blob" in content && Buffer.from(content.blob, "base64").equals(source)).toBe(true);
+
+      const malformed = await client.callTool({ name: "ipe_import_svg", arguments: { dataBase64: "Zh==" } });
+      expect(structured(malformed)).toMatchObject({
+        ok: false, data: {}, error: { code: "VECTOR_IMPORT_REJECTED", details: { diagnostic: "SVG_INVALID_BASE64", location: "svg" } },
+      });
+      const hostile = '<!DOCTYPE svg [<!ENTITY probe SYSTEM "file:///private/secret-canary">]><svg width="10" height="10">&probe;</svg>';
+      const rejected = await client.callTool({ name: "ipe_import_svg", arguments: { dataBase64: Buffer.from(hostile).toString("base64") } });
+      expect(structured(rejected)).toMatchObject({
+        ok: false, data: {}, error: { code: "VECTOR_IMPORT_REJECTED", details: { diagnostic: "SVG_DTD_FORBIDDEN", location: "svg" } },
+      });
+      expect(JSON.stringify(rejected) + stderr.join("")).not.toContain("secret-canary");
+    } finally { await client.close(); }
+  });
+
 });
