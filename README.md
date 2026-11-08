@@ -86,16 +86,24 @@ Key source areas:
   connectors;
 - `fixtures/conformance`: documents and golden data used against native Ipe.
 
-## Requirements
+## Requirements by feature
 
-- Node.js 20 or later;
-- npm;
-- Ipe 7.2.30 for the supported full-validation path;
-- pdfLaTeX for text compilation and native rendering workflows.
+Install Node.js 20 or later and npm for the server. The npm package uses its
+declared JavaScript dependencies. Use your operating system's package manager
+to install the native tools required by the workflows you use. Ipe, TeX,
+and the native validators stay external to the npm package.
 
-The verified environment uses Ubuntu's `ipe 7.2.30-1build2` package on Ubuntu
-26.04 WSL. Follow [SETUP-WSL.md](./SETUP-WSL.md) for installation and native-tool
-verification.
+| Workflow | Additional tools to install |
+| --- | --- |
+| Create, edit, and save `.ipe` files, build discrete views, import supported SVG, or run structural checks | Node.js and npm are sufficient. |
+| Import supported PDF as editable Ipe geometry | MuPDF (`mupdf-tools`), `bubblewrap`, and `prlimit` from `util-linux` on the Linux/WSL runtime. The importer was tested with MuPDF 1.27.0. See the [import profile](./docs/adr/0010-vector-import-fidelity.md). |
+| Run full native validation, render previews, or export PDF and PNG | Ipe 7.2.30, pdfLaTeX (`texlive-latex-base`), `poppler-utils`, `mupdf-tools`, `bubblewrap`, and `util-linux`. The verified baseline is Ubuntu 26.04 on WSL2 with `ipe 7.2.30-1build2`. The editor window can stay closed. See [WSL installation and verification](./SETUP-WSL.md). |
+| Run the optional local HTTP transport | `flock` from `util-linux` on Linux/WSL. Install the native tools above only if the HTTP client needs those workflows. See [local HTTP setup](./docs/guides/local-http.md). |
+
+The server reports its native runtime mode through `ipe_get_capabilities`.
+Presentations advance through discrete Ipe views. Each exported view becomes a
+PDF page. The initial release targets file-based authoring on WSL. Editing an
+open Ipe session with explicit consent is a later feature tracked in [#40](https://github.com/Mik1810/ipe-mcp/issues/40).
 
 ## Development Setup
 

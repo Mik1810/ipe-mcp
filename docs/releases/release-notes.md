@@ -101,9 +101,10 @@ Distribution strategy and packaging (npm bundle/helper, marketplace/plugin
 template), authenticated Streamable HTTP, the live bridge with open Ipe and
 bidirectional synchronization, support/CI for non-WSL Linux/macOS/Windows,
 container/devcontainer, provider-neutral agent harness, more faithful SVG/PDF
-import, dedicated web presenter with real interpolation, continuous video
-(after a Manim/license/fidelity spike), and adoption of a 7.3.x release as a
-stable target (only after a stable release and migration tests).
+import, and adoption of a 7.3.x release as a stable target after upstream
+release and migration tests. The dedicated web presenter and continuous
+video were considered as post-MVP candidates. See the
+[scope decision and experiment record](../adr/0009-manim-continuous-video-spike.md).
 
 ## 2. Migration guidance
 
