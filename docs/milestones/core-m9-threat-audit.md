@@ -10,9 +10,12 @@ freeze mechanism: Git tree `4090c820c72b866a1f7c242693075a6bc52e94d2`,
 resolved from immutable source revision
 `5dbaca8a76665ba47ebcbc4305bbf68ed6434e10`. The issue #22 and #23 changes
 remain the source of the attestation documentation, gates, fixtures, and
-conformance tooling. The gate fails if `src/`, `package.json`, or
-`package-lock.json` differs from the frozen source revision; a product change
-requires another candidate freeze before this audit can pass.
+conformance tooling. The standalone historical audit requires `src/`,
+`package.json`, and `package-lock.json` to match that revision. The cumulative
+gate also checks the archived identity and matrix, then runs the hostile corpus
+and stdio probes on its current read-only frozen tree via `--current-tree`.
+Those probes verify current behavior while the historical attestation continues
+to refer to the original candidate.
 
 `PASS` requires direct current execution, not documentation alone.
 `NOT APPLICABLE` is permitted only for an absent surface proved both

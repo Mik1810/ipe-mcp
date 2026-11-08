@@ -9,14 +9,13 @@ fail() { echo "M9 REAL FAIL: $*" >&2; exit 1; }
 m9_require_m8 "$ROOT" || fail "M8 gate"
 (cd "$ROOT" && npm run build) || fail "build"
 (cd "$ROOT" && node scripts/conformance/m9-real-runner.mjs "$M9_REAL_TMP/run" "$M9_REAL_TMP/evidence.json") || fail "real-document review run"
-cmp "$M9_REAL_TMP/evidence.json" "$ROOT/fixtures/conformance/m9/real/evidence.json" || fail "real-document evidence drift"
-
-python3 - "$ROOT" <<'PY' || fail "real-document review audit"
-import hashlib, json, pathlib, sys
+python3 - "$ROOT" "$M9_REAL_TMP/evidence.json" <<'PY' || fail "real-document review audit"
+import hashlib, json, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 fixtures = root / "fixtures/conformance/m9/real"
 manifest = json.loads((fixtures / "manifest.json").read_text())
 evidence = json.loads((fixtures / "evidence.json").read_text())
+live = json.loads(pathlib.Path(sys.argv[2]).read_text())
 doc = (root / "docs/milestones/core-m9-real.md").read_text()
 
 assert evidence["scenario"] == "m9-real-v1" and evidence["milestone"] == "M9" and evidence["subissue"] == 20 and evidence["contract"] == "ipe-mcp/1"
@@ -64,6 +63,55 @@ assert all("70218" in c["phases"]["reject"]["summary"] or "Only Ipe XML format 7
 originals = evidence["originalsUnchanged"]
 assert len(originals) == 2 and all(item["unchanged"] for item in originals), "package originals changed"
 assert evidence["stderrProtocolSafe"] is True
+
+# The archive records one run; compare behavioral evidence, not its capture
+# date, generated identities, output hashes, or diagnostic prose.
+assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", live["capturedAt"]), "missing live capture date"
+for key in ["scenario", "milestone", "subissue", "contract", "reviewSums", "originalsUnchanged", "stderrProtocolSafe"]:
+    assert live[key] == evidence[key], f"real-document run changed {key}"
+assert [(c["id"], c["name"]) for c in live["cases"]] == [(c["id"], c["name"]) for c in evidence["cases"]], "case coverage changed"
+
+def check_native(recorded, actual, label, success="ok"):
+    if actual.get(success) is True:
+        return True
+    assert recorded.get(success) is not True, f"{label} regressed from pass"
+    assert actual.get(success) is False and actual["code"].startswith("NATIVE_") and actual["code"] == recorded["code"], f"{label} classification changed"
+    if success == "ok":
+        assert actual.get("classified") is True, f"{label} failure not classified"
+    return False
+
+for recorded, actual in zip(evidence["cases"], live["cases"]):
+    case = actual["id"]
+    before, after = recorded["phases"], actual["phases"]
+    if case == "REAL-004":
+        rejection = after["reject"]
+        assert rejection["ok"] is True and rejection["code"] == before["reject"]["code"], "raw 70216 classification changed"
+        assert "Only Ipe XML format 70218 is supported" in rejection.get("summary", "") + rejection.get("message", ""), "raw 70216 format diagnostic missing"
+        continue
+    assert actual["originalSha256"] == recorded["originalSha256"], f"{case} original hash changed"
+    assert actual["derived"]["rootVersion"] == "70218", f"{case} derived format changed"
+    if case == "REAL-003":
+        assert actual["derived"]["sha256"] == actual["originalSha256"], "vendored native fixture was modified"
+    for item in [actual["derived"], after["saveCopy"]]:
+        assert item["bytes"] > 0 and re.fullmatch(r"[0-9a-f]{64}", item["sha256"]), f"{case} artifact evidence missing"
+    for phase in ["open", "inspect", "reopen"]:
+        assert after[phase] == before[phase], f"{case} {phase} changed"
+    for phase, keys in [("edit", ["ok", "op", "revision"]), ("saveCopy", ["ok", "revision"])]:
+        assert all(after[phase][key] == before[phase][key] for key in keys), f"{case} {phase} changed"
+
+    if check_native(before["validate"], after["validate"], f"{case} validate"):
+        assert isinstance(after["validate"]["diagnosticCount"], int) and after["validate"]["diagnosticCount"] > 0
+    if check_native(before["pdf"], after["pdf"], f"{case} pdf"):
+        assert after["pdf"]["resources"] > 0 and after["pdf"]["bytes"] > 0 and after["pdf"]["header"].startswith("%PDF-")
+    if check_native(before["png"], after["png"], f"{case} png"):
+        assert after["png"]["resources"] > 0 and all(after["png"]["first"][key] > 0 for key in ["width", "height"])
+
+    previous_pages = before["renderPerPage"]["pages"]
+    rendered = after["renderPerPage"]
+    assert len(rendered["pages"]) == len(previous_pages) == after["inspect"]["pageCount"], f"{case} render coverage changed"
+    assert len({page["pageId"] for page in rendered["pages"]}) == len(previous_pages), f"{case} duplicate render evidence"
+    passed = sum(check_native(old, new, f"{case} render page {i}", "pass") for i, (old, new) in enumerate(zip(previous_pages, rendered["pages"]), 1))
+    assert rendered["pass"] == passed and rendered["classified"] == len(previous_pages) - passed, f"{case} inconsistent render totals"
 
 # documentation of provenance, findings, and policy
 for token in ["REAL-001", "REAL-002", "REAL-003", "REAL-004", "GPL-3+", "MIT", "Oleg Soloviev", "70216", "mode_translate", "mathpazo", "real, licensed Ipe documents", "not retained", "license", "retained-file policy", "findings"]:

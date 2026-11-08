@@ -59,7 +59,11 @@ components=(
 )
 for component in "${components[@]}"; do
   echo "M9 GATE: $component"
-  bash "$ROOT/scripts/gates/$component" || fail "$component"
+  if [[ "$component" == check-m9-threat-audit.sh ]]; then
+    bash "$ROOT/scripts/gates/$component" --current-tree || fail "$component"
+  else
+    bash "$ROOT/scripts/gates/$component" || fail "$component"
+  fi
 done
 
 python3 - "$ROOT" <<'PY' || fail "completion and Issue #8 schema audit"

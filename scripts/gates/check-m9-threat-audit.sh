@@ -11,7 +11,17 @@ CANDIDATE_SOURCE=5dbaca8a76665ba47ebcbc4305bbf68ed6434e10
 CANDIDATE_TREE=4090c820c72b866a1f7c242693075a6bc52e94d2
 [[ "$(cd "$ROOT" && git rev-parse "$CANDIDATE_SOURCE^{tree}")" == "$CANDIDATE_TREE" ]] || fail "frozen candidate identity"
 (cd "$ROOT" && git merge-base --is-ancestor "$CANDIDATE_SOURCE" HEAD) || fail "candidate source is not an ancestor of HEAD"
-(cd "$ROOT" && git diff --quiet "$CANDIDATE_SOURCE" -- src package.json package-lock.json) || fail "product surface changed after candidate freeze"
+case "${1:-}" in
+  "") (cd "$ROOT" && git diff --quiet "$CANDIDATE_SOURCE" -- src package.json package-lock.json) || fail "product surface changed after historical candidate freeze" ;;
+  --current-tree)
+    [[ "${IPE_M9_READONLY_GATE:-}" == 1 && -n "${IPE_M9_FROZEN_TREE:-}" ]] || fail "current-tree mode requires the frozen cumulative gate"
+    [[ "$(cd "$ROOT" && git write-tree)" == "$IPE_M9_FROZEN_TREE" ]] || fail "current candidate tree identity"
+    (cd "$ROOT" && git diff --quiet --ignore-submodules=none) || fail "current candidate has tracked differences"
+    [[ -z "$(cd "$ROOT" && git ls-files --others --exclude-standard)" ]] || fail "current candidate has untracked files"
+    echo "M9 THREAT AUDIT INFO: checking historical evidence and running probes on current frozen tree $IPE_M9_FROZEN_TREE"
+    ;;
+  *) fail "unknown audit mode" ;;
+esac
 
 bash "$ROOT/scripts/gates/check-m9-hostile.sh" || fail "hostile corpus and inherited M8 gate"
 (cd "$ROOT" && node scripts/conformance/m9-hostile-runner.mjs "$ROOT") >"$M9_THREAT_TMP/hostile.json" || fail "bounded hostile evidence record"
