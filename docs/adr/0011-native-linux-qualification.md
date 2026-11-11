@@ -9,8 +9,13 @@ kernel, package versions and APT provenance on each run. It checks
 distribution and architecture and rejects WSL kernels and container runs.
 
 Use the Ubuntu archive packages for Ipe, TeX Live, Lua, Poppler, MuPDF,
-Bubblewrap and util-linux. Native operations run under the same unprivileged
-Bubblewrap and prlimit policy as the WSL baseline. Package ownership,
+Bubblewrap and util-linux. Use signed Ubuntu metadata over HTTPS. The TeX
+installation includes `texlive-latex-recommended` for the `xcolor` path
+exercised by the Ipe colour fixtures. Native operations run under the same
+unprivileged
+Bubblewrap and prlimit policy as the WSL baseline. A negative probe hides
+Bubblewrap ownership evidence in an isolated mount namespace and checks
+that the runtime refuses to spawn. Package ownership,
 tool versions and verified native capabilities are required before running
 the cumulative M0–M8 checks, M9 limits, hostile and real-document gates, and
 the clean package install with a portable SDK stdio scenario. The real
