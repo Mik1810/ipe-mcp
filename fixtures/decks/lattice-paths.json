@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "preset": "16:9",
+  "title": "Counting lattice paths",
+  "slides": [
+    {
+      "title": "Lattice setup",
+      "layers": ["content", "example", "equation"],
+      "views": [["content"], ["example", "content"], ["content", "example", "equation"]],
+      "objects": [
+        {"op":"add_text","layer":"content","text":"\\Huge \\textbf{Lattice setup}","position":{"x":70,"y":580}},
+        {"op":"add_text","layer":"content","text":"\\Large Two steps right and one step up.","position":{"x":70,"y":475}},
+        {"op":"add_rectangle","layer":"content","x":730,"y":200,"width":320,"height":160,"stroke":"0.5"},
+        {"op":"add_segment","layer":"content","from":{"x":890,"y":200},"to":{"x":890,"y":360},"stroke":"0.5"},
+        {"op":"add_text","layer":"content","text":"Start $S$","position":{"x":695,"y":175}},
+        {"op":"add_text","layer":"content","text":"Target $T$","position":{"x":1065,"y":375}},
+        {"op":"add_path","layer":"example","path":{"kind":"polyline","points":[{"x":730,"y":200},{"x":890,"y":200},{"x":890,"y":360},{"x":1050,"y":360}],"style":{"stroke":"0 0.3 0.7","pen":4}}},
+        {"op":"add_text","layer":"example","text":"\\Large Example route: $RUR$","position":{"x":70,"y":375}},
+        {"op":"add_text","layer":"equation","text":"\\Large Route count: $\\frac{3!}{2!1!}=3$","position":{"x":70,"y":275}}
+      ]
+    },
+    {
+      "title": "General rule",
+      "layers": ["content"],
+      "views": [["content"]],
+      "objects": [
+        {"op":"add_text","layer":"content","text":"\\Huge \\textbf{General rule}","position":{"x":70,"y":580}},
+        {"op":"add_text","layer":"content","text":"\\Large Choose which of the $a+b$ positions are upward steps.","position":{"x":70,"y":475}},
+        {"op":"add_rectangle","layer":"content","x":60,"y":265,"width":525,"height":120,"fill":"0.92 0.96 1"},
+        {"op":"add_text","layer":"content","text":"\\Huge Count: $N(a,b)=\\frac{(a+b)!}{a!b!}$","position":{"x":90,"y":320}}
+      ]
+    }
+  ]
+}

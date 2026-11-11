@@ -16,7 +16,7 @@ Run in the Ubuntu WSL terminal, not PowerShell:
 
 ```bash
 sudo apt update
-sudo apt install ipe lua5.4
+sudo apt install ipe lua5.4 texlive-latex-recommended
 ```
 
 The `ipe` package already installs the base pdfLaTeX environment and required Qt libraries. It also includes the programs needed by the MCP server:
@@ -28,11 +28,8 @@ The `ipe` package already installs the base pdfLaTeX environment and required Qt
 - `ipepresenter`;
 - `ipeextract`.
 
-Nothing else is needed for the MVP's minimal LaTeX profile. If common LaTeX packages or better accented-character coverage are needed later:
-
-```bash
-sudo apt install texlive-latex-recommended
-```
+Install `texlive-latex-recommended` for `xcolor.sty`, which Ipe uses
+when rendering text in authored decks.
 
 ## Verification
 
@@ -51,13 +48,14 @@ The native adapter relies on fixed local validators and isolation, all
 verifiable with the same package metadata:
 
 ```bash
-dpkg-query -W -f='${Package}\t${Version}\n' ipe texlive-latex-base poppler-utils mupdf-tools bubblewrap
+dpkg-query -W -f='${Package}\t${Version}\n' ipe texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap
 ```
 
 Expected for the verified 7.2.30 lane:
 
 - `ipe` starting with `7.2.30`;
 - `texlive-latex-base` (provides `pdflatex`);
+- `texlive-latex-recommended` (provides `xcolor.sty` for deck text);
 - `poppler-utils` (provides `pdfinfo`, `pdftoppm`);
 - `mupdf-tools` (provides `mutool`);
 - `bubblewrap` `0.11.1` (provides `/usr/bin/bwrap`, attested as an ELF owned by that package).
@@ -66,7 +64,7 @@ If a package is missing on a fresh Ubuntu 26.04 WSL image:
 
 ```bash
 sudo apt update
-sudo apt install ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap
+sudo apt install ipe lua5.4 texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap
 ```
 
 When the toolchain is incomplete or a version mismatches, the adapter reports a

@@ -35,40 +35,44 @@ export function createSdkStdioAdapter({ command, args = [], cwd, workspaceDirect
   return createPortableMcpAdapter({
     identity: { name: "official-sdk-stdio", version: "1", transport: "stdio" },
     workspaceDirectory,
-    createConnection({ timeoutMs }) {
-      const transport = new StdioClientTransport({
-        command, args, cwd,
-        env: { PATH: process.env.PATH ?? "", IPE_MCP_WORKSPACE_ROOT: workspaceDirectory, IPE_MCP_STATE_ROOT: join(workspaceDirectory, ".state") },
-        stderr: "pipe",
-      });
-      const client = new Client({ name: "ipe-m10-provider-neutral-harness", version: "1.0.0" });
-      let stderr = "";
-      let diagnosticsExceeded = false;
-      transport.stderr?.on("data", (chunk) => {
-        if (stderr.length + chunk.length > 64 * 1024) diagnosticsExceeded = true;
-        if (!diagnosticsExceeded) stderr += String(chunk);
-      });
-      return {
-        get productVersion() { return client.getServerVersion()?.version; },
-        async connect(signal) {
-          await client.connect(transport, { signal, timeout: timeoutMs });
-          const server = client.getServerVersion();
-          if (server?.name !== "ipe-mcp" || (expectedVersion !== undefined && server.version !== expectedVersion)) {
-            throw new HarnessFailure("protocol", "PROTOCOL_SERVER_IDENTITY", "Server identity or product version mismatch");
-          }
-          const pid = transport.pid;
-          if (pid === null) throw new HarnessFailure("protocol", "PROTOCOL_CHILD_PID", "stdio child PID unavailable");
-          if ((await listeningSockets(pid)).length !== 0) throw new HarnessFailure("protocol", "TRANSPORT_LISTENER_OPEN", "stdio server opened a network listener");
-        },
-        callTool: (request, options) => client.callTool(request, options),
-        readResource: (request) => client.readResource(request, { timeout: timeoutMs }),
-        close: () => client.close(),
-        assertPrivateDiagnostics() {
-          if (diagnosticsExceeded || stderr.includes(workspaceDirectory) || /Bearer\s+|_authToken|password=/iu.test(stderr)) {
-            throw new HarnessFailure("protocol", "TRANSPORT_PRIVACY_FAILED", "Server diagnostics exceeded their bound or exposed private transport data");
-          }
-        },
-      };
-    },
+    createConnection: ({ timeoutMs }) => createSdkStdioConnection({
+      command, args, cwd, workspaceDirectory, expectedVersion, timeoutMs,
+    }),
   });
+}
+
+export function createSdkStdioConnection({ command, args, cwd, workspaceDirectory, expectedVersion, timeoutMs }) {
+  const transport = new StdioClientTransport({
+    command, args, cwd,
+    env: { PATH: process.env.PATH ?? "", IPE_MCP_WORKSPACE_ROOT: workspaceDirectory, IPE_MCP_STATE_ROOT: join(workspaceDirectory, ".state") },
+    stderr: "pipe",
+  });
+  const client = new Client({ name: "ipe-m10-provider-neutral-harness", version: "1.0.0" });
+  let stderr = "";
+  let diagnosticsExceeded = false;
+  transport.stderr?.on("data", (chunk) => {
+    if (stderr.length + chunk.length > 64 * 1024) diagnosticsExceeded = true;
+    if (!diagnosticsExceeded) stderr += String(chunk);
+  });
+  return {
+    get productVersion() { return client.getServerVersion()?.version; },
+    async connect(signal) {
+      await client.connect(transport, { signal, timeout: timeoutMs });
+      const server = client.getServerVersion();
+      if (server?.name !== "ipe-mcp" || (expectedVersion !== undefined && server.version !== expectedVersion)) {
+        throw new HarnessFailure("protocol", "PROTOCOL_SERVER_IDENTITY", "Server identity or product version mismatch");
+      }
+      const pid = transport.pid;
+      if (pid === null) throw new HarnessFailure("protocol", "PROTOCOL_CHILD_PID", "stdio child PID unavailable");
+      if ((await listeningSockets(pid)).length !== 0) throw new HarnessFailure("protocol", "TRANSPORT_LISTENER_OPEN", "stdio server opened a network listener");
+    },
+    callTool: (request, options) => client.callTool(request, options),
+    readResource: (request) => client.readResource(request, { timeout: timeoutMs }),
+    close: () => client.close(),
+    assertPrivateDiagnostics() {
+      if (diagnosticsExceeded || stderr.includes(workspaceDirectory) || /Bearer\s+|_authToken|password=/iu.test(stderr)) {
+        throw new HarnessFailure("protocol", "TRANSPORT_PRIVACY_FAILED", "Server diagnostics exceeded their bound or exposed private transport data");
+      }
+    },
+  };
 }

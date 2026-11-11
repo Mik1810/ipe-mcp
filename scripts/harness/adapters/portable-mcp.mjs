@@ -8,6 +8,21 @@ import { HarnessFailure, portableFailure, redactPortableText } from "../privacy.
 
 const sha256 = (data) => createHash("sha256").update(data).digest("hex");
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+export function hasArtifactSignature(kind, bytes) {
+  const signature = kind === "pdf" ? Buffer.from("%PDF-") : pngSignature;
+  return bytes.subarray(0, signature.length).equals(signature);
+}
+
+export function hasToolResultParity(result) {
+  const text = result.content.find((item) => item.type === "text");
+  try {
+    return result.structuredContent !== undefined && text?.type === "text" &&
+      isDeepStrictEqual(JSON.parse(text.text), result.structuredContent);
+  } catch {
+    return false;
+  }
+}
+
 const supportedFeatures = new Set(["create", "edit", "history", "validate", "render", "export", "import"]);
 
 const serverFailure = (tool, structured) => {
@@ -60,10 +75,7 @@ export function createPortableMcpAdapter({ identity, workspaceDirectory, createC
           record("tool", name, "fail", "PROTOCOL_RESULT_MISSING");
           throw new HarnessFailure("protocol", "PROTOCOL_RESULT_MISSING", `${name} omitted structuredContent`);
         }
-        const text = result.content.find((item) => item.type === "text");
-        try {
-          if (text?.type !== "text" || !isDeepStrictEqual(JSON.parse(text.text), result.structuredContent)) throw new Error("parity");
-        } catch {
+        if (!hasToolResultParity(result)) {
           record("tool", name, "fail", "PROTOCOL_PARITY_FAILED");
           throw new HarnessFailure("protocol", "PROTOCOL_PARITY_FAILED", `${name} text and structured results differ`);
         }
@@ -85,10 +97,7 @@ export function createPortableMcpAdapter({ identity, workspaceDirectory, createC
           record("tool", name, "fail", "PROTOCOL_CALL_FAILED");
           throw new HarnessFailure("protocol", "PROTOCOL_CALL_FAILED", `${name} protocol call failed`);
         }
-        const text = result.content.find((item) => item.type === "text");
-        try {
-          if (result.structuredContent === undefined || text?.type !== "text" || !isDeepStrictEqual(JSON.parse(text.text), result.structuredContent)) throw new Error("parity");
-        } catch {
+        if (!hasToolResultParity(result)) {
           record("tool", name, "fail", "PROTOCOL_PARITY_FAILED");
           throw new HarnessFailure("protocol", "PROTOCOL_PARITY_FAILED", `${name} expected error lacks text and structured parity`);
         }
@@ -227,19 +236,19 @@ export function createPortableMcpAdapter({ identity, workspaceDirectory, createC
         if (scenario.task.outputs.includes("preview-png")) {
           const preview = await call("ipe_render_preview", { documentId });
           const bytes = await readResource("preview-png", preview.data.resources[0]?.uri);
-          if (!bytes.subarray(0, 8).equals(pngSignature) || bytes.length < artifactAssertion("preview-png").minBytes) throw new HarnessFailure("artifact-quality", "PREVIEW_QUALITY_FAILED", "Preview PNG signature or size is invalid");
+          if (!hasArtifactSignature("png", bytes) || bytes.length < artifactAssertion("preview-png").minBytes) throw new HarnessFailure("artifact-quality", "PREVIEW_QUALITY_FAILED", "Preview PNG signature or size is invalid");
           await retainArtifact("preview-png", "image/png", bytes, `${scenario.id}-preview.png`, { signature: "PNG" });
         }
         if (scenario.task.outputs.includes("pdf")) {
           const exported = await call("ipe_export_document", { documentId, format: "pdf" });
           const bytes = await readResource("pdf", exported.data.resources[0]?.uri);
-          if (!bytes.subarray(0, 5).equals(Buffer.from("%PDF-")) || bytes.length < artifactAssertion("pdf").minBytes) throw new HarnessFailure("artifact-quality", "PDF_QUALITY_FAILED", "PDF signature or size is invalid");
+          if (!hasArtifactSignature("pdf", bytes) || bytes.length < artifactAssertion("pdf").minBytes) throw new HarnessFailure("artifact-quality", "PDF_QUALITY_FAILED", "PDF signature or size is invalid");
           await retainArtifact("pdf", "application/pdf", bytes, `${scenario.id}.pdf`, { signature: "%PDF-" });
         }
         if (scenario.task.outputs.includes("png")) {
           const exported = await call("ipe_export_document", { documentId, format: "png" });
           const bytes = await readResource("png", exported.data.resources[0]?.uri);
-          if (!bytes.subarray(0, 8).equals(pngSignature) || bytes.length < artifactAssertion("png").minBytes) throw new HarnessFailure("artifact-quality", "PNG_QUALITY_FAILED", "PNG signature or size is invalid");
+          if (!hasArtifactSignature("png", bytes) || bytes.length < artifactAssertion("png").minBytes) throw new HarnessFailure("artifact-quality", "PNG_QUALITY_FAILED", "PNG signature or size is invalid");
           await retainArtifact("png", "image/png", bytes, `${scenario.id}.png`, { signature: "PNG" });
         }
         client.assertPrivateDiagnostics?.();

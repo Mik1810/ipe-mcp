@@ -75,7 +75,8 @@
   },
   "bin": {
     "ipe-mcp": "dist/src/cli/mcp-stdio.js",
-    "ipe-mcp-http": "dist/src/cli/mcp-http.js"
+    "ipe-mcp-http": "dist/src/cli/mcp-http.js",
+    "ipe-mcp-cli": "dist/src/cli/deck.js"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0",

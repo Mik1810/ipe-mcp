@@ -137,7 +137,7 @@ function previousValues(before: IpeDocument, after: IpeDocument, operations: rea
   return values;
 }
 
-function outline(document: IpeDocument, maxObjects: number = MCP_LIMITS.inspectObjectsDefault): Record<string, unknown> {
+function outline(document: IpeDocument, maxObjects: number = MCP_LIMITS.inspectObjectsDefault) {
   let remaining = maxObjects;
   const pages = document.pages.map((page) => {
     const shown = page.objects.slice(0, Math.max(0, remaining)); remaining -= shown.length;

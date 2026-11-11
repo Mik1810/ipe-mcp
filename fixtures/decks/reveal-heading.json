@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "preset": "16:9",
+  "title": "A three-state diagram",
+  "slides": [
+    {
+      "title": "Read the diagram",
+      "layers": [
+        "anchor",
+        "setup",
+        "detail",
+        "relocated"
+      ],
+      "views": [
+        [
+          "setup",
+          "anchor"
+        ],
+        [
+          "detail",
+          "setup",
+          "anchor"
+        ],
+        [
+          "relocated",
+          "setup",
+          "detail"
+        ]
+      ],
+      "objects": [
+        {
+          "op": "add_text",
+          "layer": "anchor",
+          "text": "Read the diagram",
+          "position": {
+            "x": 96,
+            "y": 565
+          },
+          "size": 52
+        },
+        {
+          "op": "add_text",
+          "layer": "setup",
+          "text": "Start with one marked vertex.",
+          "position": {
+            "x": 96,
+            "y": 445
+          },
+          "size": 34
+        },
+        {
+          "op": "add_rectangle",
+          "layer": "detail",
+          "x": 840,
+          "y": 220,
+          "width": 160,
+          "height": 95,
+          "fill": "0.8 0.9 0.92"
+        },
+        {
+          "op": "add_text",
+          "layer": "detail",
+          "text": "Then identify its neighborhood.",
+          "position": {
+            "x": 96,
+            "y": 340
+          },
+          "size": 34
+        },
+        {
+          "op": "add_text",
+          "layer": "relocated",
+          "text": "Read the diagram",
+          "position": {
+            "x": 280,
+            "y": 565
+          },
+          "size": 52
+        }
+      ]
+    }
+  ]
+}

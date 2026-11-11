@@ -68,3 +68,9 @@ Scenarios may assert semantic structure, signatures, dimensions, bounded sizes,
 and other visual observations. They must not assert exact agent prose, exact
 tool-call order, transient document IDs, local paths, or byte equality of
 artifacts containing legitimate generated identities.
+
+## Research slide quality
+
+Use the [research presentation harness](slide-quality-harness.md) to replay
+an authored specification over CLI and MCP and review the resulting views
+against an independent rubric and speaker script.

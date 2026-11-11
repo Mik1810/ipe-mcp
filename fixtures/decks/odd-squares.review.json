@@ -1,0 +1,17 @@
+{
+  "views": [
+    {"slide":1,"view":1,"layers":["base"],"present":["Grow a square"],"absent":["Add a rim"]},
+    {"slide":1,"view":2,"layers":["base","rim"],"present":["Grow a square","Add a rim"]},
+    {"slide":2,"view":1,"layers":["claim"],"present":["The odd-sum identity"],"absent":["Base case","Inductive step"]},
+    {"slide":2,"view":2,"layers":["claim","base_case"],"present":["The odd-sum identity","Base case"],"absent":["Inductive step"]},
+    {"slide":2,"view":3,"layers":["claim","base_case","step"],"present":["The odd-sum identity","Base case","Inductive step"]},
+    {"slide":3,"view":1,"layers":["base"],"present":["Check the next square","Each odd term counts one new rim."]}
+  ],
+  "intentionalOverlaps": [
+    {"slide":1,"view":1,"objects":[5,6],"reason":"White size label belongs inside the starting square."},
+    {"slide":1,"view":2,"objects":[4,5],"reason":"The small square covers the lower-left part of the large one to expose the rim."},
+    {"slide":1,"view":2,"objects":[4,6],"reason":"The label remains in the small square and above both fills."},
+    {"slide":1,"view":2,"objects":[5,6],"reason":"White size label belongs inside the starting square."},
+    {"slide":3,"view":1,"objects":[4,5],"reason":"The tinted panel sits behind the worked equation."}
+  ]
+}

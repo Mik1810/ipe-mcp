@@ -1,0 +1,57 @@
+{
+  "views": [
+    {
+      "slide": 1,
+      "view": 1,
+      "layers": [
+        "setup",
+        "anchor"
+      ],
+      "present": [
+        "Read the diagram",
+        "Start with one marked vertex."
+      ],
+      "absent": [
+        "Then identify its neighborhood."
+      ]
+    },
+    {
+      "slide": 1,
+      "view": 2,
+      "layers": [
+        "detail",
+        "setup",
+        "anchor"
+      ],
+      "present": [
+        "Read the diagram",
+        "Then identify its neighborhood."
+      ]
+    },
+    {
+      "slide": 1,
+      "view": 3,
+      "layers": [
+        "relocated",
+        "setup",
+        "detail"
+      ],
+      "present": [
+        "Read the diagram",
+        "Then identify its neighborhood."
+      ]
+    }
+  ],
+  "stableHeadings": [
+    {
+      "slide": 1,
+      "text": "Read the diagram",
+      "intentionalMoves": [
+        {
+          "view": 3,
+          "reason": "Demonstrate a deliberate change of the title anchor."
+        }
+      ]
+    }
+  ]
+}
