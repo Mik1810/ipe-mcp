@@ -26,12 +26,17 @@ jobs:
           node-version: "24"
           package-manager-cache: false
 
-      - name: Install Ubuntu toolchain and locked dependencies
+      - name: Install Ubuntu toolchain
+        timeout-minutes: 8
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
-          npm install --global npm@11.16.0
-          npm ci --ignore-scripts --no-audit --no-fund
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install --yes --no-install-recommends ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
+
+      - name: Install locked JavaScript dependencies
+        timeout-minutes: 5
+        run: |
+          npm install --global npm@11.16.0 --fetch-retries=2 --fetch-timeout=30000
+          npm ci --ignore-scripts --no-audit --no-fund --fetch-retries=2 --fetch-timeout=30000
 
       - name: Verify runner and record toolchain provenance
         shell: bash
@@ -48,6 +53,23 @@ jobs:
           apt-cache policy ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
           dpkg-query -S /usr/bin/prlimit
           bash scripts/gates/check-m9-setup.sh
+
+      - name: Check fail-closed native process attestation
+        run: |
+          /usr/bin/bwrap --unshare-user --ro-bind / / --ro-bind /dev/null /var/lib/dpkg/info/bubblewrap.list --chdir "$PWD" "$(command -v node)" --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import { NATIVE_PROCESS_LIMITS } from "./dist/src/limits.js";
+          import { runControlledProcess } from "./dist/src/native/process.js";
+
+          await assert.rejects(
+            runControlledProcess("/usr/bin/true", [], process.cwd(), NATIVE_PROCESS_LIMITS, "NATIVE_RENDER_ERROR"),
+            { code: "NATIVE_UNAVAILABLE" },
+          );
+          console.log("Missing Bubblewrap ownership evidence rejected before spawn");
+          NODE
+
+      - name: Run complete test suite
+        run: npm test
 
       - name: Check baseline, hostile inputs and real documents
         run: |
