@@ -39,7 +39,8 @@
     "docs/reference/package-sbom.json",
     "scripts/conformance/m6-artifact-worker.mjs",
     "scripts/conformance/m6-native.lua",
-    "docs/guides/local-http.md",
+    "scripts/conformance/m10-pdf-import.js",
+        "docs/guides/local-http.md",
     "bridge/ipe-mcp-live.lua",
     "bridge/ipe-mcp-transaction.lua",
     "docs/guides/live-ipe-bridge.md"

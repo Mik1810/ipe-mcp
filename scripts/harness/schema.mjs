@@ -47,7 +47,7 @@ export const scenarioSchema = z.strictObject({
     features: z.array(identifier).max(32),
   }),
   limits: limitsSchema,
-  task: z.strictObject({
+  task: z.discriminatedUnion("kind", [z.strictObject({
     kind: z.literal("create-edit-validate-export"),
     document: z.strictObject({
       preset: z.literal("16:9"),
@@ -64,19 +64,28 @@ export const scenarioSchema = z.strictObject({
     recovery: z.array(z.enum(["stale-write", "undo", "snapshot-restore"])).min(1).max(3),
     validation: z.literal("full"),
     outputs: z.array(artifactKindSchema).min(1).max(4),
-  }),
+  }), z.strictObject({
+    kind: z.literal("import-validate-export"),
+    fixture: z.literal("mixed-pdf"),
+    validation: z.literal("full"),
+    outputs: z.array(artifactKindSchema).min(1).max(4),
+  })]),
   approvals: z.array(z.strictObject({
     id: identifier,
     action: z.enum(["save", "undo", "restore"]),
     decision: z.enum(["grant", "deny"]),
   })).max(8),
   assertions: z.strictObject({
-    semantic: z.strictObject({
+    semantic: z.union([z.strictObject({
       title: z.string().min(1).max(160),
       pageCount: z.number().int().positive().max(100),
       objectCount: z.number().int().nonnegative().max(10_000),
       rectanglePath: z.string().min(1).max(300),
-    }),
+    }), z.strictObject({
+      pageCount: z.number().int().positive().max(100),
+      objectCount: z.number().int().nonnegative().max(10_000),
+      importDiagnostics: z.array(z.string().regex(/^[A-Z][A-Z0-9_]*$/u).max(64)).max(16),
+    })]),
     artifacts: z.array(z.strictObject({
       kind: artifactKindSchema,
       mediaType: z.string().min(1).max(100),
@@ -99,7 +108,12 @@ export const scenarioSchema = z.strictObject({
   if (approvalIds.size !== scenario.approvals.length) {
     context.addIssue({ code: "custom", message: "approval ids must be unique", path: ["approvals"] });
   }
-  for (const required of ["save", ...scenario.task.recovery.filter((item) => item === "undo" || item === "snapshot-restore").map((item) => item === "snapshot-restore" ? "restore" : item)]) {
+  const importing = scenario.task.kind === "import-validate-export";
+  if (importing !== ("importDiagnostics" in scenario.assertions.semantic)) {
+    context.addIssue({ code: "custom", message: "semantic assertions must match the task kind", path: ["assertions", "semantic"] });
+  }
+  const recovery = importing ? [] : scenario.task.recovery;
+  for (const required of ["save", ...recovery.filter((item) => item === "undo" || item === "snapshot-restore").map((item) => item === "snapshot-restore" ? "restore" : item)]) {
     if (!approvalActions.has(required)) context.addIssue({ code: "custom", message: `missing granted ${required} approval`, path: ["approvals"] });
   }
   for (const [index, artifact] of scenario.assertions.artifacts.entries()) {

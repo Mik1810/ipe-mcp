@@ -57,6 +57,7 @@ const fixed = new Set([
   "docs/reference/package-sbom.json",
   "scripts/conformance/m6-artifact-worker.mjs",
   "scripts/conformance/m6-native.lua",
+  "scripts/conformance/m10-pdf-import.js",
 ]);
 const paths = artifact.files.map((file) => file.path);
 for (const path of paths) {

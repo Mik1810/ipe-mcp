@@ -40,12 +40,24 @@ export interface SessionManagerOptions<Document = unknown> {
   readonly mutationGuard?: MutationGuard<Document>;
 }
 
+const ORIGINAL_LIMITS = { svg: 1024 * 1024, pdf: 2 * 1024 * 1024 } as const;
+
+export interface OriginalSourceReceipt {
+  readonly format: keyof typeof ORIGINAL_LIMITS;
+  readonly bytes: number;
+  readonly sha256: string;
+  readonly diagnostics: readonly string[];
+}
+
+type OriginalSourceInput = Pick<OriginalSourceReceipt, "format" | "diagnostics"> & { readonly data: Uint8Array };
+
 export interface OpenSessionResult<Document> {
   readonly documentId: string;
   readonly revision: number;
   readonly document: Document;
   readonly sourcePath: string;
   readonly sourceHash: string;
+  readonly original?: OriginalSourceReceipt;
 }
 
 export interface MutationResult<Document> {
@@ -111,6 +123,7 @@ interface StoredSession<Document> {
   manifestState: TargetState;
   bridgeCommit?: BridgeCommit;
   bridgeGrant?: BridgeGrant;
+  readonly original?: OriginalSourceReceipt;
 }
 
 interface ExistingTargetState {
@@ -138,6 +151,7 @@ interface SessionManifestV1 {
   readonly workingFile: string;
   readonly bridgeCommit?: BridgeCommit;
   readonly bridgeGrant?: BridgeGrant;
+  readonly original?: OriginalSourceReceipt;
 }
 
 interface SaveJournalV1 {
@@ -238,6 +252,19 @@ function sameBridgeGrant(a: BridgeGrant, b: BridgeGrant): boolean {
   return a.epoch === b.epoch && a.sequence === b.sequence && a.revision === b.revision && a.proposalHash === b.proposalHash;
 }
 
+function validOriginal(input: unknown): input is OriginalSourceReceipt {
+  if (typeof input !== "object" || input === null) return false;
+  const value = input as Record<string, unknown>;
+  const format = value.format;
+  return Object.keys(value).sort().join(",") === "bytes,diagnostics,format,sha256"
+    && (format === "svg" || format === "pdf")
+    && typeof value.bytes === "number" && Number.isSafeInteger(value.bytes)
+    && value.bytes > 0 && value.bytes <= ORIGINAL_LIMITS[format]
+    && typeof value.sha256 === "string" && /^[0-9a-f]{64}$/u.test(value.sha256)
+    && Array.isArray(value.diagnostics) && value.diagnostics.length <= 16
+    && value.diagnostics.every((code) => typeof code === "string" && /^[A-Z_]{1,64}$/u.test(code));
+}
+
 function parseManifest(input: unknown): SessionManifestV1 {
   if (typeof input !== "object" || input === null) throw new Error("invalid session manifest");
   const value = input as Record<string, unknown>;
@@ -245,7 +272,9 @@ function parseManifest(input: unknown): SessionManifestV1 {
   const expected = ["documentId", "revision", "schemaVersion", "sourceDevice", "sourceHash", "sourceInode", "sourcePath", "workingFile"];
   if (Object.hasOwn(value, "bridgeGrant")) expected.unshift("bridgeGrant");
   if (Object.hasOwn(value, "bridgeCommit")) expected.unshift("bridgeCommit");
+  if (value.original !== undefined) expected.splice(expected.indexOf("revision"), 0, "original");
   if (JSON.stringify(keys) !== JSON.stringify(expected)) throw new Error("invalid session manifest fields");
+  if (value.original !== undefined && !validOriginal(value.original)) throw new Error("invalid original source receipt");
   if (value.schemaVersion !== 1 || typeof value.documentId !== "string" || typeof value.sourcePath !== "string" ||
       typeof value.sourceHash !== "string" || !/^[a-f0-9]{64}$/u.test(value.sourceHash) ||
       typeof value.sourceDevice !== "string" || !/^\d+$/u.test(value.sourceDevice) ||
@@ -316,6 +345,10 @@ export class DocumentSessionManager<Document> {
   }
 
   async open(sourcePath: string): Promise<OpenSessionResult<Document>> {
+    return await this.#open(sourcePath);
+  }
+
+  async #open(sourcePath: string, originalInput?: OriginalSourceInput): Promise<OpenSessionResult<Document>> {
     const canonicalSource = await this.#resolveExistingAllowed(sourcePath);
     const source = await targetState(canonicalSource, this.#maxSourceBytes);
     if (!source.exists) throw new SourceChangedError(canonicalSource);
@@ -330,6 +363,13 @@ export class DocumentSessionManager<Document> {
     await mkdir(workDirectory, { recursive: false, mode: 0o700 });
     const workingPath = join(workDirectory, `working-r0-${randomUUID()}.ipe`);
     await atomicWriteFile(workingPath, source.data, this.#atomicOptions());
+    const original = originalInput === undefined ? undefined : {
+      format: originalInput.format, bytes: originalInput.data.length, sha256: hash(originalInput.data), diagnostics: [...originalInput.diagnostics],
+    };
+    if (original !== undefined) {
+      if (!validOriginal(original)) throw new Error("invalid original source receipt");
+      await atomicWriteFile(join(workDirectory, "original." + original.format), originalInput!.data, this.#atomicOptions());
+    }
     const session: StoredSession<Document> = {
       documentId,
       sourcePath: canonicalSource,
@@ -342,20 +382,15 @@ export class DocumentSessionManager<Document> {
       sourceDevice: source.device,
       sourceInode: source.inode,
       manifestState: { exists: false },
+      ...(original === undefined ? {} : { original }),
     };
     await this.#writeManifest(session);
     this.#sessions.set(documentId, session);
-    return {
-      documentId,
-      revision: 0,
-      document: clone(document),
-      sourcePath: canonicalSource,
-      sourceHash: source.hash,
-    };
+    return this.inspect(documentId);
   }
 
   /** Start a recoverable session for a new document without touching its eventual save target. */
-  async create(document: Document): Promise<OpenSessionResult<Document>> {
+  async create(document: Document, original?: OriginalSourceInput): Promise<OpenSessionResult<Document>> {
     const diagnostics = this.#codec.validate(document);
     if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
       throw new StructuralValidationError(diagnostics);
@@ -366,7 +401,7 @@ export class DocumentSessionManager<Document> {
     await mkdir(seedDirectory, { recursive: true, mode: 0o700 });
     const seedPath = join(seedDirectory, `created-${randomUUID()}.ipe`);
     await atomicWriteFile(seedPath, source, this.#atomicOptions());
-    return await this.open(seedPath);
+    return await this.#open(seedPath, original);
   }
 
   inspect(documentId: string): OpenSessionResult<Document> {
@@ -377,7 +412,20 @@ export class DocumentSessionManager<Document> {
       document: clone(session.document),
       sourcePath: session.sourcePath,
       sourceHash: session.sourceHash,
+      ...(session.original === undefined ? {} : { original: clone(session.original) }),
     };
+  }
+
+  async readOriginal(documentId: string): Promise<{ readonly data: Buffer; readonly receipt: OriginalSourceReceipt }> {
+    const session = this.#session(documentId);
+    const original = session.original;
+    if (original === undefined) throw new Error("original import source does not exist");
+    const directory = await realpath(session.workDirectory);
+    if (directory !== session.workDirectory || !isInside(this.#stateRoot, directory)) throw new PathOutsideWorkspaceError(directory);
+    const path = join(directory, "original." + original.format);
+    const current = await targetState(path, original.bytes);
+    if (!current.exists || current.hash !== original.sha256) throw new SourceChangedError(path);
+    return { data: Buffer.from(current.data), receipt: clone(original) };
   }
 
   mutate(
@@ -653,6 +701,7 @@ export class DocumentSessionManager<Document> {
         manifestState,
         ...(manifest.bridgeCommit === undefined ? {} : { bridgeCommit: manifest.bridgeCommit }),
         ...(manifest.bridgeGrant === undefined ? {} : { bridgeGrant: manifest.bridgeGrant }),
+        ...(manifest.original === undefined ? {} : { original: manifest.original }),
       };
       this.#sessions.set(session.documentId, session);
       await this.#recoverSaveJournals(session);
@@ -835,6 +884,7 @@ export class DocumentSessionManager<Document> {
       workingFile: basename(overrides.workingPath ?? session.workingPath),
       ...(bridgeCommit === undefined ? {} : { bridgeCommit }),
       ...(bridgeGrant == null ? {} : { bridgeGrant }),
+      ...(session.original === undefined ? {} : { original: session.original }),
     };
     const path = join(session.workDirectory, "session.json");
     const expected = session.manifestState;

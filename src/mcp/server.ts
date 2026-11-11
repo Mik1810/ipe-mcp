@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import { MCP_CONTRACT_VERSION, documentIdSchema, entityIdSchema, operationSchema, resultSchema, revisionSchema, viewBuildSchema, type PublicResult } from "./contracts.js";
 import { failure, inputValidationFailure, safeLog, success } from "./errors.js";
+import { PDF_IMPORT_MAX_BYTES } from "../import/pdf.js";
+import { SVG_IMPORT_MAX_BYTES } from "../import/svg.js";
 import { IpeMcpService } from "./service.js";
 import { DOCUMENT_SHAPE_LIMITS, MCP_LIMITS } from "../limits.js";
 import { PRODUCT_NAME, PRODUCT_VERSION } from "../version.js";
@@ -16,6 +18,11 @@ type LinkInput = { readonly uri: string; readonly name: string; readonly mimeTyp
 function response(result: PublicResult, links: readonly LinkInput[] = []): CallToolResult {
   const resources: ResourceLink[] = links.map((link) => ({ type: "resource_link", uri: link.uri, name: link.name, mimeType: link.mimeType, ...(link.bytes === undefined ? {} : { size: link.bytes }) }));
   return { content: [{ type: "text", text: JSON.stringify(result) }, ...resources], structuredContent: result, ...(!result.ok ? { isError: true } : {}) };
+}
+
+function importSourceLink(result: PublicResult): readonly LinkInput[] {
+  const source = result.data.source as (Omit<LinkInput, "mimeType"> & { mediaType: string }) | undefined;
+  return source === undefined ? [] : [{ ...source, mimeType: source.mediaType }];
 }
 
 async function run(kind: string, operation: () => Promise<PublicResult>, links?: (result: PublicResult) => readonly LinkInput[]): Promise<CallToolResult> {
@@ -37,11 +44,11 @@ export function createMcpServer(service: IpeMcpService, bridge?: BridgeBroker): 
   server.registerTool("ipe_orientation", {
     title: "Orient to Ipe MCP", description: "Stable bootstrap: returns workflow, contract version, limits, resource routes, and revision/write rules without invoking native tools.",
     inputSchema: z.object({}).strict(), outputSchema: resultSchema, annotations: readOnly,
-  }, async () => response(success("orientation", "Use create/open → inspect → revision-guarded mutation → validate → save/export; binary results stay behind resource links.", {
+  }, async () => response(success("orientation", "Use create/open/import → inspect → revision-guarded mutation → validate → save/export; binary results stay behind resource links.", {
     ...(bridge === undefined ? {} : { bridge: { tool: "ipe_bridge", transport: "private-local-files", guiConsentRequired: true } }),
-    contractVersion: MCP_CONTRACT_VERSION, instructionsVersion: 1, workflow: ["ipe_create_document|ipe_open_document", "ipe_inspect", "ipe_apply_operations|ipe_compose_slide|ipe_build_views", "ipe_validate", "ipe_save_document|ipe_export_document"],
+    contractVersion: MCP_CONTRACT_VERSION, instructionsVersion: 1, workflow: ["ipe_create_document|ipe_open_document|ipe_import_svg|ipe_import_pdf", "ipe_inspect", "ipe_apply_operations|ipe_compose_slide|ipe_build_views", "ipe_validate", "ipe_save_document|ipe_export_document"],
     invariants: ["Use exact IDs from results/resources", "Every mutation needs current expectedRevision", "Delete/save/undo/restore need confirmation", "Read binary resources only on demand", "Duplicate create calls deliberately create distinct local sessions"],
-    resources: ["ipe://documents/{documentId}/summary", "ipe://documents/{documentId}/source", "ipe://documents/{documentId}/diagnostics", "ipe://previews/{artifactId}", "ipe://artifacts/{artifactId}"], limits: { operationsPerBatch: MCP_LIMITS.operationsPerBatch, inspectObjectsDefault: MCP_LIMITS.inspectObjectsDefault, maxInspectObjects: MCP_LIMITS.maxInspectObjects, sourceResourceBytes: MCP_LIMITS.sourceResourceBytes, hints: MCP_LIMITS.maxHints, documentShape: DOCUMENT_SHAPE_LIMITS },
+    resources: ["ipe://documents/{documentId}/summary", "ipe://documents/{documentId}/source", "ipe://documents/{documentId}/diagnostics", "ipe://documents/{documentId}/original", "ipe://previews/{artifactId}", "ipe://artifacts/{artifactId}"], limits: { operationsPerBatch: MCP_LIMITS.operationsPerBatch, inspectObjectsDefault: MCP_LIMITS.inspectObjectsDefault, maxInspectObjects: MCP_LIMITS.maxInspectObjects, sourceResourceBytes: MCP_LIMITS.sourceResourceBytes, hints: MCP_LIMITS.maxHints, documentShape: DOCUMENT_SHAPE_LIMITS },
   })));
 
   if (bridge !== undefined) {
@@ -90,6 +97,34 @@ export function createMcpServer(service: IpeMcpService, bridge?: BridgeBroker): 
     title: "Open Ipe document", description: "Opens an allowed local .ipe path into a private working copy; the source stays byte-identical until explicit save.",
     inputSchema: z.object({ path: z.string().min(1).max(MCP_LIMITS.pathChars).describe("Local .ipe path inside a configured workspace root; remote URLs and symlink escapes are rejected.") }).strict(), outputSchema: resultSchema, annotations: mutation,
   }, async ({ path }) => await run("open_document", async () => { const data = await service.openDocument(path); return success("open_document", "Opened a private working copy; the source was not modified.", data); }));
+
+  server.registerTool("ipe_import_svg", {
+    title: "Import an SVG into a private Ipe document",
+    description: "Imports supported SVG shapes as editable paths and embedded PNGs as images. Unsupported constructs reject the whole import. The source link retrieves the exact original bytes after import or session recovery.",
+    inputSchema: z.object({
+      dataBase64: z.string().min(4).max(4 * Math.ceil(SVG_IMPORT_MAX_BYTES / 3))
+        .describe("Canonical base64 of the UTF-8 SVG, limited to one MiB decoded."),
+    }).strict(),
+    outputSchema: resultSchema,
+    annotations: mutation,
+  }, async ({ dataBase64 }) => await run("import_svg", async () => {
+    const data = await service.importSvgDocument(dataBase64);
+    return success("import_svg", "Imported SVG into a private working document.", data);
+  }, importSourceLink));
+
+  server.registerTool("ipe_import_pdf", {
+    title: "Import PDF vector paths into a private Ipe document",
+    description: "Imports supported PDF paths, clipping, outlined glyphs and bitmap images in the isolated Linux native runtime. Unsupported constructs reject the whole import. The source link retrieves the exact original bytes after import or session recovery.",
+    inputSchema: z.object({
+      dataBase64: z.string().min(4).max(4 * Math.ceil(PDF_IMPORT_MAX_BYTES / 3))
+        .describe("Canonical base64 of a PDF within the 2 MiB decoded limit."),
+    }).strict(),
+    outputSchema: resultSchema,
+    annotations: mutation,
+  }, async ({ dataBase64 }) => await run("import_pdf", async () => {
+    const data = await service.importPdfDocument(dataBase64);
+    return success("import_pdf", "Imported PDF vector paths into a private working document.", data);
+  }, importSourceLink));
 
   server.registerTool("ipe_inspect", {
     title: "Inspect Ipe document", description: "Returns bounded outline, exact actionable IDs, counts and an explicit truncation flag. Read the summary resource for the same stable orientation shape.",
@@ -143,9 +178,21 @@ export function createMcpServer(service: IpeMcpService, bridge?: BridgeBroker): 
     const data = await service.history(documentId, action, expectedRevision, snapshotId); return success("history", `History action ${action} completed.`, data);
   }));
 
-  server.registerResource("ipe-document", new ResourceTemplate("ipe://documents/{documentId}/{kind}", { list: undefined }), { title: "Bounded Ipe document state", description: "Summary, canonical source, or diagnostics for a live session. Source declares truncation metadata when bounded.", mimeType: "application/json" }, async (uri, variables) => {
-    const kind = String(variables.kind); if (!(["summary", "source", "diagnostics"] as const).includes(kind as "summary")) throw new Error("resource kind must be summary, source, or diagnostics");
-    const resource = service.documentResource(String(variables.documentId), kind as "summary" | "source" | "diagnostics");
+  server.registerResource("ipe-document", new ResourceTemplate("ipe://documents/{documentId}/{kind}", { list: undefined }), { title: "Bounded Ipe document state", description: "Summary, canonical Ipe source, diagnostics or exact original import bytes for a live or recovered session.", mimeType: "application/json" }, async (uri, variables) => {
+    const documentId = String(variables.documentId);
+    const kind = String(variables.kind);
+    if (kind === "original") {
+      try {
+        const item = await service.originalResource(documentId);
+        return { contents: [{ uri: uri.href, mimeType: item.mediaType, blob: item.data.toString("base64"), _meta: {
+          bytes: item.receipt.bytes, sha256: item.receipt.sha256, diagnostics: [...item.receipt.diagnostics],
+        } }] };
+      } catch {
+        throw new Error("Original import source is unavailable or failed its integrity check.");
+      }
+    }
+    if (!(["summary", "source", "diagnostics"] as const).includes(kind as "summary")) throw new Error("resource kind must be summary, source, diagnostics, or original");
+    const resource = service.documentResource(documentId, kind as "summary" | "source" | "diagnostics");
     return { contents: [{ uri: uri.href, mimeType: resource.mimeType, text: resource.text, ...(resource.metadata === undefined ? {} : { _meta: resource.metadata }) }] };
   });
   for (const family of ["artifacts", "previews"] as const) server.registerResource(`ipe-${family}`, new ResourceTemplate(`ipe://${family}/{artifactId}`, { list: undefined }), { title: family === "artifacts" ? "Ipe binary artifact" : "Ipe PNG preview", description: "Explicit on-demand binary read; tool results contain only a resource link and metadata.", mimeType: family === "artifacts" ? "application/octet-stream" : "image/png" }, async (uri, variables) => {

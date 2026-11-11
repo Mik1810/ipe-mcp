@@ -1,4 +1,5 @@
 import { BridgeConflictError } from "../bridge/snapshot.js";
+import { VectorImportError } from "../import/errors.js";
 import { NativeIpeError } from "../native/errors.js";
 import { BridgeReviewPendingError, PathOutsideWorkspaceError, RevisionConflictError, SourceChangedError, StructuralValidationError } from "../persistence/errors.js";
 import { LimitsExceededError, MODEL_TEXT_CAPS } from "../limits.js";
@@ -35,6 +36,11 @@ export function failure(kind: string, error: unknown): PublicResult {
     message = error instanceof BridgeReviewPendingError ? "An Ipe proposal has a reserved working revision." : "The Ipe bridge request is not ready or its baseline changed.";
     correction = "Inspect both working copies. Use the Ipe bridge menu to complete or reconcile the proposal before retrying.";
     retryable = true;
+  } else if (error instanceof VectorImportError) {
+    code = error.code;
+    message = "The source contains an unsupported or invalid vector construct.";
+    correction = "Review the import diagnostic at the reported source location.";
+    details = { diagnostic: error.diagnostic.code, location: error.diagnostic.location };
   } else if (error instanceof SourceChangedError) {
     code = error.code; message = "The source changed outside this session; it was not overwritten."; correction = "Open the changed source as a new session or save to a different approved path."; retryable = true;
   } else if (error instanceof PathOutsideWorkspaceError) {

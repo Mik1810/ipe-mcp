@@ -52,4 +52,8 @@ The bridge extends TM-FS, TM-CONCURRENCY and TM-METADATA to an open GUI
 document. Private staging, explicit operator consent and rechecking the
 common revision before apply are required before enabling any GUI writes.
 
+## Vector import
+
+[ADR-0010](0010-vector-import-fidelity.md) defines the SVG parser and the confined PDF worker, stable rejection diagnostics, and the private original-source receipt.
+
 Distribution remains an approved deferral: it will be reassessed with licensing, packaging, and sandboxing.

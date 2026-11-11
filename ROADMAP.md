@@ -244,14 +244,15 @@ Pipeline:
 
 ### 7.1 Honest Contract
 
-Ipe has no continuous timeline. The server will distinguish four products:
+Presentations advance through discrete Ipe views. The server supports three
+related operations:
 
-1. **Native reveal**: layer visibility across views.
-2. **Discrete motion**: intermediate states generated between views.
-3. **PDF transition**: whole-page effect, viewer-dependent.
-4. **Continuous video**: optional future pipeline, not part of the native `.ipe`.
+1. **Native reveal** through layer visibility across views.
+2. **Discrete motion** through intermediate states generated between views.
+3. **PDF transition** through whole-page effects that depend on the viewer.
 
-No tool will call a view sequence “fluid”. The preview must be able to show every static state even when the viewer does not support transitions.
+The preview shows each static state. Export preserves the order of the
+views so the presenter can advance each step manually.
 
 ### 7.2 High-Level Operations
 
@@ -680,10 +681,13 @@ Gate:
 
 ### M10 — Post-MVP Extensions
 
+The initial release targets file-based authoring with discrete Ipe views on
+WSL. Live editing of an open Ipe session is a later milestone.
+
 - authenticated Streamable HTTP;
 - live bridge with open Ipe and bidirectional synchronization;
 - distribution strategy, npm packaging, and installable bundle/helper;
-- support and CI for non-WSL Linux, macOS, and Windows;
+- support and CI for non-WSL Linux, followed by macOS and Windows after the WSL workflow is stable;
 - container/devcontainer if still useful after local validation;
 - Codex marketplace/plugin template;
 - provider-neutral agent harness for repeatable create/edit/validate/export
@@ -692,9 +696,11 @@ Gate:
   agents, keeping shared scenarios, expected outcomes, and diagnostics independent
   of vendor-specific prompts, skills, or UI directives;
 - more faithful SVG/PDF import;
-- dedicated web presenter with real interpolation;
-- continuous video, only after a Manim/licenses/fidelity spike;
 - adoption of 7.3.x only after a stable release and migration tests.
+
+The dedicated web presenter and continuous-video export are outside the
+product scope. The [Manim experiment](./docs/adr/0009-manim-continuous-video-spike.md)
+is retained as a historical decision.
 
 #### Future Agent Harness
 

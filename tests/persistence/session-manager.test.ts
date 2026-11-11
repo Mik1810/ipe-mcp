@@ -507,6 +507,30 @@ describe("bridge snapshot commit", () => {
     expect(JSON.parse(await readFile(source, "utf8"))).toEqual({ value: "original", valid: true });
   });
 
+  it("recovers an import receipt alongside the bridge replay marker and reservation", async () => {
+    const session = await manager();
+    const original = Buffer.from("<svg/>");
+    const { documentId } = await session.create({ value: "imported", valid: true }, {
+      format: "svg", data: original, diagnostics: [],
+    });
+    const epoch = "a".repeat(32);
+    const sourceStamp = await session.bridgeSourceStamp(documentId, 0);
+    const request = { epoch, sequence: 1, snapshotHash: "b".repeat(64), sourceStamp };
+    await session.commitBridgeSnapshot(documentId, 0, request, () => ({ value: "GUI", valid: true }));
+    const grant = { epoch, sequence: 2, revision: 1, proposalHash: "c".repeat(64) };
+    await session.reserveBridgeGrant(documentId, grant, sourceStamp, async () => true);
+
+    const restarted = await manager();
+    await expect(restarted.recover()).resolves.toEqual([
+      expect.objectContaining({ documentId, revision: 1, original: expect.objectContaining({ format: "svg" }) }),
+    ]);
+    await expect(restarted.readOriginal(documentId)).resolves.toMatchObject({ data: original });
+    await expect(restarted.confirmBridgeGrant(documentId, grant)).resolves.toBeUndefined();
+    await restarted.releaseBridgeGrant(documentId, grant);
+    const replay = await restarted.commitBridgeSnapshot(documentId, 0, request, () => { throw new Error("replayed GUI edit"); });
+    expect(replay).toEqual({ revision: 1, replayed: true });
+  });
+
   it("rejects a stale revision and a source replaced during the working-copy commit", async () => {
     let replace = false;
     const session = await manager(async (_temporary, target) => {

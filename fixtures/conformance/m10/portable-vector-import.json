@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "id": "portable-vector-import",
+  "title": "Portable PDF import, native validation, reopen and export",
+  "requirements": {
+    "contract": "ipe-mcp/1",
+    "capabilityMode": "full-7.2.30",
+    "features": [
+      "import",
+      "validate",
+      "render",
+      "export"
+    ]
+  },
+  "limits": {
+    "timeoutMs": 300000,
+    "toolCallTimeoutMs": 180000,
+    "maxSteps": 24,
+    "maxTranscriptEntries": 32,
+    "maxArtifacts": 4,
+    "maxArtifactBytes": 67108864
+  },
+  "task": {
+    "kind": "import-validate-export",
+    "fixture": "mixed-pdf",
+    "validation": "full",
+    "outputs": [
+      "ipe",
+      "preview-png",
+      "pdf"
+    ]
+  },
+  "approvals": [
+    {
+      "id": "save-document",
+      "action": "save",
+      "decision": "grant"
+    }
+  ],
+  "assertions": {
+    "semantic": {
+      "pageCount": 1,
+      "objectCount": 8,
+      "importDiagnostics": [
+        "PDF_TEXT_OUTLINED",
+        "PDF_IMAGE_INTERPOLATION_RENDERER_DEPENDENT"
+      ]
+    },
+    "artifacts": [
+      {
+        "kind": "ipe",
+        "mediaType": "application/xml",
+        "minBytes": 100
+      },
+      {
+        "kind": "preview-png",
+        "mediaType": "image/png",
+        "minBytes": 100
+      },
+      {
+        "kind": "pdf",
+        "mediaType": "application/pdf",
+        "minBytes": 100
+      }
+    ]
+  }
+}
