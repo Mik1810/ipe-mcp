@@ -6,7 +6,7 @@ import { ipeDocumentCodec } from "../core/ipe-document-codec.js";
 import { NATIVE_WORKER_ARTIFACT_BYTES } from "../limits.js";
 import { DEFAULT_RASTER_LIMITS } from "./artifact-validation.js";
 import type { ProcessLimits } from "./process.js";
-import { runControlledProcess, WINDOWS_NATIVE_UNAVAILABLE } from "./process.js";
+import { runControlledProcess, NATIVE_PLATFORM_UNAVAILABLE } from "./process.js";
 import { openStableArtifact, type StableArtifact } from "./stable-artifact.js";
 
 export type NativeCapabilityMode = "structural-only" | "full-7.2.30" | "nightly";
@@ -165,11 +165,11 @@ async function verifiedLinuxToolchain(executables: NativeExecutables, workspace:
 }
 
 export async function detectNativeCapabilities(executables: NativeExecutables, helperDirectory: string, workspace: string, limits: ProcessLimits, nextLimits: ProcessLimitsProvider = () => limits, remaining: () => number = () => limits.timeoutMs): Promise<NativeCapabilities> {
-  if (process.platform === "win32") {
+  if (process.platform !== "linux") {
     return {
       mode: "structural-only", verified: false, xmlVersion: 70218,
       features: { ipelib: false, latex: false, pdf: false, png: false, svg: false },
-      toolchain: undefined, validators: undefined, diagnostics: [WINDOWS_NATIVE_UNAVAILABLE],
+      toolchain: undefined, validators: undefined, diagnostics: [NATIVE_PLATFORM_UNAVAILABLE],
     };
   }
   const diagnostics: string[] = [];

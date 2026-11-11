@@ -6,7 +6,7 @@ import { requestSignal } from "../runtime/request-lifetime.js";
 
 import { NativeIpeError, type NativeErrorCode } from "./errors.js";
 
-export const WINDOWS_NATIVE_UNAVAILABLE = "Native Ipe on Windows requires verified process isolation and toolchain provenance";
+export const NATIVE_PLATFORM_UNAVAILABLE = "Native Ipe requires verified process isolation and toolchain provenance on this platform";
 
 export interface ProcessLimits {
   readonly timeoutMs: number;
@@ -30,33 +30,27 @@ export async function runControlledProcess(
   environment: Readonly<Record<string, string>> = {},
   profile?: "pdf-import",
 ): Promise<ProcessResult> {
-  if (process.platform === "win32") {
-    throw new NativeIpeError("NATIVE_UNAVAILABLE", WINDOWS_NATIVE_UNAVAILABLE);
-  }
-  if (profile === "pdf-import" && process.platform !== "linux") {
-    throw new NativeIpeError("NATIVE_UNAVAILABLE", "PDF import requires the isolated Linux native runtime");
+  if (process.platform !== "linux") {
+    throw new NativeIpeError("NATIVE_UNAVAILABLE", NATIVE_PLATFORM_UNAVAILABLE);
   }
   const signal = requestSignal();
   assertNativeRequestActive();
   const started = Date.now();
-  if (process.platform === "linux") await attestBubblewrap();
+  await attestBubblewrap();
   assertNativeRequestActive();
   const remainingTimeout = limits.timeoutMs - (Date.now() - started);
   if (remainingTimeout < 1) throw new NativeIpeError("NATIVE_TIMEOUT", `native process exceeded ${limits.timeoutMs} ms before spawn`);
   return await new Promise<ProcessResult>((resolve, reject) => {
-    const launchExecutable = process.platform === "linux" ? "/usr/bin/bwrap" : executable;
-    const launchArgs = process.platform === "linux"
-      ? [
-        "--unshare-user", "--unshare-pid", "--die-with-parent", "--new-session",
-        ...(profile === "pdf-import"
-          ? ["--unshare-net", "--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind-try", "/lib64", "/lib64",
-            "--ro-bind", cwd, "/work", "--chdir", "/work"]
-          : ["--ro-bind", "/", "/", "--bind", cwd, cwd, "--chdir", cwd]),
-        "--proc", "/proc", "--dev", "/dev", "--",
-        "/usr/bin/prlimit", `--as=${limits.maxMemoryBytes}`, `--nproc=${limits.maxProcesses}`, `--fsize=${limits.maxFileBytes}`, "--", executable, ...args,
-      ]
-      : [...args];
-    const child = spawn(launchExecutable, launchArgs, {
+    const launchArgs = [
+      "--unshare-user", "--unshare-pid", "--die-with-parent", "--new-session",
+      ...(profile === "pdf-import"
+        ? ["--unshare-net", "--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind-try", "/lib64", "/lib64",
+          "--ro-bind", cwd, "/work", "--chdir", "/work"]
+        : ["--ro-bind", "/", "/", "--bind", cwd, cwd, "--chdir", cwd]),
+      "--proc", "/proc", "--dev", "/dev", "--",
+      "/usr/bin/prlimit", `--as=${limits.maxMemoryBytes}`, `--nproc=${limits.maxProcesses}`, `--fsize=${limits.maxFileBytes}`, "--", executable, ...args,
+    ];
+    const child = spawn("/usr/bin/bwrap", launchArgs, {
       cwd,
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
