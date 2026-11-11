@@ -198,7 +198,7 @@ export function assertMinimalPreamble(preamble: string | undefined): void {
   if (remainder.trim() !== "") throw new NativeIpeError("NATIVE_TEX_ERROR", "only allowlisted \\usepackage declarations are permitted in the M6 preamble");
 }
 
-function assertMappingPreserved(before: DocumentIR, after: DocumentIR): readonly NativeDiagnostic[] {
+export function assertMappingPreserved(before: DocumentIR, after: DocumentIR): readonly NativeDiagnostic[] {
   const diagnostics: NativeDiagnostic[] = [];
   if (after.format !== 70218) throw new NativeIpeError("NATIVE_LOAD_ERROR", `native save emitted XML ${after.format}, expected 70218`);
   assertEqualRecord(before.metadata, after.metadata, "metadata");

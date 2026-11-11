@@ -9,6 +9,7 @@ import { SVG_IMPORT_MAX_BYTES } from "../import/svg.js";
 import { IpeMcpService } from "./service.js";
 import { DOCUMENT_SHAPE_LIMITS, MCP_LIMITS } from "../limits.js";
 import { PRODUCT_NAME, PRODUCT_VERSION } from "../version.js";
+import type { BridgeBroker } from "../bridge/broker.js";
 import { trackRequestWork } from "../runtime/request-lifetime.js";
 
 export const SERVER_INSTRUCTIONS = `Ipe MCP ${MCP_CONTRACT_VERSION}. Start with ipe_orientation, then create/open and retain exact document/page/layer/view/object IDs. Every mutation requires the latest expectedRevision; on REVISION_CONFLICT inspect and retry. Validate before save/export. DELETE, SAVE, UNDO, and RESTORE require explicit confirmation tokens. Binary outputs are resource links: read only the artifact needed.`;
@@ -33,7 +34,7 @@ const readOnly = { readOnlyHint: true, destructiveHint: false, idempotentHint: t
 const mutation = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const;
 const destructive = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false } as const;
 
-export function createMcpServer(service: IpeMcpService): McpServer {
+export function createMcpServer(service: IpeMcpService, bridge?: BridgeBroker): McpServer {
   const server = new McpServer({ name: PRODUCT_NAME, version: PRODUCT_VERSION }, { instructions: SERVER_INSTRUCTIONS, capabilities: { tools: {}, resources: {} } });
   // SDK v2 validates registered schemas before invoking callbacks. Its default
   // error is text-only, so replace that last-resort formatter with the same
@@ -44,10 +45,39 @@ export function createMcpServer(service: IpeMcpService): McpServer {
     title: "Orient to Ipe MCP", description: "Stable bootstrap: returns workflow, contract version, limits, resource routes, and revision/write rules without invoking native tools.",
     inputSchema: z.object({}).strict(), outputSchema: resultSchema, annotations: readOnly,
   }, async () => response(success("orientation", "Use create/open/import → inspect → revision-guarded mutation → validate → save/export; binary results stay behind resource links.", {
+    ...(bridge === undefined ? {} : { bridge: { tool: "ipe_bridge", transport: "private-local-files", guiConsentRequired: true } }),
     contractVersion: MCP_CONTRACT_VERSION, instructionsVersion: 1, workflow: ["ipe_create_document|ipe_open_document|ipe_import_svg|ipe_import_pdf", "ipe_inspect", "ipe_apply_operations|ipe_compose_slide|ipe_build_views", "ipe_validate", "ipe_save_document|ipe_export_document"],
     invariants: ["Use exact IDs from results/resources", "Every mutation needs current expectedRevision", "Delete/save/undo/restore need confirmation", "Read binary resources only on demand", "Duplicate create calls deliberately create distinct local sessions"],
     resources: ["ipe://documents/{documentId}/summary", "ipe://documents/{documentId}/source", "ipe://documents/{documentId}/diagnostics", "ipe://documents/{documentId}/original", "ipe://previews/{artifactId}", "ipe://artifacts/{artifactId}"], limits: { operationsPerBatch: MCP_LIMITS.operationsPerBatch, inspectObjectsDefault: MCP_LIMITS.inspectObjectsDefault, maxInspectObjects: MCP_LIMITS.maxInspectObjects, sourceResourceBytes: MCP_LIMITS.sourceResourceBytes, hints: MCP_LIMITS.maxHints, documentShape: DOCUMENT_SHAPE_LIMITS },
   })));
+
+  if (bridge !== undefined) {
+    const epoch = z.string().regex(/^[a-f0-9]{32}$/u).describe("Attachment ID returned by invite and entered in the Ipe bridge menu.");
+    const sequence = z.number().int().min(1).max(0x7fff_ffff).describe("Next bridge sequence shown in the attached Ipe window.");
+    server.registerTool("ipe_bridge", {
+      title: "Synchronize with a consenting local Ipe window",
+      description: "Create an invitation, admit a GUI snapshot, stage a proposal, authorize an already approved GUI proposal, or settle the verified GUI outcome. Only the Ipe operator can approve or apply a GUI write.",
+      inputSchema: z.discriminatedUnion("action", [
+        z.object({ action: z.literal("invite").describe("Invite one open Ipe document to this working session."), documentId: documentIdSchema, expectedRevision: revisionSchema }).strict(),
+        z.object({ action: z.literal("attach").describe("Verify the initial snapshot sent from the Ipe Attach menu."), epoch }).strict(),
+        z.object({ action: z.literal("ingest").describe("Import a snapshot explicitly sent from Ipe."), epoch, sequence }).strict(),
+        z.object({ action: z.literal("offer").describe("Stage a proposal for review in Ipe."), epoch, sequence, expectedRevision: revisionSchema }).strict(),
+        z.object({ action: z.literal("authorize").describe("Reserve the revision after an exact Ipe approval."), epoch, sequence }).strict(),
+        z.object({ action: z.literal("settle").describe("Verify the GUI outcome and record the receipt."), epoch, sequence }).strict(),
+      ]),
+      outputSchema: resultSchema,
+      annotations: destructive,
+    }, async (request) => await run("bridge", async () => {
+      switch (request.action) {
+        case "invite": return success("bridge", "Enter the attachment ID in Ipe and send the initial snapshot.", await bridge.invite(request.documentId, request.expectedRevision));
+        case "attach": return success("bridge", "Initial Ipe snapshot acknowledged.", await bridge.attach(request.epoch));
+        case "ingest": return success("bridge", "Ipe snapshot committed to the private working session.", await bridge.ingest(request.epoch, request.sequence));
+        case "offer": return success("bridge", "Proposal staged for explicit review in Ipe.", await bridge.offer(request.epoch, request.sequence, request.expectedRevision));
+        case "authorize": return success("bridge", "Revision reserved. The Ipe operator can now apply the approved proposal.", await bridge.authorize(request.epoch, request.sequence));
+        case "settle": return success("bridge", "Ipe outcome recorded.", await bridge.settle(request.epoch, request.sequence));
+      }
+    }));
+  }
 
   server.registerTool("ipe_get_capabilities", {
     title: "Get Ipe capabilities", description: "Reports structural/native mode, fixed local backends, format and supported semantic surfaces; call before full validation or export.", inputSchema: z.object({}).strict(), outputSchema: resultSchema, annotations: readOnly,

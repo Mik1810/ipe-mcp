@@ -123,6 +123,9 @@ Install from source, then start `ipe-mcp-http` with a private bearer-token file.
 Point your client on the same host to `http://127.0.0.1:8765/mcp`.
 [Set up the token and connect over HTTP](./docs/guides/local-http.md)
 
+The source build also includes an opt-in bridge for an open Ipe window on WSL.
+[Set up the live Ipe bridge](./docs/guides/live-ipe-bridge.md)
+
 ## Try your first slide
 
 Ask your assistant to run `ipe_get_capabilities` to see whether the native

@@ -43,3 +43,12 @@ export interface SessionDiagnostic {
   readonly path: string;
   readonly message: string;
 }
+
+export class BridgeReviewPendingError extends Error {
+  readonly code = "BRIDGE_REVIEW_PENDING";
+
+  constructor() {
+    super("The document is reserved for an Ipe bridge proposal");
+    this.name = "BridgeReviewPendingError";
+  }
+}

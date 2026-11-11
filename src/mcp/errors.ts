@@ -1,6 +1,7 @@
+import { BridgeConflictError } from "../bridge/snapshot.js";
 import { VectorImportError } from "../import/errors.js";
 import { NativeIpeError } from "../native/errors.js";
-import { PathOutsideWorkspaceError, RevisionConflictError, SourceChangedError, StructuralValidationError } from "../persistence/errors.js";
+import { BridgeReviewPendingError, PathOutsideWorkspaceError, RevisionConflictError, SourceChangedError, StructuralValidationError } from "../persistence/errors.js";
 import { LimitsExceededError, MODEL_TEXT_CAPS } from "../limits.js";
 import { MAX_HINTS, MCP_CONTRACT_VERSION, resultSchema, type PublicResult } from "./contracts.js";
 
@@ -30,6 +31,11 @@ export function failure(kind: string, error: unknown): PublicResult {
   if (error instanceof RevisionConflictError) {
     code = error.code; message = "The expected revision is stale; no mutation was applied."; correction = "Call ipe_inspect, then retry with its current revision."; retryable = true;
     details = { expectedRevision: error.expectedRevision, actualRevision: error.actualRevision };
+  } else if (error instanceof BridgeConflictError || error instanceof BridgeReviewPendingError) {
+    code = error.code;
+    message = error instanceof BridgeReviewPendingError ? "An Ipe proposal has a reserved working revision." : "The Ipe bridge request is not ready or its baseline changed.";
+    correction = "Inspect both working copies. Use the Ipe bridge menu to complete or reconcile the proposal before retrying.";
+    retryable = true;
   } else if (error instanceof VectorImportError) {
     code = error.code;
     message = "The source contains an unsupported or invalid vector construct.";
