@@ -48,8 +48,8 @@ jobs:
           EOF
           apt_options=(-o "Dir::Etc::sourcelist=$sources" -o Dir::Etc::sourceparts=- -o Acquire::Retries=2 -o Acquire::https::Timeout=30)
           sudo apt-get "${apt_options[@]}" -o APT::Update::Error-Mode=any update
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install --yes --no-install-recommends ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
-          apt-cache "${apt_options[@]}" policy ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install --yes --no-install-recommends ipe lua5.4 texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap util-linux
+          apt-cache "${apt_options[@]}" policy ipe lua5.4 texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap util-linux
 
       - name: Install locked JavaScript dependencies
         timeout-minutes: 5
@@ -70,6 +70,7 @@ jobs:
           node --version
           npm --version
           dpkg-query -S /usr/bin/prlimit
+          dpkg-query -S "$(kpsewhich xcolor.sty)"
           bash scripts/gates/check-m9-setup.sh
 
       - name: Check fail-closed native process attestation
