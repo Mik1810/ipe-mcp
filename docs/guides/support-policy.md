@@ -38,14 +38,15 @@ are in [`package-installation.md`](./package-installation.md).
 | `full-7.2.30` | Ipe 7.2.30 package | everything in the MVP | viewer-dependent effects best-effort; layer transforms need explicit BBOX | classified native errors and viewer compatibility warnings | format ≠ 70218, unsafe XML/paths/images, over-limit documents |
 | `nightly-7.3.x` | 7.3.x package | probes only; does not rewrite a stable file without consent | separate divergence lane; never claims full-7.2.30 | `NIGHTLY_DIVERGENCE` | used as a stable write target without consent |
 
-Supports no macOS/Windows/non-WSL target, no registry/marketplace publication,
-and no HTTP transport.
+The platform lanes below define the scope of native support. Marketplace
+publication and HTTP are outside this MVP matrix.
 
 ## Platform and runtime expectations
 
 | Item | Supported | Provenance |
 |---|---|---|
 | Platform | Ubuntu 26.04 LTS on WSL2 (`microsoft-standard-WSL2`) | `SETUP-WSL.md`, `check-m9-setup.sh` |
+| Native Linux CI | Ubuntu 26.04 LTS amd64, headless GitHub-hosted VM | [ADR-0011](../adr/0011-native-linux-qualification.md), [qualification run](https://github.com/Mik1810/ipe-mcp/actions/runs/43049327279) |
 | Node.js | ≥ 20 (verified 24.x) | `package.json` engines, setup gate |
 | npm | lockfile v3; `npm ci` + build | setup gate snapshot |
 | Ipe | `7.2.30-1build2` (Ubuntu package) | dpkg + capability probe |
@@ -54,10 +55,21 @@ and no HTTP transport.
 | Isolation | `bubblewrap` 0.11.1 + `prlimit` | attested in `process.ts` |
 | Lua (Ipelib) | `lua5.4` | package inventory (SBOM) |
 
-Anything outside this list is **not a supported target**: for example an
-IPython-managed Node, a pip-managed Ipe, or a binary from a source build (the
-M1 source-build lane is explicit and optional, `IPE_M1_SOURCE_BIN_DIR`, and
-never a supported install path for the release candidate).
+The native Linux lane covers the source checkout and a clean install of the
+tarball built from the qualified revision. The run used GitHub runner image
+`20261101.186.1`, Linux `7.0.0-1019-azure`, Ubuntu Ipe `7.2.30-1build2`,
+Bubblewrap `0.11.1-1ubuntu0.3` and Node.js 24. Install the Ubuntu packages
+`ipe`, `lua5.4`, `texlive-latex-base`, `texlive-latex-recommended`,
+`poppler-utils`, `mupdf-tools`, `bubblewrap` and `util-linux` for this
+lane. Ipe's colour fixtures exercise `xcolor` from
+`texlive-latex-recommended`.
+
+The run verified load, save, reopen, render and export for the supported
+70218 fixtures and the portable SDK stdio scenario. The licensed document
+corpus retains the same classified limits as the WSL baseline. Desktop
+integration, macOS, Windows outside WSL, and other Linux releases and
+architectures require separate qualification. The optional M1 source-build
+lane (`IPE_M1_SOURCE_BIN_DIR`) remains an experimental check.
 
 ## Document expectations
 
