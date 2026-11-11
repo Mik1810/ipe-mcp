@@ -1,0 +1,64 @@
+name: Native Linux qualification
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu-26-04-amd64:
+    name: Ubuntu 26.04 amd64
+    runs-on: ubuntu-26.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install Ubuntu toolchain and locked dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
+          npm install --global npm@11.16.0
+          npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify runner and record toolchain provenance
+        shell: bash
+        run: |
+          source /etc/os-release
+          [[ "$ID" == ubuntu && "$VERSION_ID" == 26.04 ]]
+          [[ "$(uname -m)" == x86_64 && "$(dpkg --print-architecture)" == amd64 ]]
+          kernel=$(uname -r)
+          [[ "${kernel,,}" != *microsoft* && -z "${WSL_INTEROP:-}" && ! -e /proc/sys/fs/binfmt_misc/WSLInterop ]]
+          [[ "$(systemd-detect-virt --container || true)" == none ]]
+          printf 'Runner image: %s %s\nKernel: %s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" "$kernel"
+          node --version
+          npm --version
+          apt-cache policy ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
+          dpkg-query -S /usr/bin/prlimit
+          bash scripts/gates/check-m9-setup.sh
+
+      - name: Check baseline, hostile inputs and real documents
+        run: |
+          bash scripts/gates/check-m8.sh
+          export IPE_M9_INHERITED_M8_TREE
+          IPE_M9_INHERITED_M8_TREE=$(git write-tree)
+          bash scripts/gates/check-m9-limits.sh
+          bash scripts/gates/check-m9-hostile.sh
+          bash scripts/gates/check-m9-real.sh
+
+      - name: Verify installed package and portable MCP scenario
+        run: |
+          bash scripts/gates/check-mcp-harness-policy.sh
+          npm run check:m10:package
