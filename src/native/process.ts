@@ -6,6 +6,8 @@ import { requestSignal } from "../runtime/request-lifetime.js";
 
 import { NativeIpeError, type NativeErrorCode } from "./errors.js";
 
+export const WINDOWS_NATIVE_UNAVAILABLE = "Native Ipe on Windows requires verified process isolation and toolchain provenance";
+
 export interface ProcessLimits {
   readonly timeoutMs: number;
   readonly maxOutputBytes: number;
@@ -28,6 +30,9 @@ export async function runControlledProcess(
   environment: Readonly<Record<string, string>> = {},
   profile?: "pdf-import",
 ): Promise<ProcessResult> {
+  if (process.platform === "win32") {
+    throw new NativeIpeError("NATIVE_UNAVAILABLE", WINDOWS_NATIVE_UNAVAILABLE);
+  }
   if (profile === "pdf-import" && process.platform !== "linux") {
     throw new NativeIpeError("NATIVE_UNAVAILABLE", "PDF import requires the isolated Linux native runtime");
   }
@@ -57,7 +62,7 @@ export async function runControlledProcess(
       stdio: ["ignore", "pipe", "pipe"],
       env: { PATH: "/usr/local/bin:/usr/bin:/bin", HOME: profile === "pdf-import" ? "/work" : cwd, LANG: "C.UTF-8", LC_ALL: "C.UTF-8", ...environment },
       windowsHide: true,
-      detached: process.platform !== "win32",
+      detached: true,
     });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
@@ -136,8 +141,7 @@ export async function attestBubblewrap(): Promise<void> {
 function killTree(pid: number | undefined): void {
   if (pid === undefined) return;
   try {
-    if (process.platform === "win32") process.kill(pid, "SIGKILL");
-    else process.kill(-pid, "SIGKILL");
+    process.kill(-pid, "SIGKILL");
   } catch {
     // The process may have exited between the limit check and the signal.
   }

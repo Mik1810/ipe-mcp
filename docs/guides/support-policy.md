@@ -59,6 +59,35 @@ IPython-managed Node, a pip-managed Ipe, or a binary from a source build (the
 M1 source-build lane is explicit and optional, `IPE_M1_SOURCE_BIN_DIR`, and
 never a supported install path for the release candidate).
 
+## Native Windows qualification
+
+The development probe targets Windows Server 2025 x64 with Node.js 24. It
+checks the MCP stdio capability response, refusal before native process
+launch, and rejection of a workspace junction pointing outside the
+workspace. Run it from the source checkout after installing the locked
+dependencies and building the package.
+
+```powershell
+npm ci --ignore-scripts
+npm run build
+node scripts/conformance/m10-windows-capability.mjs
+```
+
+On Windows, `ipe_get_capabilities` reports `structural-only` and native
+requests return `NATIVE_UNAVAILABLE`. This mode is a capability result.
+Native Windows remains outside the support matrix. The probe records the
+directory flush result because persistence uses it to confirm durable
+publication. On the local Windows x64 probe, Node returned `EPERM` for that
+flush. Use the [WSL setup](../../SETUP-WSL.md) for a verified install and
+native rendering.
+
+A full Windows lane requires an attested Ipe, TeX and validator toolchain,
+a launcher that applies process-tree and resource limits before Ipe runs,
+filesystem durability and reparse-point evidence, and native save, reopen,
+render and export from the installed package. The [Ipe 7.2.30
+release](https://github.com/otfried/ipe/releases/tag/v7.2.30) supplies source
+archives and has no attached Windows binary.
+
 ## Document expectations
 
 | Item | Supported | Degraded | Warn / Reject |
