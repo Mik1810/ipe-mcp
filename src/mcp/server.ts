@@ -3,7 +3,7 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { z } from "zod";
 
 import { MCP_CONTRACT_VERSION, documentIdSchema, entityIdSchema, operationSchema, resultSchema, revisionSchema, viewBuildSchema, type PublicResult } from "./contracts.js";
-import { failure, inputValidationFailure, safeLog, success } from "./errors.js";
+import { sanitizePublicText, failure, inputValidationFailure, safeLog, success } from "./errors.js";
 import { PDF_IMPORT_MAX_BYTES } from "../import/pdf.js";
 import { SVG_IMPORT_MAX_BYTES } from "../import/svg.js";
 import { IpeMcpService } from "./service.js";
@@ -82,9 +82,14 @@ export function createMcpServer(service: IpeMcpService, bridge?: BridgeBroker): 
   server.registerTool("ipe_get_capabilities", {
     title: "Get Ipe capabilities", description: "Reports structural/native mode, fixed local backends, format and supported semantic surfaces; call before full validation or export.", inputSchema: z.object({}).strict(), outputSchema: resultSchema, annotations: readOnly,
   }, async () => await run("capabilities", async () => {
-    const capabilities = await service.capabilities();
+    const { toolchain, validators, diagnostics, ...capabilities } = await service.capabilities();
     const publicTool = (tool: { readonly package: string; readonly packageVersion?: string }) => ({ package: tool.package, ...(tool.packageVersion === undefined ? {} : { packageVersion: tool.packageVersion }) });
-    const publicCapabilities = { ...capabilities, ...(capabilities.toolchain === undefined ? {} : { toolchain: Object.fromEntries(Object.entries(capabilities.toolchain).map(([name, tool]) => [name, publicTool(tool)])) }), ...(capabilities.validators === undefined ? {} : { validators: Object.fromEntries(Object.entries(capabilities.validators).map(([name, tool]) => [name, { package: tool.package }])) }) };
+    const publicCapabilities = {
+      ...capabilities,
+      diagnostics: diagnostics.map(sanitizePublicText),
+      ...(toolchain === undefined ? {} : { toolchain: Object.fromEntries(Object.entries(toolchain).map(([name, tool]) => [name, publicTool(tool)])) }),
+      ...(validators === undefined ? {} : { validators: Object.fromEntries(Object.entries(validators).map(([name, tool]) => [name, { package: tool.package }])) }),
+    };
     return success("capabilities", `Ipe backend mode is ${capabilities.mode}.`, { format: 70218, contractVersion: MCP_CONTRACT_VERSION, capabilities: publicCapabilities });
   }));
 

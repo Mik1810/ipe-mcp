@@ -9,10 +9,10 @@ import { afterEach, describe, expect, it } from "vitest";
 const temporary: string[] = [];
 afterEach(async () => { await Promise.all(temporary.splice(0).map((path) => rm(path, { recursive: true, force: true }))); });
 
-async function connect(extraEnv: Record<string, string> = {}) {
+async function connect(extraEnv: Record<string, string> = {}, serverArgs = [resolve("dist/src/cli/mcp-stdio.js")]) {
   const root = await mkdtemp(join(tmpdir(), "ipe-mcp-protocol-")); temporary.push(root);
   const stderr: string[] = [];
-  const transport = new StdioClientTransport({ command: process.execPath, args: [resolve("dist/src/cli/mcp-stdio.js")], cwd: process.cwd(), env: { PATH: process.env.PATH ?? "", IPE_MCP_WORKSPACE_ROOT: root, IPE_MCP_STATE_ROOT: join(root, ".state"), ...extraEnv }, stderr: "pipe" });
+  const transport = new StdioClientTransport({ command: process.execPath, args: serverArgs, cwd: process.cwd(), env: { PATH: process.env.PATH ?? "", IPE_MCP_WORKSPACE_ROOT: root, IPE_MCP_STATE_ROOT: join(root, ".state"), ...extraEnv }, stderr: "pipe" });
   transport.stderr?.on("data", (chunk) => stderr.push(String(chunk)));
   const client = new Client({ name: "ipe-m8-test-host", version: "1" });
   await client.connect(transport);
@@ -49,6 +49,29 @@ describe("M8 real stdio protocol", () => {
       expect(JSON.stringify(capabilities.structuredContent)).not.toContain("/usr/");
     } finally { await client.close(); }
     expect(stderr.join("")).toContain("server_started");
+  });
+
+  it("reports structural-only capability over stdio when the native toolchain is missing", async () => {
+    const bootstrap = `
+      import { serveStdio } from "@modelcontextprotocol/server/stdio";
+      import { createMcpServer, IpeMcpService } from "./dist/src/index.js";
+      const missing = "/ipe-mcp-intentionally-missing";
+      const service = await IpeMcpService.create(
+        [process.env.IPE_MCP_WORKSPACE_ROOT], process.env.IPE_MCP_STATE_ROOT,
+        { executables: { ipescript: missing, ipetoipe: missing, iperender: missing, pdflatex: missing } },
+      );
+      serveStdio(() => createMcpServer(service), { legacy: "serve" });
+    `;
+    const { client } = await connect({}, ["--input-type=module", "--eval", bootstrap]);
+    try {
+      const result = await client.callTool({ name: "ipe_get_capabilities", arguments: {} });
+      const parsed = structured(result);
+      expect(parsed).toMatchObject({ ok: true, data: { capabilities: {
+        mode: "structural-only", verified: false, diagnostics: expect.arrayContaining(["ipescript is unavailable"]),
+      } } });
+      expect(parsed.data.capabilities).not.toHaveProperty("toolchain");
+      expect(JSON.stringify(parsed)).not.toContain("/usr/");
+    } finally { await client.close(); }
   });
 
   it("normalizes SDK input rejection into ipe-mcp/1 text/structured parity", async () => {
