@@ -71,6 +71,26 @@ integration, macOS, Windows outside WSL, and other Linux releases and
 architectures require separate qualification. The optional M1 source-build
 lane (`IPE_M1_SOURCE_BIN_DIR`) remains an experimental check.
 
+## Windows and macOS capability probes
+
+The development workflow uses Windows Server 2025 x64 and macOS 15 on
+Apple silicon and Intel with Node.js 24. It checks the real MCP stdio
+capability response, refusal before native process launch, and rejection of
+a link pointing outside the workspace. It also checks atomic replacement
+of a scratch file and records whether directory durability was confirmed.
+
+On these platforms, `ipe_get_capabilities` reports `structural-only` and
+native Ipe requests return `NATIVE_UNAVAILABLE`. The support matrix
+requires verified native isolation, toolchain provenance, and an installed
+package round trip before adding a platform. The directory flush returned
+`EPERM` on Windows x64. Use the [WSL setup](../../SETUP-WSL.md) for a
+verified install and native rendering on a Windows machine.
+
+To reproduce the development probe, install the locked dependencies with
+`npm ci --ignore-scripts` and run `npm run build` from the source checkout.
+Then run `node scripts/conformance/m10-desktop-capability.mjs win32 x64` on
+Windows or use `darwin arm64` or `darwin x64` on the corresponding Mac.
+
 ## Document expectations
 
 | Item | Supported | Degraded | Warn / Reject |

@@ -6,6 +6,8 @@ import { requestSignal } from "../runtime/request-lifetime.js";
 
 import { NativeIpeError, type NativeErrorCode } from "./errors.js";
 
+export const NATIVE_PLATFORM_UNAVAILABLE = "Native Ipe requires verified process isolation and toolchain provenance on this platform";
+
 export interface ProcessLimits {
   readonly timeoutMs: number;
   readonly maxOutputBytes: number;
@@ -28,36 +30,33 @@ export async function runControlledProcess(
   environment: Readonly<Record<string, string>> = {},
   profile?: "pdf-import",
 ): Promise<ProcessResult> {
-  if (profile === "pdf-import" && process.platform !== "linux") {
-    throw new NativeIpeError("NATIVE_UNAVAILABLE", "PDF import requires the isolated Linux native runtime");
+  if (process.platform !== "linux") {
+    throw new NativeIpeError("NATIVE_UNAVAILABLE", NATIVE_PLATFORM_UNAVAILABLE);
   }
   const signal = requestSignal();
   assertNativeRequestActive();
   const started = Date.now();
-  if (process.platform === "linux") await attestBubblewrap();
+  await attestBubblewrap();
   assertNativeRequestActive();
   const remainingTimeout = limits.timeoutMs - (Date.now() - started);
   if (remainingTimeout < 1) throw new NativeIpeError("NATIVE_TIMEOUT", `native process exceeded ${limits.timeoutMs} ms before spawn`);
   return await new Promise<ProcessResult>((resolve, reject) => {
-    const launchExecutable = process.platform === "linux" ? "/usr/bin/bwrap" : executable;
-    const launchArgs = process.platform === "linux"
-      ? [
-        "--unshare-user", "--unshare-pid", "--die-with-parent", "--new-session",
-        ...(profile === "pdf-import"
-          ? ["--unshare-net", "--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind-try", "/lib64", "/lib64",
-            "--ro-bind", cwd, "/work", "--chdir", "/work"]
-          : ["--ro-bind", "/", "/", "--bind", cwd, cwd, "--chdir", cwd]),
-        "--proc", "/proc", "--dev", "/dev", "--",
-        "/usr/bin/prlimit", `--as=${limits.maxMemoryBytes}`, `--nproc=${limits.maxProcesses}`, `--fsize=${limits.maxFileBytes}`, "--", executable, ...args,
-      ]
-      : [...args];
-    const child = spawn(launchExecutable, launchArgs, {
+    const launchArgs = [
+      "--unshare-user", "--unshare-pid", "--die-with-parent", "--new-session",
+      ...(profile === "pdf-import"
+        ? ["--unshare-net", "--ro-bind", "/usr", "/usr", "--ro-bind", "/lib", "/lib", "--ro-bind-try", "/lib64", "/lib64",
+          "--ro-bind", cwd, "/work", "--chdir", "/work"]
+        : ["--ro-bind", "/", "/", "--bind", cwd, cwd, "--chdir", cwd]),
+      "--proc", "/proc", "--dev", "/dev", "--",
+      "/usr/bin/prlimit", `--as=${limits.maxMemoryBytes}`, `--nproc=${limits.maxProcesses}`, `--fsize=${limits.maxFileBytes}`, "--", executable, ...args,
+    ];
+    const child = spawn("/usr/bin/bwrap", launchArgs, {
       cwd,
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
       env: { PATH: "/usr/local/bin:/usr/bin:/bin", HOME: profile === "pdf-import" ? "/work" : cwd, LANG: "C.UTF-8", LC_ALL: "C.UTF-8", ...environment },
       windowsHide: true,
-      detached: process.platform !== "win32",
+      detached: true,
     });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
@@ -136,8 +135,7 @@ export async function attestBubblewrap(): Promise<void> {
 function killTree(pid: number | undefined): void {
   if (pid === undefined) return;
   try {
-    if (process.platform === "win32") process.kill(pid, "SIGKILL");
-    else process.kill(-pid, "SIGKILL");
+    process.kill(-pid, "SIGKILL");
   } catch {
     // The process may have exited between the limit check and the signal.
   }

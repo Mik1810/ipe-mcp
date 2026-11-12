@@ -1,0 +1,49 @@
+name: Windows and macOS capability probes
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capability:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows Server 2025 x64
+            runner: windows-2025
+            platform: win32
+            arch: x64
+          - name: macOS 15 Apple silicon
+            runner: macos-15
+            platform: darwin
+            arch: arm64
+          - name: macOS 15 Intel
+            runner: macos-15-intel
+            platform: darwin
+            arch: x64
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build
+        run: npm run build
+      - name: Probe process launch, MCP and filesystem
+        run: node scripts/conformance/m10-desktop-capability.mjs ${{ matrix.platform }} ${{ matrix.arch }}
