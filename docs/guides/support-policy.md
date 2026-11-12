@@ -15,13 +15,12 @@ does not add support outside its declared matrix.
 ## Distribution Status
 
 The M9 source-checkout candidate remains the historical `0.1.0` baseline.
-ADR-0005 approves a thin npm helper, and the repository now builds the local
-`1.0.0-rc.1` tarball candidate. No package has been published. The packaged
-lane is supported only for a tarball that passes `check-m10-package.sh`; a
-successful `npm install` alone is not verification.
+ADR-0005 approves the thin npm package. The stable `1.0.0` artifact follows
+the published `1.0.0-rc.1` prerelease. The package gate qualifies the exact
+tarball and its native dependencies.
 
-The approved package contains only the JavaScript stdio server and essential
-metadata/documentation. Users or system administrators remain responsible for
+The package contains the JavaScript server, stdio and local HTTP entry
+points, the opt-in Ipe bridge, runtime helpers, and documentation. Users or system administrators remain responsible for
 installing Node.js and the native packages below. Package installation must not
 install native programs, change global MCP configuration, migrate documents or
 state, start HTTP, or enable telemetry. See
@@ -38,8 +37,8 @@ are in [`package-installation.md`](./package-installation.md).
 | `full-7.2.30` | Ipe 7.2.30 package | everything in the MVP | viewer-dependent effects best-effort; layer transforms need explicit BBOX | classified native errors and viewer compatibility warnings | format ≠ 70218, unsafe XML/paths/images, over-limit documents |
 | `nightly-7.3.x` | 7.3.x package | probes only; does not rewrite a stable file without consent | separate divergence lane; never claims full-7.2.30 | `NIGHTLY_DIVERGENCE` | used as a stable write target without consent |
 
-The platform lanes below define the scope of native support. Marketplace
-publication and HTTP are outside this MVP matrix.
+The platform lanes below define the scope of native support. The local HTTP
+transport and the WSL bridge require explicit configuration.
 
 ## Platform and runtime expectations
 
@@ -110,7 +109,7 @@ Windows or use `darwin arm64` or `darwin x64` on the corresponding Mac.
 | MCP Inspector | 2.4.0 real launcher/remote-session | host integration docs |
 | VS Code / SDK host | `.vscode/mcp.json`, `@modelcontextprotocol/client` | host integration docs |
 | Other MCP hosts | host-neutral contract, protocol-only stdout | design; no per-host token |
-| Local npm tarball | `1.0.0-rc.1`, exact allowlisted artifact | `check-m10-package.sh` clean install and provider-neutral stdio/native scenario |
+| Local npm tarball | `1.0.0`, exact allowlisted artifact | `check-m10-package.sh` clean install and provider-neutral stdio/native scenario |
 
 Resources: documents (summary/source/diagnostics) bounded, previews and
 artifacts behind `resource_link`, binary bytes only on explicit read. Artifacts

@@ -1,14 +1,14 @@
 # Package Installation
 
 Lifecycle: **Maintained**. Audience: operators and MCP host integrators. This
-guide covers the thin `ipe-mcp` npm artifact approved by ADR-0005. Version
-`1.0.0-rc.1` is a locally gated package candidate; it has not been published
-to the npm registry, tagged, or released on GitHub.
+guide covers the thin `ipe-mcp` npm artifact approved by ADR-0005. The stable
+release uses npm `latest` and the annotated GitHub release tag.
 
 ## What the Package Contains
 
 The package contains the compiled JavaScript server, declarations, the
-`ipe-mcp` stdio executable, two MIT runtime attestation helpers, the generated
+`ipe-mcp` stdio and `ipe-mcp-http` executables, the opt-in Ipe bridge,
+and the runtime helpers, the generated
 candidate SBOM, MIT license, README, and essential package/support guides. It
 contains no tests, fixtures, agent/editor configuration, local state, source
 maps, secrets, or native GPL/AGPL executables.
@@ -25,7 +25,7 @@ and run the native installation separately:
 
 ```bash
 sudo apt update
-sudo apt install ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap
+sudo apt install ipe lua5.4 texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap util-linux
 ```
 
 The server probes executable paths, Debian package ownership, versions, and
@@ -42,7 +42,7 @@ npm ci
 npm run check:m10:package
 ```
 
-The gate builds `1.0.0-rc.1`, audits the exact allowlisted tarball, scans for
+The gate builds `1.0.0`, audits the exact allowlisted tarball, scans for
 secret-like content and native binaries, generates and checks the candidate
 SBOM, installs the tarball in an isolated temporary project with lifecycle
 scripts disabled, verifies fail-closed missing-native diagnostics, and runs the
@@ -57,7 +57,7 @@ directory outside the repository:
 ```bash
 PACKAGE_OUTPUT=$(mktemp -d /tmp/ipe-mcp-package-XXXXXX)
 npm pack --pack-destination "$PACKAGE_OUTPUT"
-npm install --global "$PACKAGE_OUTPUT/ipe-mcp-1.0.0-rc.1.tgz"
+npm install --global "$PACKAGE_OUTPUT/ipe-mcp-1.0.0.tgz"
 ```
 
 The global installation is an explicit user action. A project-local install
@@ -80,7 +80,7 @@ env = {
 ```
 
 After connection, call `ipe_orientation`, then `ipe_get_capabilities`. The
-supported packaged lane must report product `1.0.0-rc.1` during MCP initialize,
+supported packaged lane must report product `1.0.0` during MCP initialize,
 contract `ipe-mcp/1`, and capability mode `full-7.2.30`. A
 `structural-only` result is usable only within its explicitly degraded limits.
 
@@ -88,15 +88,10 @@ For the optional local Codex integration, see the [plugin template](./codex-plug
 
 ## Update and Rollback
 
-There is no automatic updater. Retain the previous exact tarball or, after a
-future registry publication, install an exact SemVer. Restart the MCP
-connection and re-query orientation/capabilities after every change.
-
-For this first package candidate, rollback means uninstalling the candidate
-and returning to the retained M9 `0.1.0` source checkout, or installing a
-previous retained prerelease tarball once one exists. A major downgrade also
-requires reviewing sidecar and document migration notes. Installation and
-rollback do not implicitly rewrite documents or `.ipe-mcp-state`.
+Install an exact version or a retained tarball. Restart the MCP connection
+and re-query orientation and capabilities after every change. For rollback
+from 1.0.0, install `ipe-mcp@1.0.0-rc.1`. Review migration notes before a
+major downgrade.
 
 Public npm publication, a Git tag, a GitHub Release, or a `latest` dist-tag
 change remains a separate owner-authorized action after all gates pass.

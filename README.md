@@ -1,6 +1,6 @@
 # Ipe MCP
 
-[![npm prerelease](https://img.shields.io/npm/v/ipe-mcp?label=npm%20prerelease&color=245a81)](https://www.npmjs.com/package/ipe-mcp)
+[![npm version](https://img.shields.io/npm/v/ipe-mcp?label=npm&color=245a81)](https://www.npmjs.com/package/ipe-mcp)
 [![MIT license](https://img.shields.io/badge/license-MIT-366e52)](./LICENSE)
 [![Node.js 20+](https://img.shields.io/badge/Node.js-20%2B-41743c)](https://nodejs.org/)
 [![Verified on WSL2](https://img.shields.io/badge/verified-Ubuntu%2026.04%20on%20WSL2-5a4283)](./SETUP-WSL.md)
@@ -28,22 +28,22 @@ Use an MCP client that can launch the server in the same WSL environment.
 
 | Install from | Available features |
 | --- | --- |
-| [npm](#from-npm) or [GitHub Releases](#from-github-releases) | Published prerelease with stdio, editable Ipe documents, discrete views, and native preview and export. |
-| [Source](#from-source) | Current source build with supported SVG and PDF import and authenticated local HTTP. |
+| [npm](#from-npm) or [GitHub Releases](#from-github-releases) | Stable package with stdio, editable Ipe documents, discrete views, SVG/PDF import, native preview and export, authenticated local HTTP, and the opt-in WSL bridge. |
+| [Source](#from-source) | Build the current source with the same package entry points. |
 
 ### From npm
 
 ```bash
-npm install --global --ignore-scripts ipe-mcp@1.0.0-rc.1
+npm install --global --ignore-scripts ipe-mcp@1.0.0
 ```
 
 ### From GitHub Releases
 
-Install the packaged prerelease directly from the release asset. [Release downloads](https://github.com/Mik1810/ipe-mcp/releases/tag/v1.0.0-rc.1)
+Install the stable package directly from the release asset. [Release downloads](https://github.com/Mik1810/ipe-mcp/releases/tag/v1.0.0)
 
 ```bash
 npm install --global --ignore-scripts \
-  https://github.com/Mik1810/ipe-mcp/releases/download/v1.0.0-rc.1/ipe-mcp-1.0.0-rc.1.tgz
+  https://github.com/Mik1810/ipe-mcp/releases/download/v1.0.0/ipe-mcp-1.0.0.tgz
 ```
 
 ### From source
@@ -55,7 +55,7 @@ npm ci
 npm run build
 ipe_package_dir="$(mktemp -d)"
 npm pack --ignore-scripts --pack-destination "$ipe_package_dir"
-npm install --global --ignore-scripts "$ipe_package_dir/ipe-mcp-1.0.0-rc.1.tgz"
+npm install --global --ignore-scripts "$ipe_package_dir/ipe-mcp-1.0.0.tgz"
 ```
 
 ### Add the tools you need
@@ -66,10 +66,10 @@ The verified baseline uses Ipe 7.2.30 on Ubuntu 26.04 WSL2. [WSL setup guide](./
 
 ```bash
 sudo apt update
-sudo apt install ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap util-linux
+sudo apt install ipe lua5.4 texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap util-linux
 ```
 
-For **PDF import from a source build**, install `mupdf-tools`, `bubblewrap`, and
+For **PDF import**, install `mupdf-tools`, `bubblewrap`, and
 `util-linux`. Supported SVG import runs in Node.js. For **local HTTP**, install
 `util-linux` for `flock`. The npm package keeps these system tools external.
 
@@ -119,11 +119,11 @@ environment variable in its configuration.
 
 ### Authenticated local HTTP
 
-Install from source, then start `ipe-mcp-http` with a private bearer-token file.
+Start `ipe-mcp-http` with a private bearer-token file.
 Point your client on the same host to `http://127.0.0.1:8765/mcp`.
 [Set up the token and connect over HTTP](./docs/guides/local-http.md)
 
-The source build also includes an opt-in bridge for an open Ipe window on WSL.
+The package also includes an opt-in bridge for an open Ipe window on WSL.
 [Set up the live Ipe bridge](./docs/guides/live-ipe-bridge.md)
 
 ## Try your first slide

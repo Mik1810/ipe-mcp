@@ -19,8 +19,9 @@ deployment_workflow = (root / ".github/workflows/release-deployment-audit.yml").
 notes = (root / f"docs/releases/v{manifest['version']}.md").read_text()
 guide = (root / "docs/guides/release-bootstrap.md").read_text()
 
-assert manifest["package"] == "ipe-mcp" and manifest["version"] == "1.0.0-rc.1"
-assert manifest["tag"] == "v1.0.0-rc.1" and manifest["distTag"] == "next"
+version = json.loads((root / "package.json").read_text())["version"]
+assert manifest["package"] == "ipe-mcp" and manifest["version"] == version
+assert manifest["tag"] == f"v{version}" and manifest["distTag"] == ("next" if "-" in version else "latest")
 assert manifest["publication"] == {"requiresExplicitOwnerApproval": True, "bootstrapCredentialRetained": False}
 assert re.fullmatch(r"[0-9a-f]{40}", manifest["source"]["revision"])
 assert re.fullmatch(r"[0-9a-f]{40}", manifest["source"]["tree"])
@@ -30,7 +31,7 @@ for key in ["sha1", "sha256", "sha512"]:
 required_workflow = [
     "workflow_dispatch:", "default: verify-only", "stage-publish", "finalize-release", "runs-on: ubuntu-26.04",
     "permissions:\n  contents: read", "environment: npm-release", "contents: write", "id-token: write",
-    "persist-credentials: false", "npm run check:m10:package", "npm run check:m10:http", "npm run check:m10:release", "npm stage publish", "--access public --tag next --provenance",
+    "persist-credentials: false", "npm run check:m10:package", "npm run check:m10:http", "npm run check:m10:release", "npm stage publish", '--access public --tag "$DIST_TAG" --provenance',
     "--verify-tag", "--prerelease", "cancel-in-progress: false", "npm audit signatures",
 ]
 for token in required_workflow:
@@ -60,7 +61,7 @@ for token in ["refs/remotes/origin/main", "release workflow requires an annotate
 registry_script = (root / "scripts/release/verify-registry.mjs").read_text()
 for token in ["versions", "stableVersions", "bootstrapLatest", "after a stable release exists"]:
     assert token in registry_script, f"registry bootstrap/latest guard missing {token}"
-for token in ["ipe-mcp", "1.0.0-rc.1", "ipe-mcp/1", "Ubuntu 26.04 WSL2", "npm install", "rollback", "not published"]:
+for token in ["ipe-mcp", version, "ipe-mcp/1", "Ubuntu 26.04 WSL2", "npm install", "rollback"]:
     assert token in notes, f"release notes missing {token}"
 for token in ["verify-only", "npm-release", "v1.0.0-rc.1", "NPM_TOKEN", "2FA", "bypass-2FA", "stage publish", "delete", "revoke", "explicit owner authorization"]:
     assert token in guide, f"release bootstrap guide missing {token}"

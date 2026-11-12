@@ -20,12 +20,13 @@ const product = await readJson(join(root, "package.json"));
 const version = product.version;
 const tag = `v${version}`;
 const notesName = `${tag}.md`;
+const distTag = version.includes("-") ? "next" : "latest";
 
-if (!/^1\.0\.0-rc\.\d+$/u.test(version) || product.name !== "ipe-mcp" || product.private !== false) {
+if (!/^1\.0\.0(?:-rc\.\d+)?$/u.test(version) || product.name !== "ipe-mcp" || product.private !== false) {
   throw new Error("release candidate package identity is invalid");
 }
-if (product.publishConfig?.tag !== "next" || product.publishConfig?.provenance !== true || product.publishConfig?.access !== "public") {
-  throw new Error("safe public prerelease publishConfig is incomplete");
+if (product.publishConfig?.tag !== distTag || product.publishConfig?.provenance !== true || product.publishConfig?.access !== "public") {
+  throw new Error("safe public publishConfig is incomplete");
 }
 
 const assertTag = async () => {
@@ -46,6 +47,7 @@ const emitOutputs = async (manifest) => {
   await appendFile(process.env.GITHUB_OUTPUT, [
     `version=${manifest.version}`,
     `tag=${manifest.tag}`,
+    `distTag=${manifest.distTag}`,
     `tarball=${manifest.tarball.filename}`,
     `integrity=${manifest.tarball.integrity}`,
   ].join("\n") + "\n");
@@ -83,7 +85,7 @@ if (command === "prepare") {
     package: product.name,
     version,
     tag,
-    distTag: "next",
+    distTag,
     source: { revision: sourceRevision, tree: sourceTree },
     tarball: {
       filename: basename(tarballPath),
@@ -110,7 +112,7 @@ if (command === "prepare") {
 } else {
   await assertTag();
   const manifest = await readJson(join(output, "release-manifest.json"));
-  if (manifest.schemaVersion !== 1 || manifest.package !== product.name || manifest.version !== version || manifest.tag !== tag || manifest.distTag !== "next") {
+  if (manifest.schemaVersion !== 1 || manifest.package !== product.name || manifest.version !== version || manifest.tag !== tag || manifest.distTag !== distTag) {
     throw new Error("release manifest identity mismatch");
   }
   const expectedFiles = [manifest.tarball.filename, notesName, "package-sbom.json", "release-manifest.json"].sort();

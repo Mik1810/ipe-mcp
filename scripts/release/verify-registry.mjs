@@ -8,6 +8,7 @@ if (name === undefined || version === undefined || expectedIntegrity === undefin
   throw new Error("usage: verify-registry.mjs PACKAGE VERSION EXPECTED_INTEGRITY");
 }
 
+const distTag = version.includes("-") ? "next" : "latest";
 const spec = `${name}@${version}`;
 let metadata;
 for (let attempt = 1; attempt <= 12; attempt += 1) {
@@ -23,14 +24,14 @@ if (metadata?.name !== name || metadata.version !== version || metadata["dist.in
   throw new Error("published registry identity or integrity mismatch");
 }
 if (metadata["dist.attestations"]?.provenance?.predicateType !== "https://slsa.dev/provenance/v1") throw new Error("npm provenance attestation is missing");
-if (metadata["dist-tags"]?.next !== version) throw new Error("npm next tag does not select the release candidate");
+if (metadata["dist-tags"]?.[distTag] !== version) throw new Error(`npm ${distTag} tag does not select the expected release`);
 if (!Array.isArray(metadata.versions) || !metadata.versions.includes(version)) {
   throw new Error("npm registry version inventory is missing the release candidate");
 }
 const publishedVersions = metadata.versions;
 const stableVersions = publishedVersions.filter((publishedVersion) => !publishedVersion.includes("-"));
 const bootstrapLatest = metadata["dist-tags"]?.latest === version && stableVersions.length === 0;
-if (metadata["dist-tags"]?.latest === version && !bootstrapLatest) {
+if (distTag === "next" && metadata["dist-tags"]?.latest === version && !bootstrapLatest) {
   throw new Error("prerelease unexpectedly changed npm latest after a stable release exists");
 }
-process.stdout.write(`${JSON.stringify({ result: "PASS", name, version, integrity: expectedIntegrity, distTag: "next", bootstrapLatest })}\n`);
+process.stdout.write(`${JSON.stringify({ result: "PASS", name, version, integrity: expectedIntegrity, distTag, bootstrapLatest })}\n`);

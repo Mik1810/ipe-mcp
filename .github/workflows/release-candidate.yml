@@ -54,10 +54,30 @@ jobs:
       - name: Pin npm CLI
         run: npm install --global "npm@${NPM_VERSION}"
 
-      - name: Install supported native lane
+      - name: Install Ubuntu toolchain
+        timeout-minutes: 8
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ipe lua5.4 texlive-latex-base poppler-utils mupdf-tools bubblewrap
+          archive=
+          for mirror in https://archive.ubuntu.com/ubuntu https://mirrors.edge.kernel.org/ubuntu; do
+            if curl --fail --silent --show-error --location --connect-timeout 8 --max-time 20 \
+              --output /dev/null "$mirror/dists/resolute/InRelease"; then
+              archive=$mirror
+              break
+            fi
+          done
+          test -n "$archive"
+          sources="$RUNNER_TEMP/native-linux-ubuntu.sources"
+          cat > "$sources" <<EOF
+          Types: deb
+          URIs: $archive
+          Suites: resolute resolute-updates resolute-security
+          Components: main universe
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          EOF
+          apt_options=(-o "Dir::Etc::sourcelist=$sources" -o Dir::Etc::sourceparts=- -o Acquire::Retries=2 -o Acquire::https::Timeout=30)
+          sudo apt-get "${apt_options[@]}" -o APT::Update::Error-Mode=any update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install --yes --no-install-recommends ipe lua5.4 texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap util-linux
+          apt-cache "${apt_options[@]}" policy ipe lua5.4 texlive-latex-base texlive-latex-recommended poppler-utils mupdf-tools bubblewrap util-linux
 
       - name: Install locked JavaScript dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -131,14 +151,15 @@ jobs:
 
       - name: Stage candidate with OIDC provenance
         env:
+          DIST_TAG: ${{ steps.candidate.outputs.distTag }}
           TARBALL: ./release-candidate/${{ steps.candidate.outputs.tarball }}
-        run: npm stage publish "$TARBALL" --access public --tag next --provenance
+        run: npm stage publish "$TARBALL" --access public --tag "$DIST_TAG" --provenance
 
       - name: Report owner approval checkpoint
         run: echo "Candidate staged. The owner must inspect and approve it with npm stage approve and 2FA before finalization."
 
   finalize:
-    name: Verify registry and create GitHub prerelease
+    name: Verify registry and create GitHub Release
     if: inputs.mode == 'finalize-release' && github.ref_type == 'tag'
     needs: verify
     runs-on: ubuntu-26.04
@@ -173,7 +194,7 @@ jobs:
         id: candidate
         run: node scripts/release/release-candidate.mjs verify release-candidate
 
-      - name: Verify registry integrity and next tag
+      - name: Verify registry integrity and dist-tag
         env:
           PACKAGE_NAME: ipe-mcp
           VERSION: ${{ steps.candidate.outputs.version }}
@@ -190,7 +211,7 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund "$PACKAGE_SPEC"
           npm audit signatures
 
-      - name: Create matching GitHub prerelease
+      - name: Create matching GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.candidate.outputs.version }}
@@ -199,9 +220,11 @@ jobs:
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             echo "GitHub Release already exists; verifying it without mutation"
           else
+            release_kind=(--latest)
+            if [[ "$VERSION" == *-* ]]; then release_kind=(--prerelease --latest=false); fi
             gh release create "$GITHUB_REF_NAME" \
               --verify-tag \
-              --prerelease \
+              "${release_kind[@]}" \
               --title "ipe-mcp $VERSION" \
               --notes-file "release-candidate/v$VERSION.md" \
               "release-candidate/$TARBALL#npm tarball" \
@@ -209,7 +232,7 @@ jobs:
               "release-candidate/package-sbom.json#CycloneDX SBOM"
           fi
 
-      - name: Verify GitHub prerelease assets
+      - name: Verify GitHub Release assets
         env:
           GH_TOKEN: ${{ github.token }}
           TARBALL: ${{ steps.candidate.outputs.tarball }}
@@ -221,8 +244,8 @@ jobs:
           const expected = [process.argv[3], "release-manifest.json", "package-sbom.json"].sort();
           const actual = release.assets.map((asset) => asset.name).sort();
           const expectedBody = readFileSync(process.argv[4], "utf8").trim();
-          if (release.tagName !== process.argv[2] || release.isPrerelease !== true || release.body.trim() !== expectedBody || JSON.stringify(actual) !== JSON.stringify(expected)) {
-            throw new Error("GitHub prerelease identity or assets mismatch");
+          if (release.tagName !== process.argv[2] || release.isPrerelease !== process.argv[2].includes("-") || release.body.trim() !== expectedBody || JSON.stringify(actual) !== JSON.stringify(expected)) {
+            throw new Error("GitHub Release identity or assets mismatch");
           }
           NODE
           mkdir "$RUNNER_TEMP/github-release-verification"

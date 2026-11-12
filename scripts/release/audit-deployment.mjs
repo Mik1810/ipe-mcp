@@ -9,21 +9,22 @@ import { promisify } from "node:util";
 const exec = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const [tag, artifactArgument] = process.argv.slice(2);
-if (tag === undefined || artifactArgument === undefined || !/^v1\.0\.0-rc\.\d+$/u.test(tag)) {
-  throw new Error("usage: audit-deployment.mjs v1.0.0-rc.N ARTIFACT_DIRECTORY");
+if (tag === undefined || artifactArgument === undefined || !/^v1\.0\.0(?:-rc\.\d+)?$/u.test(tag)) {
+  throw new Error("usage: audit-deployment.mjs v1.0.0[-rc.N] ARTIFACT_DIRECTORY");
 }
 
 const artifactDirectory = resolve(artifactArgument);
 const manifest = JSON.parse(await readFile(join(artifactDirectory, "release-manifest.json"), "utf8"));
 const release = JSON.parse(process.env.RELEASE_JSON ?? "null");
 const version = tag.slice(1);
+const prerelease = version.includes("-");
 const tarballName = `ipe-mcp-${version}.tgz`;
 const hash = (algorithm, data) => createHash(algorithm).update(data).digest("hex");
 
 if (manifest.schemaVersion !== 1 || manifest.package !== "ipe-mcp" || manifest.version !== version || manifest.tag !== tag) {
   throw new Error("release manifest identity does not match the requested deployment");
 }
-if (manifest.tarball.filename !== tarballName || manifest.distTag !== "next") {
+if (manifest.tarball.filename !== tarballName || manifest.distTag !== (prerelease ? "next" : "latest")) {
   throw new Error("release manifest artifact or dist-tag is invalid");
 }
 
@@ -60,11 +61,11 @@ const expectedAssets = [tarballName, "package-sbom.json", "release-manifest.json
 const actualAssets = release?.assets?.map((asset) => basename(asset.name)).sort();
 if (
   release?.tagName !== tag ||
-  release?.isPrerelease !== true ||
+  release?.isPrerelease !== prerelease ||
   release?.isDraft !== false ||
   JSON.stringify(actualAssets) !== JSON.stringify(expectedAssets)
 ) {
-  throw new Error("GitHub prerelease identity or asset inventory is invalid");
+  throw new Error("GitHub Release identity or asset inventory is invalid");
 }
 
 if (process.env.GITHUB_OUTPUT !== undefined) {

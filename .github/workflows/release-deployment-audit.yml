@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing annotated prerelease tag to audit
+        description: Existing annotated release tag to audit
         required: true
-        default: v1.0.0-rc.1
+        default: v1.0.0
         type: string
 
 permissions:
@@ -53,8 +53,8 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          if [[ ! "$RELEASE_TAG" =~ ^v1\.0\.0-rc\.[0-9]+$ ]]; then
-            echo "deployment audit requires an explicit v1.0.0-rc.N tag" >&2
+          if [[ ! "$RELEASE_TAG" =~ ^v1\.0\.0(-rc\.[0-9]+)?$ ]]; then
+            echo "deployment audit requires an explicit v1.0.0 or v1.0.0-rc.N tag" >&2
             exit 1
           fi
 

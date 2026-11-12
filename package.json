@@ -1,6 +1,6 @@
 {
   "name": "ipe-mcp",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0",
   "description": "Local-first MCP server for creating, editing, validating, and rendering Ipe documents",
   "private": false,
   "license": "MIT",
@@ -52,7 +52,7 @@
   "publishConfig": {
     "access": "public",
     "provenance": true,
-    "tag": "next"
+    "tag": "latest"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

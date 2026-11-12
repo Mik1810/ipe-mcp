@@ -82,9 +82,9 @@ plus staging still require explicit owner authorization:
 5. dispatch the same workflow and tag with `mode=finalize-release`, approve the
    protected environment, and let it verify the now-public registry artifact;
 6. let finalization verify registry integrity and provenance/signatures,
-   require `next` to select the candidate, and preserve the stable `latest`
-   line;
-7. create or verify the matching GitHub prerelease with tarball, manifest, and
+   require `next` for a prerelease or `latest` for an approved stable
+   release;
+7. create or verify the matching GitHub Release with tarball, manifest, and
    SBOM assets.
 
 `stage-publish` has `id-token: write` but only read access to repository

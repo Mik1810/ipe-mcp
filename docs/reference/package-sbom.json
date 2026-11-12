@@ -7,15 +7,15 @@
     "timestamp": "2026-01-01T00:00:00Z",
     "component": {
       "type": "application",
-      "bom-ref": "ipe-mcp@1.0.0-rc.1",
+      "bom-ref": "ipe-mcp@1.0.0",
       "name": "ipe-mcp",
-      "version": "1.0.0-rc.1",
+      "version": "1.0.0",
       "licenses": [
         {
           "expression": "MIT"
         }
       ],
-      "purl": "pkg:npm/ipe-mcp@1.0.0-rc.1"
+      "purl": "pkg:npm/ipe-mcp@1.0.0"
     },
     "properties": [
       {

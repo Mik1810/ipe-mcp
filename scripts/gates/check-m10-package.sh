@@ -33,10 +33,11 @@ const lock = JSON.parse(await readFile(join(root, "package-lock.json"), "utf8"))
 const packed = JSON.parse(await readFile(join(temporary, "pack.json"), "utf8"));
 if (!Array.isArray(packed) || packed.length !== 1) throw new Error("expected one packed artifact");
 const artifact = packed[0];
-if (packageJson.name !== "ipe-mcp" || packageJson.version !== expectedVersion || packageJson.private !== false || !/^\d+\.\d+\.\d+-rc\.\d+$/u.test(packageJson.version)) throw new Error("public candidate identity mismatch");
+if (packageJson.name !== "ipe-mcp" || packageJson.version !== expectedVersion || packageJson.private !== false || !/^\d+\.\d+\.\d+(?:-rc\.\d+)?$/u.test(packageJson.version)) throw new Error("public candidate identity mismatch");
 if (lock.name !== packageJson.name || lock.version !== packageJson.version || lock.packages[""].version !== packageJson.version) throw new Error("package-lock root identity mismatch");
 if (packageJson.license !== "MIT" || packageJson.bin?.["ipe-mcp"] !== "dist/src/cli/mcp-stdio.js") throw new Error("license/bin metadata mismatch");
-if (packageJson.publishConfig?.tag !== "next" || packageJson.publishConfig?.provenance !== true) throw new Error("safe prerelease publish metadata missing");
+const expectedDistTag = expectedVersion.includes("-") ? "next" : "latest";
+if (packageJson.publishConfig?.tag !== expectedDistTag || packageJson.publishConfig?.provenance !== true || packageJson.publishConfig?.access !== "public") throw new Error("safe publish metadata missing");
 for (const forbidden of ["install", "postinstall", "preinstall", "prepare"]) {
   if (packageJson.scripts?.[forbidden] !== undefined) throw new Error(`forbidden install lifecycle script: ${forbidden}`);
 }
